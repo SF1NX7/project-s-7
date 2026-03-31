@@ -8,4 +8,7 @@ func interact() -> void:
 	if dialogue_ui == null:
 		return
 
+	if dialogue_ui.is_active:
+		return
+
 	dialogue_ui.start_dialogue(dialogue_lines, portrait)

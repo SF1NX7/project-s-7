@@ -9,6 +9,7 @@
 script = ExtResource("1_2x5cq")
 
 [node name="DialogueBox" type="Panel" parent="." unique_id=1502954987]
+visible = false
 anchors_preset = -1
 anchor_left = 0.5
 anchor_top = 0.5
