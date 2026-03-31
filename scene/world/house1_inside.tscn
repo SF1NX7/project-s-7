@@ -4973,12 +4973,7 @@ tile_map_data = PackedByteArray("AAD7////AAATAAsAAAD8////AAATAAsAAAD9////AAATAAs
 tile_set = SubResource("TileSet_wygdx")
 
 [node name="Player" parent="." unique_id=1879990349 instance=ExtResource("6_qf2io")]
-position = Vector2(-16, 16)
-
-[node name="spawn_0" type="Marker2D" parent="." unique_id=681743128]
-position = Vector2(-39, 60)
-rotation = 0.7853982
-gizmo_extents = 16.0
+position = Vector2(-112, -48)
 
 [node name="spawn_1" type="Marker2D" parent="." unique_id=1772322999]
 position = Vector2(-176, -45)
@@ -4989,7 +4984,7 @@ gizmo_extents = 16.0
 
 [node name="Portal" parent="." unique_id=1250424720 instance=ExtResource("11_en8mq")]
 position = Vector2(-176, -16)
-target_scene = "res://scene/World_1.tscn"
+target_scene = "res://scene/world/World_1.tscn"
 target_spawn_id = "spawn_2"
 
 [node name="FadeLayer" parent="." unique_id=975937443 instance=ExtResource("12_2ayqp")]

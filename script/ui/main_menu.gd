@@ -15,7 +15,7 @@ func _on_play_pressed() -> void:
 		await fade.fade_out()
 
 	Global.next_spawn_id = "spawn_0"
-	get_tree().change_scene_to_file("res://scene/World.tscn")
+	get_tree().change_scene_to_file("res://scene/world/World_1.tscn")
 
 func _on_options_pressed() -> void:
 	print("Опции пока не сделаны")
