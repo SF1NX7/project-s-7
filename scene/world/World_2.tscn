@@ -6248,4 +6248,3 @@ target_scene = "res://scene/world/World_1.tscn"
 target_spawn_id = "spawn_1"
 
 [node name="FadeLayer" parent="." unique_id=975937443 instance=ExtResource("11_fihje")]
-visible = false

@@ -15,7 +15,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Tactical RPG Movement"
-run/main_scene="uid://cg1lpc6fvfakg"
+run/main_scene="uid://ca68rgb5hdpq1"
 config/features=PackedStringArray("4.6")
 config/icon="res://icon.png"
 

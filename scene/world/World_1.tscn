@@ -5039,7 +5039,6 @@ target_scene = "res://scene/world/World_2.tscn"
 target_spawn_id = "spawn_1"
 
 [node name="FadeLayer" parent="." unique_id=975937443 instance=ExtResource("12_by30h")]
-visible = false
 
 [node name="Portal2" parent="." unique_id=625714238 instance=ExtResource("11_heg0q")]
 position = Vector2(176, -48)

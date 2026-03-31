@@ -4976,7 +4976,7 @@ tile_set = SubResource("TileSet_wygdx")
 position = Vector2(-112, -48)
 
 [node name="spawn_1" type="Marker2D" parent="." unique_id=1772322999]
-position = Vector2(-176, -45)
+position = Vector2(-176, -48)
 rotation = 0.7853982
 gizmo_extents = 16.0
 
@@ -4990,6 +4990,6 @@ target_spawn_id = "spawn_2"
 [node name="FadeLayer" parent="." unique_id=975937443 instance=ExtResource("12_2ayqp")]
 
 [node name="NPC 1" parent="." unique_id=841262844 instance=ExtResource("7_pw4cv")]
-position = Vector2(-238, -201)
+position = Vector2(-240, -176)
 dialogue_lines = Array[String](["Это мой дом!"])
 portrait = ExtResource("11_qtfew")
