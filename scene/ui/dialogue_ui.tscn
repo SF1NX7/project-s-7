@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://d5r87lolq6o8"]
 
-[ext_resource type="Script" uid="uid://bx702ewe0ye4n" path="res://script/dialogue_ui.gd" id="1_2x5cq"]
+[ext_resource type="Script" uid="uid://bx702ewe0ye4n" path="res://script/ui/dialogue_ui.gd" id="1_2x5cq"]
 [ext_resource type="FontFile" uid="uid://b44y6g3w8o64t" path="res://font/thin_pixel-7.ttf" id="2_v6amk"]
 
 [sub_resource type="Theme" id="Theme_p1v5b"]

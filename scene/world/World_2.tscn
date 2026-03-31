@@ -1,19 +1,19 @@
 [gd_scene format=4 uid="uid://cweup558jdplj"]
 
-[ext_resource type="Script" uid="uid://brqtqqincmeu8" path="res://script/world_2.gd" id="1_b51kk"]
-[ext_resource type="Texture2D" uid="uid://brxe2c8wkr7qp" path="res://art/16_bit_tile_202603242252.jpeg" id="2_otvi8"]
-[ext_resource type="Texture2D" uid="uid://g2dfyymlxlx6" path="res://art/groundTileAI.jpeg" id="3_40cn6"]
-[ext_resource type="Texture2D" uid="uid://b8v83cih7hjy" path="res://art/Pics/TIleCastleAI.jpeg" id="4_bk6d8"]
+[ext_resource type="Script" uid="uid://brqtqqincmeu8" path="res://script/world/world_2.gd" id="1_b51kk"]
+[ext_resource type="Texture2D" uid="uid://g2dfyymlxlx6" path="res://art/Tiles/groundTileAI.jpeg" id="3_40cn6"]
+[ext_resource type="Texture2D" uid="uid://b8v83cih7hjy" path="res://art/Tiles/TIleCastleAI.jpeg" id="4_bk6d8"]
 [ext_resource type="PackedScene" uid="uid://dqi3adlgday0w" path="res://scene/characters/player.tscn" id="5_a2nyj"]
 [ext_resource type="PackedScene" uid="uid://c4pn5jj6ffbty" path="res://scene/characters/npc.tscn" id="6_dinsj"]
 [ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="7_5tkp4"]
-[ext_resource type="Script" uid="uid://ceixrw2s27tki" path="res://script/fade.gd" id="8_xo6f8"]
 [ext_resource type="PackedScene" uid="uid://d5r87lolq6o8" path="res://scene/ui/dialogue_ui.tscn" id="9_7xd1l"]
-[ext_resource type="PackedScene" uid="uid://bsxqpd3pfv3fa" path="res://scene/portal.tscn" id="10_rdyk4"]
+[ext_resource type="PackedScene" uid="uid://bsxqpd3pfv3fa" path="res://scene/ui/portal.tscn" id="10_rdyk4"]
 [ext_resource type="PackedScene" uid="uid://beifm5ixvfjwe" path="res://scene/ui/fade_layer.tscn" id="11_fihje"]
 
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_p22p5"]
+
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fvag4"]
-texture = ExtResource("2_otvi8")
+texture = SubResource("CompressedTexture2D_p22p5")
 texture_region_size = Vector2i(32, 32)
 0:0/0 = 0
 1:0/0 = 0
@@ -6215,6 +6215,15 @@ texture_region_size = Vector2i(32, 32)
 tile_size = Vector2i(32, 32)
 sources/3 = SubResource("TileSetAtlasSource_b2ar6")
 
+[sub_resource type="GDScript" id="GDScript_0g60i"]
+script/source = "@tool
+extends ColorRect
+
+func _ready():
+	if Engine.is_editor_hint():
+		visible = false
+"
+
 [node name="World_2" type="Node2D" unique_id=269618916]
 script = ExtResource("1_b51kk")
 
@@ -6249,7 +6258,7 @@ offset_right = 0.039978027
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 1)
-script = ExtResource("8_xo6f8")
+script = SubResource("GDScript_0g60i")
 
 [node name="spawn_1" type="Marker2D" parent="." unique_id=114873027]
 position = Vector2(304, 48)

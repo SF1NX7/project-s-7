@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://by6aaijw277na"]
+
+[ext_resource type="Script" uid="uid://ditmoitkwngg" path="res://script/system/door.gd" id="1_vwy5n"]
+[ext_resource type="Texture2D" uid="uid://ccp5vgg7fbi2a" path="res://art/doors/door1_closed.png" id="2_ox2ys"]
+[ext_resource type="Texture2D" uid="uid://dbs36n7mpcf8b" path="res://art/doors/door1_open.png" id="3_g5bwa"]
+
+[node name="Door" type="Area2D" unique_id=484262521]
+script = ExtResource("1_vwy5n")
+closed_texture = ExtResource("2_ox2ys")
+open_texture = ExtResource("3_g5bwa")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1455771168]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=389362803]

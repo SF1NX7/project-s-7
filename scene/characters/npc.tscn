@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c4pn5jj6ffbty"]
 
 [ext_resource type="Texture2D" uid="uid://ddhnxmx3ckgbv" path="res://art/NPC 1.png" id="1_0u0ms"]
-[ext_resource type="Script" uid="uid://dq1uc20hj6alp" path="res://script/npc.gd" id="1_gw7q4"]
+[ext_resource type="Script" uid="uid://dq1uc20hj6alp" path="res://script/player/npc.gd" id="1_gw7q4"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0u0ms"]
 size = Vector2(22, 32)
@@ -13,7 +13,6 @@ radius = 22.203604
 script = ExtResource("1_gw7q4")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=223748891]
-position = Vector2(-128, 112)
 texture = ExtResource("1_0u0ms")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=652236933]
@@ -22,7 +21,6 @@ position = Vector2(-130, 112)
 shape = SubResource("RectangleShape2D_0u0ms")
 
 [node name="Area2D" type="Area2D" parent="." unique_id=904403340]
-position = Vector2(-1, -1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=900683245]
 visible = false

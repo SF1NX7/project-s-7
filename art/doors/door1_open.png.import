@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b8v83cih7hjy"
-path="res://.godot/imported/TIleCastleAI.jpeg-c9f97cbef70c0e32299781a8fef4703a.ctex"
+uid="uid://dbs36n7mpcf8b"
+path="res://.godot/imported/door1_open.png-e7f3ea12016c893f7526bb01254f5ec1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/Pics/TIleCastleAI.jpeg"
-dest_files=["res://.godot/imported/TIleCastleAI.jpeg-c9f97cbef70c0e32299781a8fef4703a.ctex"]
+source_file="res://art/doors/door1_open.png"
+dest_files=["res://.godot/imported/door1_open.png-e7f3ea12016c893f7526bb01254f5ec1.ctex"]
 
 [params]
 
