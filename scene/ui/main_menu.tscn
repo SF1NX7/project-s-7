@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://cg1lpc6fvfakg"]
+
+[ext_resource type="Script" uid="uid://k1602msr8r2j" path="res://script/main_menu.gd" id="1_k75cp"]
+[ext_resource type="FontFile" uid="uid://b44y6g3w8o64t" path="res://font/thin_pixel-7.ttf" id="2_8wb42"]
+[ext_resource type="PackedScene" uid="uid://beifm5ixvfjwe" path="res://scene/ui/fade_layer.tscn" id="3_k3dtv"]
+
+[node name="MainMenu" type="Control" unique_id=1916273437]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_k75cp")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=905844483]
+layout_mode = 0
+offset_right = 640.0
+offset_bottom = 360.0
+color = Color(0.23137255, 0.18431373, 0.21176471, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=119061660]
+layout_mode = 0
+offset_left = 137.0
+offset_top = 149.0
+offset_right = 426.0
+offset_bottom = 303.0
+theme_override_constants/separation = 34
+
+[node name="Play" type="Button" parent="VBoxContainer" unique_id=1149701933]
+layout_mode = 2
+text = "Play"
+
+[node name="Option" type="Button" parent="VBoxContainer" unique_id=1488046414]
+layout_mode = 2
+text = "Option"
+
+[node name="Title" type="Label" parent="." unique_id=1873588414]
+layout_mode = 0
+offset_left = 111.0
+offset_top = 20.0
+offset_right = 532.0
+offset_bottom = 133.0
+theme_override_colors/font_color = Color(0.9171446, 0.5478107, 0.34269243, 1)
+theme_override_fonts/font = ExtResource("2_8wb42")
+theme_override_font_sizes/font_size = 86
+text = "S7DE QUEST RPG"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="FadeLayer" parent="." unique_id=975937443 instance=ExtResource("3_k3dtv")]

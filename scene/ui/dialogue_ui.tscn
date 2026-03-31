@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://d5r87lolq6o8"]
+
+[ext_resource type="Script" uid="uid://bx702ewe0ye4n" path="res://script/dialogue_ui.gd" id="1_2x5cq"]
+[ext_resource type="FontFile" uid="uid://b44y6g3w8o64t" path="res://font/thin_pixel-7.ttf" id="2_v6amk"]
+
+[sub_resource type="Theme" id="Theme_p1v5b"]
+
+[node name="DialogueUI" type="CanvasLayer" unique_id=203183458]
+script = ExtResource("1_2x5cq")
+
+[node name="DialogueBox" type="Panel" parent="." unique_id=1502954987]
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.50600004
+offset_left = -314.0
+offset_top = 10.0
+offset_right = 313.0
+offset_bottom = 170.83998
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DialogueText" type="Label" parent="DialogueBox" unique_id=1664274126]
+layout_mode = 1
+anchors_preset = -1
+offset_left = 183.0
+offset_top = 10.0
+offset_right = 599.0
+offset_bottom = 153.0
+theme = SubResource("Theme_p1v5b")
+theme_type_variation = &"GraphFrameTitleLabel"
+theme_override_colors/font_color = Color(0.95959085, 0.9370962, 0.9457806, 1)
+theme_override_fonts/font = ExtResource("2_v6amk")
+theme_override_font_sizes/font_size = 41
+autowrap_mode = 3
+
+[node name="Portrait" type="TextureRect" parent="DialogueBox" unique_id=1326713532]
+layout_mode = 0
+offset_left = 7.0
+offset_top = 6.0
+offset_right = 158.0
+offset_bottom = 157.0
