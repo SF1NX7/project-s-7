@@ -4,11 +4,20 @@
 [ext_resource type="Texture2D" uid="uid://ccp5vgg7fbi2a" path="res://art/doors/door1_closed.png" id="2_ox2ys"]
 [ext_resource type="Texture2D" uid="uid://dbs36n7mpcf8b" path="res://art/doors/door1_open.png" id="3_g5bwa"]
 
-[node name="Door" type="Area2D" unique_id=484262521]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vwy5n"]
+size = Vector2(32, 42)
+
+[node name="Door" type="Area2D" unique_id=484262521 groups=["doors"]]
+z_index = -1
 script = ExtResource("1_vwy5n")
 closed_texture = ExtResource("2_ox2ys")
 open_texture = ExtResource("3_g5bwa")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1455771168]
+position = Vector2(0, -5)
+texture = ExtResource("2_ox2ys")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=389362803]
+position = Vector2(0, -5)
+shape = SubResource("RectangleShape2D_vwy5n")
+debug_color = Color(0.8666667, 0.30588236, 0.45882353, 0.13333334)

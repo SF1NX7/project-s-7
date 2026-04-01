@@ -1,15 +1,18 @@
 extends CharacterBody2D
 
 var tile_size: int = 32
-var move_speed: float = 200.0
+var move_speed: float = 128.0
 var moving: bool = false
 var target_position: Vector2
 var can_move: bool = true
+var last_direction: Vector2 = Vector2.DOWN
 
 @onready var blocked_layer = $"../Blocked"
+@onready var anim = $AnimatedSprite2D
 
 func _ready() -> void:
 	target_position = global_position
+	play_idle_animation()
 
 func _process(delta: float) -> void:
 	if not can_move:
@@ -18,21 +21,25 @@ func _process(delta: float) -> void:
 	if moving:
 		global_position = global_position.move_toward(target_position, move_speed * delta)
 
-		if global_position.distance_to(target_position) < 1.0:
-			global_position = target_position
-			moving = false
-			try_move()
+	if global_position.distance_to(target_position) < 1.0:
+		global_position = target_position
+		moving = false
+
+	try_move()
+
+	if not moving:
+		play_idle_animation()
 	else:
 		try_move()
 
 func try_move() -> void:
-	if Input.is_action_pressed("ui_right"):
+	if Input.is_action_pressed("move_right"):
 		start_move(Vector2.RIGHT)
-	elif Input.is_action_pressed("ui_left"):
+	elif Input.is_action_pressed("move_left"):
 		start_move(Vector2.LEFT)
-	elif Input.is_action_pressed("ui_down"):
+	elif Input.is_action_pressed("move_down"):
 		start_move(Vector2.DOWN)
-	elif Input.is_action_pressed("ui_up"):
+	elif Input.is_action_pressed("move_up"):
 		start_move(Vector2.UP)
 
 func start_move(direction: Vector2) -> void:
@@ -44,16 +51,26 @@ func start_move(direction: Vector2) -> void:
 	var cell = world_to_cell(next_feet_position)
 
 	if is_npc_on_tile(next_feet_position):
+		play_idle_animation()
+		return
+
+	if is_closed_door_on_tile(next_feet_position):
+		play_idle_animation()
 		return
 
 	if blocked_layer.get_cell_source_id(cell) != -1:
+		play_idle_animation()
 		return
+		
+
+	last_direction = direction
+	play_walk_animation(direction)
 
 	target_position = next_position
 	moving = true
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_accept"):
+	if event.is_action_pressed("action"):
 		var dialogue_ui = get_tree().current_scene.get_node_or_null("DialogueUI")
 
 		if dialogue_ui != null and dialogue_ui.is_active:
@@ -68,9 +85,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 
 		for area in interaction_area.get_overlapping_areas():
-			if area.get_parent().has_method("interact"):
-				area.get_parent().interact()
-				return
+			var node = area
+			while node != null:
+				if node.has_method("interact"):
+					node.interact()
+					return
+				node = node.get_parent()
 
 func get_feet_world_pos(node: Node2D) -> Vector2:
 	return node.get_node("CollisionShape2D").global_position
@@ -85,6 +105,44 @@ func is_npc_on_tile(world_pos: Vector2) -> bool:
 	for npc in get_tree().get_nodes_in_group("npcs"):
 		var npc_cell = world_to_cell(get_feet_world_pos(npc))
 		if npc_cell == target_cell:
+			return true
+
+	return false
+
+func play_walk_animation(direction: Vector2) -> void:
+	var anim_name := ""
+
+	if direction == Vector2.RIGHT:
+		anim_name = "Right"
+	elif direction == Vector2.LEFT:
+		anim_name = "Left"
+	elif direction == Vector2.DOWN:
+		anim_name = "Down"
+	elif direction == Vector2.UP:
+		anim_name = "Up"
+
+	if anim.animation != anim_name:
+		anim.play(anim_name)
+
+func play_idle_animation() -> void:
+	if last_direction == Vector2.RIGHT:
+		anim.play("Idle_right")
+	elif last_direction == Vector2.LEFT:
+		anim.play("Idle_left")
+	elif last_direction == Vector2.DOWN:
+		anim.play("Idle_down")
+	elif last_direction == Vector2.UP:
+		anim.play("Idle_up")
+		
+func is_closed_door_on_tile(world_pos: Vector2) -> bool:
+	var target_cell = world_to_cell(world_pos)
+
+	for door in get_tree().get_nodes_in_group("doors"):
+		if door.is_open:
+			continue
+
+		var door_cell = world_to_cell(door.global_position)
+		if door_cell == target_cell:
 			return true
 
 	return false

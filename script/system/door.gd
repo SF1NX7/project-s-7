@@ -2,30 +2,24 @@ extends Area2D
 
 @export var closed_texture: Texture2D
 @export var open_texture: Texture2D
+@export var is_open: bool = false
 
-@export var target_scene: String = ""
-@export var target_spawn_id: String = ""
-
-@onready var sprite: Sprite2D = $Sprite2D
-
-var is_opening := false
-
+@onready var sprite = $Sprite2D
 
 func _ready() -> void:
-	if closed_texture:
-		sprite.texture = closed_texture
+	update_visual()
 
-
-func open_door() -> void:
-	if is_opening:
+func interact() -> void:
+	print("DOOR INTERACT")
+	if is_open:
 		return
-	
-	is_opening = true
-	
-	if open_texture:
+
+	is_open = true
+	update_visual()
+
+func update_visual() -> void:
+	if is_open:
 		sprite.texture = open_texture
-	
-	await get_tree().create_timer(0.2).timeout
-	
-	Global.next_spawn_id = target_spawn_id
-	get_tree().change_scene_to_file(target_scene)
+	else:
+		sprite.texture = closed_texture
+		
