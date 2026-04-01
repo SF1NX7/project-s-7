@@ -198,7 +198,7 @@ script = ExtResource("1_onrkg")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=844094621]
 sprite_frames = SubResource("SpriteFrames_65p5e")
 animation = &"Down"
-frame_progress = 0.8791877
+frame_progress = 0.09699089
 offset = Vector2(0, -8)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=301383383]
@@ -212,4 +212,5 @@ debug_color = Color(0.011764706, 0.7490196, 0.023529412, 0.41960785)
 [node name="InteractionArea" type="Area2D" parent="." unique_id=1693438874]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea" unique_id=302059315]
+visible = false
 shape = SubResource("RectangleShape2D_onrkg")

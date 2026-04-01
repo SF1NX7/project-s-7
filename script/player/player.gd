@@ -15,6 +15,12 @@ func _ready() -> void:
 	play_idle_animation()
 
 func _process(delta: float) -> void:
+	var menu_ui = get_tree().current_scene.get_node_or_null("MenuUI")
+	if menu_ui != null and menu_ui.is_open:
+		return
+	var dialogue_ui = get_tree().current_scene.get_node_or_null("DialogueUI")
+	if dialogue_ui != null and dialogue_ui.is_active:
+		return
 	if not can_move:
 		return
 
@@ -46,6 +52,8 @@ func start_move(direction: Vector2) -> void:
 	if moving:
 		return
 
+	last_direction = direction
+
 	var next_position = global_position + direction * tile_size
 	var next_feet_position = $CollisionShape2D.global_position + direction * tile_size
 	var cell = world_to_cell(next_feet_position)
@@ -62,14 +70,17 @@ func start_move(direction: Vector2) -> void:
 		play_idle_animation()
 		return
 		
-
-	last_direction = direction
 	play_walk_animation(direction)
 
 	target_position = next_position
 	moving = true
 
 func _unhandled_input(event: InputEvent) -> void:
+	
+	var menu_ui = get_tree().current_scene.get_node_or_null("MenuUI")
+	if menu_ui != null and menu_ui.is_open:
+		return
+	
 	if event.is_action_pressed("action"):
 		var dialogue_ui = get_tree().current_scene.get_node_or_null("DialogueUI")
 
@@ -88,8 +99,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			var node = area
 			while node != null:
 				if node.has_method("interact"):
-					node.interact()
-					return
+					if is_in_front_of_player(node.global_position):
+						node.interact()
+						return
+					break
 				node = node.get_parent()
 
 func get_feet_world_pos(node: Node2D) -> Vector2:
@@ -146,3 +159,7 @@ func is_closed_door_on_tile(world_pos: Vector2) -> bool:
 			return true
 
 	return false
+	
+func is_in_front_of_player(target_pos: Vector2) -> bool:
+	var front_pos = global_position + last_direction * tile_size
+	return world_to_cell(target_pos) == world_to_cell(front_pos)

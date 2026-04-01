@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://bsxqpd3pfv3fa" path="res://scene/ui/portal.tscn" id="11_heg0q"]
 [ext_resource type="PackedScene" uid="uid://beifm5ixvfjwe" path="res://scene/ui/fade_layer.tscn" id="12_by30h"]
 [ext_resource type="PackedScene" uid="uid://by6aaijw277na" path="res://scene/objects/door.tscn" id="14_u6jkk"]
+[ext_resource type="PackedScene" uid="uid://c64pa8ud8y83u" path="res://scene/ui/menu_ui.tscn" id="15_mpv6a"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wygdx"]
 texture = ExtResource("2_ehcd8")
@@ -5050,3 +5051,5 @@ visible = false
 position = Vector2(176, -48)
 target_scene = "res://scene/world/house1_inside.tscn"
 target_spawn_id = "spawn_1"
+
+[node name="Menu_ui" parent="." unique_id=211641837 instance=ExtResource("15_mpv6a")]

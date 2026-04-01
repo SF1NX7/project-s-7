@@ -4,10 +4,10 @@
 [ext_resource type="Script" uid="uid://dq1uc20hj6alp" path="res://script/player/npc.gd" id="1_gw7q4"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_0u0ms"]
-size = Vector2(22, 32)
+size = Vector2(30, 30)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_gw7q4"]
-radius = 22.203604
+radius = 20.0
 
 [node name="NPC 1" type="CharacterBody2D" unique_id=841262844 groups=["npcs"]]
 script = ExtResource("1_gw7q4")
@@ -23,6 +23,7 @@ shape = SubResource("RectangleShape2D_0u0ms")
 [node name="Area2D" type="Area2D" parent="." unique_id=904403340]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=900683245]
+visible = false
 shape = SubResource("CircleShape2D_gw7q4")
 
 [connection signal="body_entered" from="Area2D" to="." method="_on_area_2d_body_entered"]
