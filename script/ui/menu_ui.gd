@@ -78,8 +78,14 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func open_menu() -> void:
+	
+	var player = get_tree().current_scene.get_node_or_null("Player")
+	if player != null:
+		player.moving = false
+	
 	if is_open:
 		return
+	
 
 	is_open = true
 	update_selection()
