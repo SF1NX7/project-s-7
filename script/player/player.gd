@@ -15,7 +15,7 @@ func _ready() -> void:
 	play_idle_animation()
 
 func _process(delta: float) -> void:
-	var menu_ui = get_tree().current_scene.get_node_or_null("MenuUI")
+	var menu_ui = get_tree().current_scene.get_node_or_null("Menu_ui")
 	if menu_ui != null and menu_ui.is_open:
 		return
 	var dialogue_ui = get_tree().current_scene.get_node_or_null("DialogueUI")
@@ -77,7 +77,7 @@ func start_move(direction: Vector2) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	
-	var menu_ui = get_tree().current_scene.get_node_or_null("MenuUI")
+	var menu_ui = get_tree().current_scene.get_node_or_null("Menu_ui")
 	if menu_ui != null and menu_ui.is_open:
 		return
 	
