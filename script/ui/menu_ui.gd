@@ -13,6 +13,9 @@ var panels: Array[Panel] = []
 var normal_style: StyleBoxFlat
 var selected_style: StyleBoxFlat
 
+var shown_position: Vector2
+var hidden_position: Vector2
+
 func _ready() -> void:
 	panels = [inventory_panel, magic_panel, equip_panel, status_panel]
 
@@ -32,10 +35,19 @@ func _ready() -> void:
 	selected_style.border_width_bottom = 3
 	selected_style.border_color = Color(1.0, 0.9, 0.45)
 
-	visible = true
 	selected_index = 0
 	update_selection()
-	update_layout()
+
+	visible = true
+
+	# Позиция, которую ты выставил вручную в сцене
+	shown_position = menu_root.position
+
+	# Скрытая позиция: то же X, но ниже экрана
+	var viewport_height = get_viewport().get_visible_rect().size.y
+	hidden_position = Vector2(shown_position.x, viewport_height + 20.0)
+
+	menu_root.position = hidden_position
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("menu"):
@@ -65,17 +77,6 @@ func _input(event: InputEvent) -> void:
 		activate_selected()
 		get_viewport().set_input_as_handled()
 
-func update_layout() -> void:
-	var viewport_size = get_viewport().get_visible_rect().size
-
-	var shown_x = 0.0
-	var shown_y = viewport_size.y - 180.0
-
-	if is_open:
-		menu_root.position = Vector2(shown_x, shown_y)
-	else:
-		menu_root.position = Vector2(shown_x, viewport_size.y + 10.0)
-
 func open_menu() -> void:
 	if is_open:
 		return
@@ -83,11 +84,8 @@ func open_menu() -> void:
 	is_open = true
 	update_selection()
 
-	var viewport_size = get_viewport().get_visible_rect().size
-	var shown_y = viewport_size.y - 180.0
-
 	var tween = create_tween()
-	tween.tween_property(menu_root, "position:y", shown_y, 0.18)
+	tween.tween_property(menu_root, "position", shown_position, 0.18)
 
 func close_menu() -> void:
 	if not is_open:
@@ -95,10 +93,8 @@ func close_menu() -> void:
 
 	is_open = false
 
-	var viewport_size = get_viewport().get_visible_rect().size
-
 	var tween = create_tween()
-	tween.tween_property(menu_root, "position:y", viewport_size.y + 10.0, 0.18)
+	tween.tween_property(menu_root, "position", hidden_position, 0.18)
 
 func move_selection_right() -> void:
 	selected_index = 2
@@ -133,7 +129,3 @@ func activate_selected() -> void:
 			print("Equip selected")
 		3:
 			print("Status selected")
-
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_SIZE_CHANGED:
-		update_layout()
