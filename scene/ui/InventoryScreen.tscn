@@ -1,6 +1,11 @@
 [gd_scene format=3 uid="uid://bumswkw0sdpc0"]
 
+[ext_resource type="Script" uid="uid://b3ujpswtw5sjs" path="res://script/ui/inventory_screen.gd" id="1_xxaoe"]
+[ext_resource type="PackedScene" uid="uid://cgw0vdbgakw6m" path="res://scene/ui/InventorySlot.tscn" id="2_8euqg"]
+
 [node name="InventoryScreen" type="CanvasLayer" unique_id=596111100]
+script = ExtResource("1_xxaoe")
+slot_scene = ExtResource("2_8euqg")
 
 [node name="Root" type="Control" parent="." unique_id=2096078012]
 layout_mode = 3
@@ -11,7 +16,6 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Background" type="Panel" parent="Root" unique_id=1129830167]
-visible = false
 modulate = Color(0.8953982, 0.6512567, 0.8674411, 1)
 self_modulate = Color(1, 1, 1, 0.7529412)
 layout_mode = 1
@@ -44,36 +48,45 @@ theme_override_constants/separation = 4
 [node name="TabAll" type="Button" parent="Root/Content/left/tabs" unique_id=573243906]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="TabWeapon" type="Button" parent="Root/Content/left/tabs" unique_id=286427656]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="TabArmor" type="Button" parent="Root/Content/left/tabs" unique_id=115004254]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="TabPotion" type="Button" parent="Root/Content/left/tabs" unique_id=56390533]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="TabOther" type="Button" parent="Root/Content/left/tabs" unique_id=523736555]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="Scroll" type="ScrollContainer" parent="Root/Content/left" unique_id=1018038091]
 layout_mode = 2
+size_flags_vertical = 3
 
 [node name="Grid" type="GridContainer" parent="Root/Content/left/Scroll" unique_id=25719634]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+columns = 5
 
-[node name="Action" type="VBoxContainer" parent="Root/Content/left/Scroll/Grid" unique_id=1033734682]
+[node name="Action" type="VBoxContainer" parent="Root/Content/left" unique_id=1033734682]
 layout_mode = 2
 
-[node name="BtnUse" type="Button" parent="Root/Content/left/Scroll/Grid/Action" unique_id=133409]
+[node name="BtnUse" type="Button" parent="Root/Content/left/Action" unique_id=133409]
 layout_mode = 2
 
-[node name="BtnDrop" type="Button" parent="Root/Content/left/Scroll/Grid/Action" unique_id=1032428161]
+[node name="BtnDrop" type="Button" parent="Root/Content/left/Action" unique_id=1032428161]
 layout_mode = 2
 
 [node name="Right" type="VBoxContainer" parent="Root/Content" unique_id=130569827]
