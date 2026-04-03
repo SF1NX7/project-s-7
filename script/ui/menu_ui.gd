@@ -1,137 +1,128 @@
 extends CanvasLayer
 
 @onready var menu_root: Control = $MenuRoot
-@onready var inventory_panel: Panel = $MenuRoot/InventoryPanel
-@onready var magic_panel: Panel = $MenuRoot/MagicPanel
-@onready var equip_panel: Panel = $MenuRoot/EquipPanel
-@onready var status_panel: Panel = $MenuRoot/StatusPanel
 
-var is_open: bool = false
-var selected_index: int = 0
-var panels: Array[Panel] = []
+@onready var panel_inventory: Control = $MenuRoot/InventoryPanel
+@onready var panel_magic: Control = $MenuRoot/MagicPanel
+@onready var panel_equip: Control = $MenuRoot/EquipPanel
+@onready var panel_status: Control = $MenuRoot/StatusPanel
 
-var normal_style: StyleBoxFlat
-var selected_style: StyleBoxFlat
+@onready var inventory_screen: Control = $MenuRoot/InventoryPanel/InventoryScreen
 
-var shown_position: Vector2
-var hidden_position: Vector2
+var panels: Array[Control] = []
+var selected_index := 0
+var is_open := false
+
+var selection_frame: Panel
 
 func _ready() -> void:
-	panels = [inventory_panel, magic_panel, equip_panel, status_panel]
+	panels = [panel_inventory, panel_magic, panel_equip, panel_status]
 
-	normal_style = StyleBoxFlat.new()
-	normal_style.bg_color = Color(0.18, 0.12, 0.08, 0.92)
-	normal_style.border_width_left = 2
-	normal_style.border_width_top = 2
-	normal_style.border_width_right = 2
-	normal_style.border_width_bottom = 2
-	normal_style.border_color = Color(0.35, 0.25, 0.12)
-
-	selected_style = StyleBoxFlat.new()
-	selected_style.bg_color = Color(0.18, 0.12, 0.08, 0.92)
-	selected_style.border_width_left = 3
-	selected_style.border_width_top = 3
-	selected_style.border_width_right = 3
-	selected_style.border_width_bottom = 3
-	selected_style.border_color = Color(1.0, 0.9, 0.45)
-
+	menu_root.visible = false
+	inventory_screen.visible = false
+	is_open = false
 	selected_index = 0
-	update_selection()
 
-	visible = true
+	# Создаём рамку как Panel (самый надёжный)
+	selection_frame = Panel.new()
+	selection_frame.name = "SelectionFrame"
+	selection_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Позиция, которую ты выставил вручную в сцене
-	shown_position = menu_root.position
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0, 0, 0, 0)
+	sb.border_width_left = 2
+	sb.border_width_top = 2
+	sb.border_width_right = 2
+	sb.border_width_bottom = 2
+	sb.border_color = Color(1, 1, 1, 1)
 
-	# Скрытая позиция: то же X, но ниже экрана
-	var viewport_height = get_viewport().get_visible_rect().size.y
-	hidden_position = Vector2(shown_position.x, viewport_height + 20.0)
+	selection_frame.add_theme_stylebox_override("panel", sb)
+	menu_root.add_child(selection_frame)
 
-	menu_root.position = hidden_position
+	_update_selection_frame()
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
+	# Tab открывает/закрывает меню. Если открыт инвентарь — закрываем инвентарь.
 	if event.is_action_pressed("menu"):
-		if is_open:
-			close_menu()
+		if inventory_screen.visible:
+			_hide_inventory()
 		else:
-			open_menu()
+			_toggle_menu()
 		get_viewport().set_input_as_handled()
 		return
 
 	if not is_open:
 		return
 
-	if event.is_action_pressed("move_up"):
-		move_selection_up()
+	if event.is_action_pressed("ui_up"):
+		selected_index = 0
+		_update_selection_frame()
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("move_left"):
-		move_selection_left()
+	elif event.is_action_pressed("ui_left"):
+		selected_index = 1
+		_update_selection_frame()
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("move_right"):
-		move_selection_right()
+	elif event.is_action_pressed("ui_right"):
+		selected_index = 2
+		_update_selection_frame()
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("move_down"):
-		move_selection_down()
+	elif event.is_action_pressed("ui_down"):
+		selected_index = 3
+		_update_selection_frame()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("action"):
-		activate_selected()
+		_activate_selected()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_cancel"):
+		_close_menu()
 		get_viewport().set_input_as_handled()
 
-func open_menu() -> void:
-	
-	var player = get_tree().current_scene.get_node_or_null("Player")
-	if player != null:
-		player.moving = false
-	
+func _toggle_menu() -> void:
 	if is_open:
-		return
-	
+		_close_menu()
+	else:
+		_open_menu()
 
+func _open_menu() -> void:
 	is_open = true
-	update_selection()
+	menu_root.visible = true
+	_update_selection_frame()
 
-	var tween = create_tween()
-	tween.tween_property(menu_root, "position", shown_position, 0.18)
-
-func close_menu() -> void:
-	if not is_open:
-		return
-
+func _close_menu() -> void:
 	is_open = false
+	menu_root.visible = false
 
-	var tween = create_tween()
-	tween.tween_property(menu_root, "position", hidden_position, 0.18)
-
-func move_selection_right() -> void:
-	selected_index = 2
-	update_selection()
-
-func move_selection_left() -> void:
-	selected_index = 1
-	update_selection()
-
-func move_selection_up() -> void:
-	selected_index = 0
-	update_selection()
-
-func move_selection_down() -> void:
-	selected_index = 3
-	update_selection()
-
-func update_selection() -> void:
-	for i in range(panels.size()):
-		if i == selected_index:
-			panels[i].add_theme_stylebox_override("panel", selected_style)
-		else:
-			panels[i].add_theme_stylebox_override("panel", normal_style)
-
-func activate_selected() -> void:
+func _activate_selected() -> void:
 	match selected_index:
 		0:
-			print("Inventory selected")
+			_open_inventory()
 		1:
 			print("Magic selected")
 		2:
 			print("Equip selected")
 		3:
 			print("Status selected")
+
+func _open_inventory() -> void:
+	_close_menu()
+	inventory_screen.visible = true
+	if inventory_screen.has_method("open"):
+		inventory_screen.call("open")
+
+func _hide_inventory() -> void:
+	if inventory_screen.has_method("close"):
+		inventory_screen.call("close")
+	else:
+		inventory_screen.visible = false
+
+func _update_selection_frame() -> void:
+	if not is_open:
+		return
+
+	var p := panels[selected_index]
+	# Рамка должна совпасть с панелью (в координатах menu_root)
+	var rect := p.get_rect()
+	var pos := p.position
+	selection_frame.position = pos
+	selection_frame.size = rect.size
+	selection_frame.visible = true

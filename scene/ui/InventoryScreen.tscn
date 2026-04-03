@@ -3,12 +3,14 @@
 [ext_resource type="Script" uid="uid://b3ujpswtw5sjs" path="res://script/ui/inventory_screen.gd" id="1_xxaoe"]
 [ext_resource type="PackedScene" uid="uid://cgw0vdbgakw6m" path="res://scene/ui/InventorySlot.tscn" id="2_8euqg"]
 
-[node name="InventoryScreen" type="CanvasLayer" unique_id=596111100]
+[node name="InventoryScreen" type="Control" unique_id=157977269]
+layout_mode = 3
+anchors_preset = 0
 script = ExtResource("1_xxaoe")
 slot_scene = ExtResource("2_8euqg")
 
 [node name="Root" type="Control" parent="." unique_id=2096078012]
-layout_mode = 3
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
