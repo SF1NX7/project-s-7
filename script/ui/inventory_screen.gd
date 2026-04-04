@@ -4,6 +4,7 @@ class_name InventoryScreen
 signal closed
 
 @export var slot_scene: PackedScene
+@export var starting_items: Array[ItemData] = []
 @onready var grid: GridContainer = $Root/Content/left/Scroll/Grid
 @onready var preview_icon: TextureRect = $Root/Content/Right/PreviewPanel/PreviewIcon
 @onready var desc_label: RichTextLabel = $Root/Content/Right/DescPanel/DescLabel
@@ -47,10 +48,16 @@ func open(item_count: int = -1) -> void:
 
 	var count := item_count
 	if count < 0:
-		count = default_item_count
+		count = default_item_count  # у тебя в инспекторе 32
 
 	_build_slots(count)
-	_select_slot(clamp(selected_slot if selected_slot >= 0 else 0, 0, count - 1))
+
+	# Разложить иконки по слотам из starting_items (Inspector)
+	for i in range(_slot_count):
+		var item: ItemData = starting_items[i] if i < starting_items.size() else null
+		slots[i].set_icon(item.icon if item != null else null)
+
+	_select_slot(0)
 
 func close() -> void:
 	visible = false
@@ -127,21 +134,36 @@ func _spawn_test_slots(count: int) -> void:
 func _select_slot(i: int) -> void:
 	var total := _slot_count
 	if total <= 0:
-		# ... как у тебя ...
+		selected_slot = -1
+		preview_icon.texture = null
+		desc_label.text = ""
+		btn_use.disabled = true
+		btn_drop.disabled = true
 		return
 
 	selected_slot = clamp(i, 0, total - 1)
 
+	# Подсветка
 	for j in range(slots.size()):
 		slots[j].set_selected(j == selected_slot and slots[j].visible)
 
+	# Превью справа: если слот пустой — превью пустое
+	var item: ItemData = starting_items[selected_slot] if selected_slot < starting_items.size() else null
+	preview_icon.texture = item.preview if item != null else null
+
+	if item != null:
+		desc_label.text = "[b]%s[/b]\n\n%s" % [item.title, item.description]
+	else:
+		desc_label.text = ""
+
+	# (опционально) текст справа
+	# desc_label.text = item.description if item != null else ""
+
+	# Автоскролл к выбранному слоту
 	scroll.ensure_control_visible(slots[selected_slot])
 
-	# Пока тест: просто показываем текст. Иконку подключим когда появятся ItemData.
-	desc_label.text = "[b]Selected Slot:[/b] %d\n\nОписание появится после ItemData." % selected_slot
 	btn_use.disabled = false
 	btn_drop.disabled = false
-	
 
 func _on_use_pressed() -> void:
 	if selected_slot < 0:

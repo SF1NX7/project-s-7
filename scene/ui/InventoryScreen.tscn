@@ -4,6 +4,13 @@
 [ext_resource type="PackedScene" uid="uid://cgw0vdbgakw6m" path="res://scene/ui/InventorySlot.tscn" id="2_8euqg"]
 [ext_resource type="FontFile" uid="uid://b44y6g3w8o64t" path="res://font/thin_pixel-7.ttf" id="3_8euqg"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8euqg"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(1, 1, 1, 0)
+
 [node name="InventoryScreen" type="Control" unique_id=157977269]
 layout_mode = 3
 anchors_preset = 15
@@ -21,10 +28,11 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
 [node name="Background" type="Panel" parent="Root" unique_id=1129830167]
-modulate = Color(0.8953982, 0.6512567, 0.8674411, 1)
-self_modulate = Color(1, 1, 1, 0.7529412)
+modulate = Color(0.61868113, 0.49481988, 0.061289355, 1)
+self_modulate = Color(0.7189749, 0.5778034, 0.13606283, 0.7529412)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -109,10 +117,25 @@ columns = 8
 layout_mode = 2
 
 [node name="BtnUse" type="Button" parent="Root/Content/left/Action" unique_id=133409]
+custom_minimum_size = Vector2(128, 0)
 layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.90005445, 0.84463793, 0.25768656, 1)
+theme_override_fonts/font = ExtResource("3_8euqg")
+theme_override_font_sizes/font_size = 20
+button_mask = 0
+text = "USE"
 
 [node name="BtnDrop" type="Button" parent="Root/Content/left/Action" unique_id=1032428161]
+custom_minimum_size = Vector2(128, 0)
 layout_mode = 2
+size_flags_horizontal = 4
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.90005445, 0.84463793, 0.25768656, 1)
+theme_override_fonts/font = ExtResource("3_8euqg")
+theme_override_font_sizes/font_size = 20
+button_mask = 0
+text = "DROP"
 
 [node name="Right" type="VBoxContainer" parent="Root/Content" unique_id=130569827]
 custom_minimum_size = Vector2(200, 0)
@@ -130,7 +153,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-stretch_mode = 2
 
 [node name="DescPanel" type="Panel" parent="Root/Content/Right" unique_id=677189925]
 layout_mode = 2
@@ -143,3 +165,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_fonts/normal_font = ExtResource("3_8euqg")
+theme_override_font_sizes/normal_font_size = 30
+theme_override_styles/normal = SubResource("StyleBoxFlat_8euqg")
+bbcode_enabled = true

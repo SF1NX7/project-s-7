@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" format=3 uid="uid://ba23nsgsui2d5"]
+
+[ext_resource type="Script" uid="uid://t1mc6m4ghibm" path="res://script/system/ItemData.gd" id="1_6qkm6"]
+[ext_resource type="Texture2D" uid="uid://bhxcasrayu6bc" path="res://data/items/icons/donut1S.png" id="1_endx4"]
+[ext_resource type="Texture2D" uid="uid://b1epwtfy64y2d" path="res://data/items/previews/donut1L.png" id="2_ef2or"]
+
+[resource]
+script = ExtResource("1_6qkm6")
+icon = ExtResource("1_endx4")
+preview = ExtResource("2_ef2or")
+title = "Test Donut"
+description = "Тестовый пончик любезно приготовленный Mrs. Ololo"
+metadata/_custom_type_script = "uid://t1mc6m4ghibm"

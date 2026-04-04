@@ -2,6 +2,8 @@
 
 [ext_resource type="Script" uid="uid://dd4r1boquuthn" path="res://script/ui/menu_ui.gd" id="1_edgug"]
 [ext_resource type="PackedScene" uid="uid://bumswkw0sdpc0" path="res://scene/ui/InventoryScreen.tscn" id="2_o0okg"]
+[ext_resource type="Script" uid="uid://t1mc6m4ghibm" path="res://script/system/ItemData.gd" id="3_n48eu"]
+[ext_resource type="Resource" uid="uid://ba23nsgsui2d5" path="res://data/items/donut.tres" id="4_2n1li"]
 
 [node name="menu_ui" type="CanvasLayer" unique_id=211641837]
 script = ExtResource("1_edgug")
@@ -112,3 +114,4 @@ offset_left = 2.0
 offset_top = 2.0
 offset_right = -2.0
 offset_bottom = -2.0
+starting_items = Array[ExtResource("3_n48eu")]([ExtResource("4_2n1li")])

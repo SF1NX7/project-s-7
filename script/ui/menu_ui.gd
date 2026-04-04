@@ -1,12 +1,10 @@
 extends CanvasLayer
 
 @onready var menu_root: Control = $MenuRoot
-
 @onready var panel_inventory: Control = $MenuRoot/InventoryPanel
 @onready var panel_magic: Control = $MenuRoot/MagicPanel
 @onready var panel_equip: Control = $MenuRoot/EquipPanel
 @onready var panel_status: Control = $MenuRoot/StatusPanel
-
 @onready var inventory_screen: InventoryScreen = $InventoryScreen as InventoryScreen
 
 # (опционально) если Player называется не "Player" и не в группе "player" — можно один раз указать путь в инспекторе
@@ -32,7 +30,7 @@ func _ready() -> void:
 	is_open = false
 	selected_index = 0
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
-
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	# Создаём рамку как Panel (самый надёжный)
 	selection_frame = Panel.new()
 	selection_frame.name = "SelectionFrame"
