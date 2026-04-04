@@ -199,7 +199,7 @@ script = ExtResource("1_onrkg")
 sprite_frames = SubResource("SpriteFrames_65p5e")
 animation = &"Down"
 frame_progress = 0.09699089
-offset = Vector2(0, -8)
+offset = Vector2(0, -12)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=301383383]
 visible = false
