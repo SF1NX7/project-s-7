@@ -108,7 +108,7 @@ theme_override_font_sizes/font_size = 9
 text = "Inventory"
 
 [node name="InventoryScreen" parent="." unique_id=596111100 instance=ExtResource("2_o0okg")]
-offset_left = 295.00006
-offset_top = 256.0
-offset_right = 295.00006
-offset_bottom = 256.0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = -2.0
+offset_bottom = -2.0

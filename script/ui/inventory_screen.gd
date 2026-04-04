@@ -9,12 +9,13 @@ signal closed
 @onready var desc_label: RichTextLabel = $Root/Content/Right/DescPanel/DescLabel
 @onready var btn_use: Button = $Root/Content/left/Action/BtnUse
 @onready var btn_drop: Button = $Root/Content/left/Action/BtnDrop
+@export var default_item_count := 32  # для теста, потом заменишь на реальный items.size()
 
-const COLS := 5
+const COLS := 8
 const ROWS := 4
 const MIN_SLOTS := COLS * ROWS
 
-var slots: Array[Control] = []
+var slots: Array[InventorySlot] = []
 
 var selected_slot: int = -1
 
@@ -30,7 +31,7 @@ func _ready() -> void:
 func _build_slots(count: int) -> void:
 	# Создаём слоты один раз до нужного количества
 	while slots.size() < count:
-		var s: Control = slot_scene.instantiate()
+		var s := slot_scene.instantiate() as InventorySlot
 		grid.add_child(s)
 		slots.append(s)
 
@@ -38,10 +39,15 @@ func _build_slots(count: int) -> void:
 	for i in range(slots.size()):
 		slots[i].visible = (i < count)
 
-func open() -> void:
+func open(item_count: int = -1) -> void:
 	visible = true
-	_build_slots(MIN_SLOTS)
-	_select_slot(0) # если у тебя уже есть выделение
+
+	var count := item_count
+	if count < 0:
+		count = default_item_count
+
+	_build_slots(count)
+	_select_slot(clamp(selected_slot if selected_slot >= 0 else 0, 0, count - 1))
 
 func close() -> void:
 	visible = false
@@ -80,13 +86,16 @@ func _select_slot(i: int) -> void:
 		btn_use.disabled = true
 		btn_drop.disabled = true
 		return
-
+  	
 	selected_slot = clamp(i, 0, total - 1)
+	for j in range(slots.size()):
+		slots[j].set_selected(j == selected_slot and slots[j].visible)
 
 	# Пока тест: просто показываем текст. Иконку подключим когда появятся ItemData.
 	desc_label.text = "[b]Selected Slot:[/b] %d\n\nОписание появится после ItemData." % selected_slot
 	btn_use.disabled = false
 	btn_drop.disabled = false
+	
 
 func _on_use_pressed() -> void:
 	if selected_slot < 0:
