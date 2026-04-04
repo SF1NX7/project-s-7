@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://c4pn5jj6ffbty" path="res://scene/characters/npc.tscn" id="6_dinsj"]
 [ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="7_5tkp4"]
 [ext_resource type="PackedScene" uid="uid://d5r87lolq6o8" path="res://scene/ui/dialogue_ui.tscn" id="9_7xd1l"]
+[ext_resource type="PackedScene" uid="uid://c64pa8ud8y83u" path="res://scene/ui/menu_ui.tscn" id="10_p22p5"]
 [ext_resource type="PackedScene" uid="uid://bsxqpd3pfv3fa" path="res://scene/ui/portal.tscn" id="10_rdyk4"]
 [ext_resource type="PackedScene" uid="uid://beifm5ixvfjwe" path="res://scene/ui/fade_layer.tscn" id="11_fihje"]
 
@@ -6249,3 +6250,5 @@ target_spawn_id = "spawn_1"
 
 [node name="FadeLayer" parent="." unique_id=975937443 instance=ExtResource("11_fihje")]
 visible = false
+
+[node name="menu_ui" parent="." unique_id=211641837 instance=ExtResource("10_p22p5")]

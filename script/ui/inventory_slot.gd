@@ -6,4 +6,4 @@ class_name InventorySlot
 func set_icon(tex: Texture2D) -> void:
 	icon_rect.texture = tex
 func set_selected(v: bool) -> void:
-	modulate = Color(0.311, 0.476, 0.135, 1.0) if v else Color(0.437, 0.932, 0.316, 1.0)
+	self_modulate = Color(0.0, 1.0, 0.0, 1.0) if v else Color(1.0, 1.0, 1.0, 1.0)
