@@ -5,7 +5,11 @@
 
 [node name="InventoryScreen" type="Control" unique_id=157977269]
 layout_mode = 3
-anchors_preset = 0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_xxaoe")
 slot_scene = ExtResource("2_8euqg")
 
@@ -97,17 +101,26 @@ layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="PreviewPanel" type="Panel" parent="Root/Content/Right" unique_id=1308763506]
+custom_minimum_size = Vector2(192, 192)
 layout_mode = 2
 
 [node name="PreviewIcon" type="TextureRect" parent="Root/Content/Right/PreviewPanel" unique_id=977694942]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 2
 
 [node name="DescPanel" type="Panel" parent="Root/Content/Right" unique_id=677189925]
 layout_mode = 2
+size_flags_vertical = 3
 
 [node name="DescLabel" type="RichTextLabel" parent="Root/Content/Right/DescPanel" unique_id=271850502]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

@@ -4,12 +4,17 @@ class_name InventoryScreen
 signal closed
 
 @export var slot_scene: PackedScene
-
 @onready var grid: GridContainer = $Root/Content/left/Scroll/Grid
 @onready var preview_icon: TextureRect = $Root/Content/Right/PreviewPanel/PreviewIcon
 @onready var desc_label: RichTextLabel = $Root/Content/Right/DescPanel/DescLabel
 @onready var btn_use: Button = $Root/Content/left/Action/BtnUse
 @onready var btn_drop: Button = $Root/Content/left/Action/BtnDrop
+
+const COLS := 5
+const ROWS := 4
+const MIN_SLOTS := COLS * ROWS
+
+var slots: Array[Control] = []
 
 var selected_slot: int = -1
 
@@ -22,10 +27,21 @@ func _ready() -> void:
 	btn_use.disabled = true
 	btn_drop.disabled = true
 
+func _build_slots(count: int) -> void:
+	# Создаём слоты один раз до нужного количества
+	while slots.size() < count:
+		var s: Control = slot_scene.instantiate()
+		grid.add_child(s)
+		slots.append(s)
+
+	# Если слотов больше, чем нужно — скрываем лишние (если потом будет скролл)
+	for i in range(slots.size()):
+		slots[i].visible = (i < count)
+
 func open() -> void:
 	visible = true
-	_spawn_test_slots(20) # 5x4 тест, позже заменим на реальные предметы
-	_select_slot(0)
+	_build_slots(MIN_SLOTS)
+	_select_slot(0) # если у тебя уже есть выделение
 
 func close() -> void:
 	visible = false

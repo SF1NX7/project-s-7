@@ -6,22 +6,20 @@ extends CanvasLayer
 @onready var panel_magic: Control = $MenuRoot/MagicPanel
 @onready var panel_equip: Control = $MenuRoot/EquipPanel
 @onready var panel_status: Control = $MenuRoot/StatusPanel
-
-@onready var inventory_screen: Control = $MenuRoot/InventoryPanel/InventoryScreen
+@onready var inventory_screen: Control = $InventoryScreen
 
 var panels: Array[Control] = []
 var selected_index := 0
 var is_open := false
-
 var selection_frame: Panel
 
 func _ready() -> void:
 	panels = [panel_inventory, panel_magic, panel_equip, panel_status]
-
 	menu_root.visible = false
 	inventory_screen.visible = false
 	is_open = false
 	selected_index = 0
+	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 
 	# Создаём рамку как Panel (самый надёжный)
 	selection_frame = Panel.new()
@@ -38,7 +36,6 @@ func _ready() -> void:
 
 	selection_frame.add_theme_stylebox_override("panel", sb)
 	menu_root.add_child(selection_frame)
-
 	_update_selection_frame()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -104,31 +101,13 @@ func _activate_selected() -> void:
 			print("Status selected")
 
 func _open_inventory() -> void:
-	is_open = false
-	selection_frame.visible = false
-
-	panel_magic.visible = false
-	panel_equip.visible = false
-	panel_status.visible = false
-
-	panel_inventory.visible = true      # важно
+	_close_menu()
 	inventory_screen.visible = true
-
-	if inventory_screen.has_method("open"):
-		inventory_screen.call("open")
-
+	inventory_screen.call("open")
 
 func _hide_inventory() -> void:
-	inventory_screen.call("close") # или visible=false
-
-	panel_inventory.visible = true
-	panel_magic.visible = true
-	panel_equip.visible = true
-	panel_status.visible = true
-
-	selection_frame.visible = true
-	is_open = true
-	_update_selection_frame()
+	inventory_screen.call("close")
+	_open_menu()
 
 func _update_selection_frame() -> void:
 	if not is_open:
