@@ -54,19 +54,19 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not is_open:
 		return
 
-	if event.is_action_pressed("ui_up"):
+	if event.is_action_pressed("move_up"):
 		selected_index = 0
 		_update_selection_frame()
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_left"):
+	elif event.is_action_pressed("move_left"):
 		selected_index = 1
 		_update_selection_frame()
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_right"):
+	elif event.is_action_pressed("move_right"):
 		selected_index = 2
 		_update_selection_frame()
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_down"):
+	elif event.is_action_pressed("move_down"):
 		selected_index = 3
 		_update_selection_frame()
 		get_viewport().set_input_as_handled()
@@ -104,16 +104,30 @@ func _activate_selected() -> void:
 			print("Status selected")
 
 func _open_inventory() -> void:
-	_close_menu()
+	# НЕ прячем menu_root, иначе спрячем и InventoryScreen (он внутри menu_root)
+	is_open = false
+	selection_frame.visible = false
+	for p in panels:
+		p.visible = false
+
 	inventory_screen.visible = true
 	if inventory_screen.has_method("open"):
 		inventory_screen.call("open")
 
+
 func _hide_inventory() -> void:
+	# Закрываем экран инвентаря
 	if inventory_screen.has_method("close"):
 		inventory_screen.call("close")
 	else:
 		inventory_screen.visible = false
+
+	# Возвращаем крест-меню
+	for p in panels:
+		p.visible = true
+	selection_frame.visible = true
+	is_open = true
+	_update_selection_frame()
 
 func _update_selection_frame() -> void:
 	if not is_open:

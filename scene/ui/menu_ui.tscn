@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://dd4r1boquuthn" path="res://script/ui/menu_ui.gd" id="1_edgug"]
 [ext_resource type="PackedScene" uid="uid://bumswkw0sdpc0" path="res://scene/ui/InventoryScreen.tscn" id="2_o0okg"]
 
-[node name="MenuUi" type="CanvasLayer" unique_id=211641837]
+[node name="menu_ui" type="CanvasLayer" unique_id=211641837]
 script = ExtResource("1_edgug")
 
 [node name="MenuRoot" type="Control" parent="." unique_id=2089326738]
@@ -104,3 +104,4 @@ theme_override_font_sizes/font_size = 9
 text = "Inventory"
 
 [node name="InventoryScreen" parent="MenuRoot/InventoryPanel" unique_id=596111100 instance=ExtResource("2_o0okg")]
+layout_mode = 0
