@@ -104,27 +104,28 @@ func _activate_selected() -> void:
 			print("Status selected")
 
 func _open_inventory() -> void:
-	# НЕ прячем menu_root, иначе спрячем и InventoryScreen (он внутри menu_root)
 	is_open = false
 	selection_frame.visible = false
-	for p in panels:
-		p.visible = false
 
+	panel_magic.visible = false
+	panel_equip.visible = false
+	panel_status.visible = false
+
+	panel_inventory.visible = true      # важно
 	inventory_screen.visible = true
+
 	if inventory_screen.has_method("open"):
 		inventory_screen.call("open")
 
 
 func _hide_inventory() -> void:
-	# Закрываем экран инвентаря
-	if inventory_screen.has_method("close"):
-		inventory_screen.call("close")
-	else:
-		inventory_screen.visible = false
+	inventory_screen.call("close") # или visible=false
 
-	# Возвращаем крест-меню
-	for p in panels:
-		p.visible = true
+	panel_inventory.visible = true
+	panel_magic.visible = true
+	panel_equip.visible = true
+	panel_status.visible = true
+
 	selection_frame.visible = true
 	is_open = true
 	_update_selection_frame()
