@@ -4,6 +4,9 @@
 [ext_resource type="PackedScene" uid="uid://cgw0vdbgakw6m" path="res://scene/ui/InventorySlot.tscn" id="2_8euqg"]
 [ext_resource type="FontFile" uid="uid://b44y6g3w8o64t" path="res://font/thin_pixel-7.ttf" id="3_8euqg"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pbgst"]
+bg_color = Color(0.7177287, 0.58658296, 0.06979615, 1)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8euqg"]
 content_margin_left = 8.0
 content_margin_top = 6.0
@@ -31,122 +34,136 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="Background" type="Panel" parent="Root" unique_id=1129830167]
-modulate = Color(0.61868113, 0.49481988, 0.061289355, 1)
-self_modulate = Color(0.7189749, 0.5778034, 0.13606283, 0.7529412)
+modulate = Color(0.86064225, 0.817808, 0.7949653, 1)
+self_modulate = Color(0.7608655, 0.85499096, 0.65714246, 1)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_pbgst")
 
-[node name="Content" type="HBoxContainer" parent="Root" unique_id=738148163]
+[node name="InnerMargin" type="MarginContainer" parent="Root" unique_id=872078095]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Content" type="HBoxContainer" parent="Root/InnerMargin" unique_id=738148163]
+layout_mode = 2
 theme_override_constants/separation = 24
 
-[node name="left" type="VBoxContainer" parent="Root/Content" unique_id=1793640692]
+[node name="left" type="VBoxContainer" parent="Root/InnerMargin/Content" unique_id=1793640692]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="tabs" type="HBoxContainer" parent="Root/Content/left" unique_id=280122776]
+[node name="tabs" type="HBoxContainer" parent="Root/InnerMargin/Content/left" unique_id=280122776]
 custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
-size_flags_vertical = 0
+mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="TabAll" type="Button" parent="Root/Content/left/tabs" unique_id=573243906]
+[node name="TabAll" type="Button" parent="Root/InnerMargin/Content/left/tabs" unique_id=573243906]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 7
+size_flags_vertical = 5
+theme_override_constants/line_spacing = 0
 theme_override_fonts/font = ExtResource("3_8euqg")
 theme_override_font_sizes/font_size = 30
 text = "All"
 
-[node name="TabWeapon" type="Button" parent="Root/Content/left/tabs" unique_id=286427656]
+[node name="TabWeapon" type="Button" parent="Root/InnerMargin/Content/left/tabs" unique_id=286427656]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 7
+size_flags_vertical = 5
 theme_override_fonts/font = ExtResource("3_8euqg")
 theme_override_font_sizes/font_size = 30
 text = "Weapon"
 
-[node name="TabArmor" type="Button" parent="Root/Content/left/tabs" unique_id=115004254]
+[node name="TabArmor" type="Button" parent="Root/InnerMargin/Content/left/tabs" unique_id=115004254]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 7
+size_flags_vertical = 5
 theme_override_fonts/font = ExtResource("3_8euqg")
 theme_override_font_sizes/font_size = 30
 text = "Armor"
 
-[node name="TabPotion" type="Button" parent="Root/Content/left/tabs" unique_id=56390533]
+[node name="TabPotion" type="Button" parent="Root/InnerMargin/Content/left/tabs" unique_id=56390533]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 7
+size_flags_vertical = 5
 theme_override_fonts/font = ExtResource("3_8euqg")
 theme_override_font_sizes/font_size = 30
 text = "Potion"
 
-[node name="TabOther" type="Button" parent="Root/Content/left/tabs" unique_id=523736555]
+[node name="TabOther" type="Button" parent="Root/InnerMargin/Content/left/tabs" unique_id=523736555]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 7
+size_flags_vertical = 5
 theme_override_fonts/font = ExtResource("3_8euqg")
 theme_override_font_sizes/font_size = 30
 text = "Other
 "
 
-[node name="Scroll" type="ScrollContainer" parent="Root/Content/left" unique_id=1018038091]
+[node name="Scroll" type="ScrollContainer" parent="Root/InnerMargin/Content/left" unique_id=1018038091]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
-vertical_scroll_mode = 2
+vertical_scroll_mode = 3
 
-[node name="Grid" type="GridContainer" parent="Root/Content/left/Scroll" unique_id=25719634]
+[node name="Grid" type="GridContainer" parent="Root/InnerMargin/Content/left/Scroll" unique_id=25719634]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 8
 
-[node name="Action" type="VBoxContainer" parent="Root/Content/left" unique_id=1033734682]
+[node name="Action" type="VBoxContainer" parent="Root/InnerMargin/Content/left" unique_id=1033734682]
 layout_mode = 2
 
-[node name="BtnUse" type="Button" parent="Root/Content/left/Action" unique_id=133409]
+[node name="BtnUse" type="Button" parent="Root/InnerMargin/Content/left/Action" unique_id=133409]
 custom_minimum_size = Vector2(128, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.90005445, 0.84463793, 0.25768656, 1)
 theme_override_fonts/font = ExtResource("3_8euqg")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 24
 button_mask = 0
 text = "USE"
 
-[node name="BtnDrop" type="Button" parent="Root/Content/left/Action" unique_id=1032428161]
+[node name="BtnDrop" type="Button" parent="Root/InnerMargin/Content/left/Action" unique_id=1032428161]
 custom_minimum_size = Vector2(128, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.90005445, 0.84463793, 0.25768656, 1)
 theme_override_fonts/font = ExtResource("3_8euqg")
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 24
 button_mask = 0
 text = "DROP"
 
-[node name="Right" type="VBoxContainer" parent="Root/Content" unique_id=130569827]
-custom_minimum_size = Vector2(200, 0)
+[node name="Right" type="VBoxContainer" parent="Root/InnerMargin/Content" unique_id=130569827]
 layout_mode = 2
+mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="PreviewPanel" type="Panel" parent="Root/Content/Right" unique_id=1308763506]
+[node name="PreviewPanel" type="Panel" parent="Root/InnerMargin/Content/Right" unique_id=1308763506]
 custom_minimum_size = Vector2(192, 192)
 layout_mode = 2
 
-[node name="PreviewIcon" type="TextureRect" parent="Root/Content/Right/PreviewPanel" unique_id=977694942]
+[node name="PreviewIcon" type="TextureRect" parent="Root/InnerMargin/Content/Right/PreviewPanel" unique_id=977694942]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -154,11 +171,11 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="DescPanel" type="Panel" parent="Root/Content/Right" unique_id=677189925]
+[node name="DescPanel" type="Panel" parent="Root/InnerMargin/Content/Right" unique_id=677189925]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="DescLabel" type="RichTextLabel" parent="Root/Content/Right/DescPanel" unique_id=271850502]
+[node name="DescLabel" type="RichTextLabel" parent="Root/InnerMargin/Content/Right/DescPanel" unique_id=271850502]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

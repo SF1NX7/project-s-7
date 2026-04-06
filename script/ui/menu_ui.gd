@@ -29,8 +29,8 @@ func _ready() -> void:
 	inventory_screen.visible = false
 	is_open = false
 	selected_index = 0
-	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
-	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	# Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+	# Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	# Создаём рамку как Panel (самый надёжный)
 	selection_frame = Panel.new()
 	selection_frame.name = "SelectionFrame"

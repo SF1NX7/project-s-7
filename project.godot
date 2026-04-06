@@ -27,10 +27,11 @@ Global="*uid://dyb1uqu5af7yn"
 
 window/size/viewport_width=640
 window/size/viewport_height=360
+window/size/resizable=false
 window/size/borderless=true
-window/stretch/mode="viewport"
-window/size/width=1280
-window/size/height=720
+window/stretch/mode="canvas_items"
+window/size/height=360
+window/size/width=640
 
 [input]
 
@@ -67,4 +68,4 @@ menu={
 
 [rendering]
 
-textures/canvas_textures/default_texture_filter=3
+textures/canvas_textures/default_texture_filter=0

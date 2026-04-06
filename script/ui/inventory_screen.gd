@@ -5,13 +5,13 @@ signal closed
 
 @export var slot_scene: PackedScene
 @export var starting_items: Array[ItemData] = []
-@onready var grid: GridContainer = $Root/Content/left/Scroll/Grid
-@onready var preview_icon: TextureRect = $Root/Content/Right/PreviewPanel/PreviewIcon
-@onready var desc_label: RichTextLabel = $Root/Content/Right/DescPanel/DescLabel
-@onready var btn_use: Button = $Root/Content/left/Action/BtnUse
-@onready var btn_drop: Button = $Root/Content/left/Action/BtnDrop
+@onready var grid: GridContainer = $Root/InnerMargin/Content/left/Scroll/Grid
+@onready var preview_icon: TextureRect = $Root/InnerMargin/Content/Right/PreviewPanel/PreviewIcon
+@onready var desc_label: RichTextLabel = $Root/InnerMargin/Content/Right/DescPanel/DescLabel
+@onready var btn_use: Button = $Root/InnerMargin/Content/left/Action/BtnUse
+@onready var btn_drop: Button = $Root/InnerMargin/Content/left/Action/BtnDrop
 @export var default_item_count := 32  # для теста, потом заменишь на реальный items.size()
-@onready var scroll: ScrollContainer = $Root/Content/left/Scroll
+@onready var scroll: ScrollContainer = $Root/InnerMargin/Content/left/Scroll
 var _slot_count := 0
 
 const COLS := 8
@@ -21,6 +21,10 @@ const MIN_SLOTS := COLS * ROWS
 var slots: Array[InventorySlot] = []
 
 var selected_slot: int = -1
+
+enum UiMode { GRID, ACTION }
+var _mode: UiMode = UiMode.GRID
+var _action_index: int = 0 # 0 = Use, 1 = Drop
 
 func _ready() -> void:
 	visible = false
@@ -45,6 +49,7 @@ func _build_slots(count: int) -> void:
 
 func open(item_count: int = -1) -> void:
 	visible = true
+	_mode = UiMode.GRID
 
 	var count := item_count
 	if count < 0:
@@ -69,17 +74,40 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
 
-	# Закрыть инвентарь по Esc или Tab (menu)
+	# Закрыть инвентарь по Esc или Tab
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("menu"):
-		close()
+		if _mode == UiMode.ACTION:
+			_exit_action_mode()
+		else:
+			close()
 		get_viewport().set_input_as_handled()
 		return
 
-	# Если слотов нет — нечего выбирать
+	# ---------- ACTION MODE ----------
+	if _mode == UiMode.ACTION:
+		if event.is_action_pressed("move_up"):
+			_set_action_selected(0)
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("move_down"):
+			_set_action_selected(1)
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("action"):
+			# позже сюда поставим реальное действие
+			if _action_index == 0:
+				print("USE on slot:", selected_slot)
+			else:
+				print("DROP on slot:", selected_slot)
+
+			# пока просто возвращаемся в сетку после нажатия
+			_exit_action_mode()
+			get_viewport().set_input_as_handled()
+		return
+
+	# ---------- GRID MODE ----------
 	if _slot_count <= 0:
 		return
 
-	var cols: int = max(grid.columns, 1)  # у тебя сейчас 8
+	var cols: int = max(grid.columns, 1)
 	var idx: int = selected_slot
 	if idx < 0:
 		idx = 0
@@ -111,12 +139,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if moved:
 		_select_slot(idx)
 		get_viewport().set_input_as_handled()
-
-	# Закрыть инвентарь по Esc или Tab (menu)
-	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("menu"):
-		close()
-		get_viewport().set_input_as_handled()
 		return
+
+	# Нажали E в сетке -> если в слоте есть предмет, прыгаем в ACTION
+	if event.is_action_pressed("action"):
+		var item = starting_items[selected_slot] if selected_slot < starting_items.size() else null
+		if item != null:
+			_enter_action_mode()
+			get_viewport().set_input_as_handled()
 
 func _spawn_test_slots(count: int) -> void:
 	for c in grid.get_children():
@@ -174,3 +204,20 @@ func _on_drop_pressed() -> void:
 	if selected_slot < 0:
 		return
 	print("DROP slot:", selected_slot)
+	
+func _set_action_selected(idx: int) -> void:
+	_action_index = clamp(idx, 0, 1)
+
+	# подсветка простая через self_modulate
+	btn_use.self_modulate = Color(1, 1, 1, 1) if _action_index == 0 else Color(0.5, 0.5, 0.5, 1)
+	btn_drop.self_modulate = Color(1, 1, 1, 1) if _action_index == 1 else Color(0.5, 0.5, 0.5, 1)
+
+func _enter_action_mode() -> void:
+	_mode = UiMode.ACTION
+	_set_action_selected(0)
+
+func _exit_action_mode() -> void:
+	_mode = UiMode.GRID
+	# вернуть кнопки в обычный вид
+	btn_use.self_modulate = Color(1, 1, 1, 1)
+	btn_drop.self_modulate = Color(1, 1, 1, 1)
