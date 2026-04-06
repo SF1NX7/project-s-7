@@ -7,6 +7,7 @@ signal closed
 @export var starting_items: Array[ItemData] = []
 @onready var grid: GridContainer = $Root/InnerMargin/Content/left/Scroll/Grid
 @onready var preview_icon: TextureRect = $Root/InnerMargin/Content/Right/PreviewPanel/PreviewIcon
+@onready var title_label: Label = $Root/InnerMargin/Content/Right/DescPanel/TitleLabel
 @onready var desc_label: RichTextLabel = $Root/InnerMargin/Content/Right/DescPanel/DescLabel
 @onready var btn_use: Button = $Root/InnerMargin/Content/left/Action/BtnUse
 @onready var btn_drop: Button = $Root/InnerMargin/Content/left/Action/BtnDrop
@@ -166,7 +167,7 @@ func _select_slot(i: int) -> void:
 	if total <= 0:
 		selected_slot = -1
 		preview_icon.texture = null
-		desc_label.text = ""
+		desc_label.text = "[b]%s[/b]\n%s"
 		btn_use.disabled = true
 		btn_drop.disabled = true
 		return
@@ -182,8 +183,10 @@ func _select_slot(i: int) -> void:
 	preview_icon.texture = item.preview if item != null else null
 
 	if item != null:
-		desc_label.text = "[b]%s[/b]\n\n%s" % [item.title, item.description]
+		title_label.text = item.title
+		desc_label.text = item.description
 	else:
+		title_label.text = ""
 		desc_label.text = ""
 
 	# (опционально) текст справа

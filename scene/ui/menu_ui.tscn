@@ -8,21 +8,28 @@
 [node name="menu_ui" type="CanvasLayer" unique_id=211641837]
 script = ExtResource("1_edgug")
 
-[node name="MenuRoot" type="Control" parent="." unique_id=2089326738]
+[node name="UiRoot" type="Control" parent="." unique_id=219774019]
 layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuRoot" type="Control" parent="UiRoot" unique_id=2089326738]
+layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -80.0
-offset_top = -104.0
-offset_right = 80.00012
-offset_bottom = -8.0
+offset_left = -80.00006
+offset_top = -96.0
+offset_right = 80.00006
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="EquipPanel" type="Panel" parent="MenuRoot" unique_id=1425130105]
+[node name="EquipPanel" type="Panel" parent="UiRoot/MenuRoot" unique_id=1425130105]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
@@ -36,7 +43,7 @@ grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Label" type="Label" parent="MenuRoot/EquipPanel" unique_id=343922149]
+[node name="Label" type="Label" parent="UiRoot/MenuRoot/EquipPanel" unique_id=343922149]
 layout_mode = 0
 offset_left = 4.9998703
 offset_top = 14.999989
@@ -46,7 +53,7 @@ theme_override_font_sizes/font_size = 10
 text = "Equip"
 vertical_alignment = 1
 
-[node name="MagicPanel" type="Panel" parent="MenuRoot" unique_id=830686586]
+[node name="MagicPanel" type="Panel" parent="UiRoot/MenuRoot" unique_id=830686586]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -57,7 +64,7 @@ offset_bottom = 25.0
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Label" type="Label" parent="MenuRoot/MagicPanel" unique_id=420514049]
+[node name="Label" type="Label" parent="UiRoot/MenuRoot/MagicPanel" unique_id=420514049]
 layout_mode = 0
 offset_left = 2.0
 offset_top = 16.0
@@ -66,7 +73,7 @@ offset_bottom = 39.0
 theme_override_font_sizes/font_size = 12
 text = "Magic"
 
-[node name="StatusPanel" type="Panel" parent="MenuRoot" unique_id=1253107604]
+[node name="StatusPanel" type="Panel" parent="UiRoot/MenuRoot" unique_id=1253107604]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -80,7 +87,7 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="Label" type="Label" parent="MenuRoot/StatusPanel" unique_id=876593800]
+[node name="Label" type="Label" parent="UiRoot/MenuRoot/StatusPanel" unique_id=876593800]
 layout_mode = 0
 offset_left = 4.999939
 offset_top = 11.0
@@ -89,7 +96,7 @@ offset_bottom = 31.0
 theme_override_font_sizes/font_size = 12
 text = "Status"
 
-[node name="InventoryPanel" type="Panel" parent="MenuRoot" unique_id=1274917682]
+[node name="InventoryPanel" type="Panel" parent="UiRoot/MenuRoot" unique_id=1274917682]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -100,7 +107,7 @@ offset_bottom = 40.0
 grow_horizontal = 2
 mouse_filter = 2
 
-[node name="Label" type="Label" parent="MenuRoot/InventoryPanel" unique_id=2017133810]
+[node name="Label" type="Label" parent="UiRoot/MenuRoot/InventoryPanel" unique_id=2017133810]
 layout_mode = 0
 offset_left = 3.999939
 offset_top = 11.0
@@ -109,9 +116,6 @@ offset_bottom = 25.0
 theme_override_font_sizes/font_size = 9
 text = "Inventory"
 
-[node name="InventoryScreen" parent="." unique_id=596111100 instance=ExtResource("2_o0okg")]
-offset_left = 8.0
-offset_top = 8.0
-offset_right = -8.0
-offset_bottom = -8.0
+[node name="InventoryScreen" parent="UiRoot" unique_id=596111100 instance=ExtResource("2_o0okg")]
+layout_mode = 1
 starting_items = Array[ExtResource("3_n48eu")]([ExtResource("4_2n1li")])

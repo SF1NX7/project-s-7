@@ -1,12 +1,12 @@
 extends CanvasLayer
 
-@onready var menu_root: Control = $MenuRoot
-@onready var panel_inventory: Control = $MenuRoot/InventoryPanel
-@onready var panel_magic: Control = $MenuRoot/MagicPanel
-@onready var panel_equip: Control = $MenuRoot/EquipPanel
-@onready var panel_status: Control = $MenuRoot/StatusPanel
-@onready var inventory_screen: InventoryScreen = $InventoryScreen as InventoryScreen
+@onready var menu_root: Control = $UiRoot/MenuRoot
+@onready var panel_inventory: Control = $UiRoot/MenuRoot/InventoryPanel
+@onready var panel_magic: Control = $UiRoot/MenuRoot/MagicPanel
+@onready var panel_equip: Control = $UiRoot/MenuRoot/EquipPanel
+@onready var panel_status: Control = $UiRoot/MenuRoot/StatusPanel
 
+@onready var inventory_screen = $UiRoot/InventoryScreen
 # (опционально) если Player называется не "Player" и не в группе "player" — можно один раз указать путь в инспекторе
 @export var player_node_path: NodePath
 
