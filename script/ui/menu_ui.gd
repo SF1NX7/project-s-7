@@ -48,9 +48,6 @@ func _ready() -> void:
 	menu_root.add_child(selection_frame)
 	_update_selection_frame()
 
-	# Чтобы при закрытии инвентаря (Esc/Tab внутри inventory_screen.gd) мы сразу возвращали управление игроку
-	if inventory_screen and not inventory_screen.closed.is_connected(_on_inventory_closed):
-		inventory_screen.closed.connect(_on_inventory_closed)
 
 	_cache_player()
 	_refresh_player_lock()
