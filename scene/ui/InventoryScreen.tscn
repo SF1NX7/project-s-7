@@ -3,10 +3,15 @@
 [ext_resource type="Script" uid="uid://b3ujpswtw5sjs" path="res://script/ui/inventory_screen.gd" id="1_xxaoe"]
 [ext_resource type="PackedScene" uid="uid://cgw0vdbgakw6m" path="res://scene/ui/InventorySlot.tscn" id="2_8euqg"]
 [ext_resource type="FontFile" uid="uid://b44y6g3w8o64t" path="res://font/thin_pixel-7.ttf" id="3_8euqg"]
+[ext_resource type="Texture2D" uid="uid://kw8bet1bb6qp" path="res://art/BG4.jpeg" id="3_08iob"]
 [ext_resource type="Texture2D" uid="uid://clq5b2wany078" path="res://data/items/previews/donut1L-removebg-preview.png" id="4_pbgst"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pbgst"]
-bg_color = Color(0.3475266, 0.6874676, 0.42915514, 1)
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_gr2t4"]
+texture = ExtResource("3_08iob")
+expand_margin_left = 8.0
+expand_margin_top = 6.0
+expand_margin_right = 6.0
+expand_margin_bottom = 6.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_08iob"]
 bg_color = Color(0.8117647, 0.8862745, 0.8862745, 1)
@@ -64,7 +69,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_pbgst")
+theme_override_styles/panel = SubResource("StyleBoxTexture_gr2t4")
 
 [node name="InnerMargin" type="MarginContainer" parent="Root" unique_id=872078095]
 layout_mode = 1
