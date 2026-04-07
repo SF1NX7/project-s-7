@@ -28,13 +28,18 @@ func interact() -> void:
 		dlg = get_tree().root.find_child("DialogueUI", true, false) as CanvasLayer
 
 	if dlg != null:
-		# добавляем последнюю строку: "Вы подобрали: <название>"
+		# добавляем последнюю строку: "Вы подобрали: <название>" (название — цветом из ItemData.pickup_color)
 		var dialog_lines := lines.duplicate()
+		var pickup_line := "Вы подобрали предмет."
 		if item_data != null and item_data.title != "":
-			dialog_lines.append("Вы подобрали: %s" % item_data.title)
+			var col := "FFD54A" # default
+			var c = item_data.get("pickup_color")
+			if c is Color:
+				col = (c as Color).to_html(false) # rrggbb
+			pickup_line = "Вы подобрали: [color=#%s]%s[/color]" % [col, item_data.title]
+			dialog_lines.append(pickup_line)
 		else:
-			dialog_lines.append("Вы подобрали предмет.")
-
+			dialog_lines.append(pickup_line)
 		dlg.start_dialogue(dialog_lines, portrait)
 		# ждём окончания (нужен signal finished в dialogue_ui.gd)
 		await dlg.finished

@@ -1,7 +1,7 @@
 extends CanvasLayer
 signal finished
 @onready var dialogue_box: Control = $DialogueBox
-@onready var dialogue_text: Label = $DialogueBox/DialogueText
+@onready var dialogue_text: RichTextLabel = $DialogueBox/DialogueText
 @onready var portrait: TextureRect = $DialogueBox/Portrait
 
 var dialogue_lines: Array[String] = []
@@ -16,6 +16,7 @@ func _ready() -> void:
 	visible = false
 	dialogue_box.visible = false
 	set_process_input(false)
+	dialogue_text.bbcode_enabled = true
 
 
 func start_dialogue(lines: Array[String], portrait_texture: Texture2D) -> void:

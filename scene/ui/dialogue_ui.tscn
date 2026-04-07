@@ -1,6 +1,10 @@
 [gd_scene format=3 uid="uid://d5r87lolq6o8"]
 
 [ext_resource type="Script" uid="uid://bx702ewe0ye4n" path="res://script/ui/dialogue_ui.gd" id="1_2x5cq"]
+[ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="2_75ktm"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q4et8"]
+bg_color = Color(0.15199637, 0.15199634, 0.15199634, 0.90588236)
 
 [sub_resource type="Theme" id="Theme_p1v5b"]
 
@@ -19,6 +23,7 @@ offset_right = 313.0
 offset_bottom = 170.83998
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_q4et8")
 metadata/_edit_use_anchors_ = true
 
 [node name="DialogueText" type="RichTextLabel" parent="DialogueBox" unique_id=1746066210]
@@ -30,6 +35,9 @@ offset_right = 599.0
 offset_bottom = 153.0
 theme = SubResource("Theme_p1v5b")
 theme_type_variation = &"GraphFrameTitleLabel"
+theme_override_fonts/normal_font = ExtResource("2_75ktm")
+theme_override_font_sizes/normal_font_size = 24
+bbcode_enabled = true
 metadata/_edit_use_anchors_ = true
 
 [node name="Portrait" type="TextureRect" parent="DialogueBox" unique_id=1326713532]

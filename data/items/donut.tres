@@ -9,6 +9,7 @@ script = ExtResource("1_6qkm6")
 icon = ExtResource("1_endx4")
 preview = ExtResource("2_endx4")
 title = "Пончик Тестовый"
+pickup_color = Color(0.7377491, 0.44643027, 0.54920304, 1)
 description = "Тестовый пончик любезно приготовленный Mrs. Ololo"
 item_class = 2
 metadata/_custom_type_script = "uid://t1mc6m4ghibm"
