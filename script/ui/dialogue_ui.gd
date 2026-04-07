@@ -1,5 +1,5 @@
 extends CanvasLayer
-
+signal finished
 @onready var dialogue_box: Control = $DialogueBox
 @onready var dialogue_text: Label = $DialogueBox/DialogueText
 @onready var portrait: TextureRect = $DialogueBox/Portrait
@@ -71,6 +71,7 @@ func end_dialogue() -> void:
 	dialogue_box.visible = false
 	visible = false
 	set_process_input(false)
+	finished.emit() 
 
 
 func show_line() -> void:

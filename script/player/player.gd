@@ -99,7 +99,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			var node = area
 			while node != null:
 				if node.has_method("interact"):
-					if is_in_front_of_player(node.global_position):
+					if is_in_front_of_player(area.global_position):
 						node.interact()
 						return
 					break

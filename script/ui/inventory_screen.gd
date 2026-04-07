@@ -1,6 +1,8 @@
 extends Control
 class_name InventoryScreen
 
+signal closed
+
 # ---------- Data ----------
 @export var slot_scene: PackedScene
 @export var starting_items: Array[ItemData] = []
@@ -88,6 +90,8 @@ func close() -> void:
 	preview_icon.texture = null
 	title_label.text = ""
 	desc_label.text = ""
+
+	closed.emit()
 
 
 # ---------- Slots ----------
