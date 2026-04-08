@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://g2dfyymlxlx6"
-path="res://.godot/imported/groundTileAI.jpeg-891b120d40df2dca5c283164502d47c1.ctex"
+uid="uid://b8lvk3dvn43xm"
+path="res://.godot/imported/water_animatiom_1.png-ddbbad4ebdd238b5932f1542757aae79.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/Tiles/groundTileAI.jpeg"
-dest_files=["res://.godot/imported/groundTileAI.jpeg-891b120d40df2dca5c283164502d47c1.ctex"]
+source_file="res://art/Tiles/WaterTiles/water_animatiom_1.png"
+dest_files=["res://.godot/imported/water_animatiom_1.png-ddbbad4ebdd238b5932f1542757aae79.ctex"]
 
 [params]
 

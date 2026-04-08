@@ -1,7 +1,6 @@
 [gd_scene format=4 uid="uid://cweup558jdplj"]
 
 [ext_resource type="Script" uid="uid://brqtqqincmeu8" path="res://script/world/world_2.gd" id="1_b51kk"]
-[ext_resource type="Texture2D" uid="uid://g2dfyymlxlx6" path="res://art/Tiles/groundTileAI.jpeg" id="3_40cn6"]
 [ext_resource type="Texture2D" uid="uid://b8v83cih7hjy" path="res://art/Tiles/TIleCastleAI.jpeg" id="4_bk6d8"]
 [ext_resource type="PackedScene" uid="uid://dqi3adlgday0w" path="res://scene/characters/player.tscn" id="5_a2nyj"]
 [ext_resource type="PackedScene" uid="uid://c4pn5jj6ffbty" path="res://scene/characters/npc.tscn" id="6_dinsj"]
@@ -1078,7 +1077,6 @@ texture_region_size = Vector2i(32, 32)
 5:4/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_536wd"]
-texture = ExtResource("3_40cn6")
 texture_region_size = Vector2i(32, 32)
 0:0/0 = 0
 1:0/0 = 0
@@ -6252,3 +6250,4 @@ target_spawn_id = "spawn_1"
 visible = false
 
 [node name="menu_ui" parent="." unique_id=211641837 instance=ExtResource("10_p22p5")]
+visible = false
