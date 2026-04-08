@@ -3,24 +3,35 @@ class_name EquipScreen
 
 signal closed
 
-# Colors for highlighting (tweak in Inspector)
-@export var cursor_modulate: Color = Color(1.0, 1.0, 1.0, 1.0)
-@export var cursor_tint: Color = Color(1.0, 1.0, 0.6, 1.0) # highlighted element
+@export var cursor_modulate: Color = Color(1, 1, 1, 1)
+@export var cursor_tint: Color = Color(1, 1, 0.6, 1)
 
 @onready var party_bar: Control = $Background/PartyBar
 @onready var equip_slots_root: Control = $Background/EquipSlots
 @onready var stats_text: RichTextLabel = $Background/StatsPanel/StatsText
 
-# PartyBar children: Portrait1..Portrait7 (TextureButton)
-# EquipSlots children: SlotHead, SlotArmor, SlotBoots, SlotWeapon, SlotRing (TextureButton)
 var _portraits: Array[BaseButton] = []
-var _slots: Array[BaseButton] = []
+
+# Slot buttons (expected names)
+var _slot_head: BaseButton
+var _slot_armor: BaseButton
+var _slot_boots: BaseButton
+var _slot_weapon: BaseButton
+var _slot_ring: BaseButton
 
 enum EquipFocus { PARTY, SLOTS }
 var _focus: EquipFocus = EquipFocus.PARTY
 
 var _hero_idx: int = 0
-var _slot_idx: int = 0
+
+# Your exact navigation model:
+# - Clothes column: Head -> Armor -> Boots (W/S)
+# - A from clothes -> Weapon, D from clothes -> Ring
+# - D from Weapon -> back to clothes (same row as last clothes)
+# - A from Ring -> back to clothes (same row as last clothes)
+enum SlotPos { CLOTHES_HEAD, CLOTHES_ARMOR, CLOTHES_BOOTS, WEAPON, RING }
+var _slot_pos: SlotPos = SlotPos.CLOTHES_HEAD
+var _last_clothes: SlotPos = SlotPos.CLOTHES_HEAD
 
 
 func _ready() -> void:
@@ -31,7 +42,7 @@ func _ready() -> void:
 
 	_set_focus(EquipFocus.PARTY)
 	_select_hero(0)
-	_select_slot(0)
+	_select_slot_pos(SlotPos.CLOTHES_HEAD)
 	_update_stats()
 
 
@@ -39,7 +50,7 @@ func open() -> void:
 	visible = true
 	set_process_unhandled_input(true)
 
-	_collect_nodes() # in case nodes were edited
+	_collect_nodes()
 
 	_set_focus(EquipFocus.PARTY)
 	_select_hero(clampi(_hero_idx, 0, _portraits.size() - 1))
@@ -54,58 +65,46 @@ func close() -> void:
 
 func _collect_nodes() -> void:
 	_portraits.clear()
-	_slots.clear()
 
 	for c in party_bar.get_children():
 		if c is BaseButton:
 			_portraits.append(c)
 
-	var by_name := {}
-	for c in equip_slots_root.get_children():
-		if c is BaseButton:
-			by_name[c.name] = c
-
-	var order := ["SlotHead", "SlotArmor", "SlotBoots", "SlotWeapon", "SlotRing"]
-	for n in order:
-		if by_name.has(n):
-			_slots.append(by_name[n])
-
-	if _slots.is_empty():
-		for c in equip_slots_root.get_children():
-			if c is BaseButton:
-				_slots.append(c)
+	# Cache slot refs by name (stable)
+	_slot_head = equip_slots_root.get_node_or_null("SlotHead") as BaseButton
+	_slot_armor = equip_slots_root.get_node_or_null("SlotArmor") as BaseButton
+	_slot_boots = equip_slots_root.get_node_or_null("SlotBoots") as BaseButton
+	_slot_weapon = equip_slots_root.get_node_or_null("SlotWeapon") as BaseButton
+	_slot_ring = equip_slots_root.get_node_or_null("SlotRing") as BaseButton
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
 
-	# Back / Close
+	# Back / Close (Tab or Esc)
 	if event.is_action_pressed("menu") or event.is_action_pressed("ui_cancel"):
 		if _focus == EquipFocus.SLOTS:
-			# Step back: Slots -> PartyBar
 			_set_focus(EquipFocus.PARTY)
 			_clear_slots_highlight()
 			_update_party_highlight()
 			get_viewport().set_input_as_handled()
 			return
 		else:
-			# PartyBar -> close (return to cross menu)
 			close()
 			closed.emit()
 			get_viewport().set_input_as_handled()
 			return
 
-	# Confirm
+	# Confirm (E)
 	if event.is_action_pressed("action") or event.is_action_pressed("ui_accept"):
 		if _focus == EquipFocus.PARTY:
-			# Confirm hero -> go to slots
 			_set_focus(EquipFocus.SLOTS)
-			_select_slot(clampi(_slot_idx, 0, _slots.size() - 1))
+			# Start on last clothes row (feels natural)
+			_select_slot_pos(_last_clothes)
 			get_viewport().set_input_as_handled()
 			return
 		else:
-			# Confirm slot (later: open item list / equip)
 			_update_stats()
 			get_viewport().set_input_as_handled()
 			return
@@ -133,71 +132,67 @@ func _handle_party_nav(event: InputEvent) -> void:
 
 
 func _handle_slots_nav(event: InputEvent) -> void:
-	if _slots.is_empty():
-		return
-
-	var head := _index_of_slot_name("SlotHead")
-	var armor := _index_of_slot_name("SlotArmor")
-	var boots := _index_of_slot_name("SlotBoots")
-	var weapon := _index_of_slot_name("SlotWeapon")
-	var ring := _index_of_slot_name("SlotRing")
-
-	var next := _slot_idx
-
 	if event.is_action_pressed("move_up"):
-		match _slot_idx:
-			weapon, armor, ring:
-				next = head if head != -1 else _slot_idx
-			boots:
-				next = weapon if weapon != -1 else _slot_idx
-			_:
-				pass
-		_select_slot(next)
+		_on_move_up()
 		get_viewport().set_input_as_handled()
 		return
 
 	if event.is_action_pressed("move_down"):
-		match _slot_idx:
-			head:
-				next = weapon if weapon != -1 else _slot_idx
-			weapon, armor, ring:
-				next = boots if boots != -1 else _slot_idx
-			_:
-				pass
-		_select_slot(next)
+		_on_move_down()
 		get_viewport().set_input_as_handled()
 		return
 
 	if event.is_action_pressed("move_left"):
-		match _slot_idx:
-			weapon:
-				next = armor if armor != -1 else _slot_idx
-			ring:
-				next = weapon if weapon != -1 else _slot_idx
-			_:
-				pass
-		_select_slot(next)
+		_on_move_left()
 		get_viewport().set_input_as_handled()
 		return
 
 	if event.is_action_pressed("move_right"):
-		match _slot_idx:
-			weapon:
-				next = ring if ring != -1 else _slot_idx
-			armor:
-				next = weapon if weapon != -1 else _slot_idx
-			_:
-				pass
-		_select_slot(next)
+		_on_move_right()
 		get_viewport().set_input_as_handled()
 		return
 
 
-func _index_of_slot_name(n: String) -> int:
-	for i in range(_slots.size()):
-		if _slots[i].name == n:
-			return i
-	return -1
+func _on_move_up() -> void:
+	match _slot_pos:
+		SlotPos.CLOTHES_ARMOR:
+			_select_slot_pos(SlotPos.CLOTHES_HEAD)
+		SlotPos.CLOTHES_BOOTS:
+			_select_slot_pos(SlotPos.CLOTHES_ARMOR)
+		_:
+			pass
+
+
+func _on_move_down() -> void:
+	match _slot_pos:
+		SlotPos.CLOTHES_HEAD:
+			_select_slot_pos(SlotPos.CLOTHES_ARMOR)
+		SlotPos.CLOTHES_ARMOR:
+			_select_slot_pos(SlotPos.CLOTHES_BOOTS)
+		_:
+			pass
+
+
+func _on_move_left() -> void:
+	match _slot_pos:
+		SlotPos.CLOTHES_HEAD, SlotPos.CLOTHES_ARMOR, SlotPos.CLOTHES_BOOTS:
+			_last_clothes = _slot_pos
+			_select_slot_pos(SlotPos.WEAPON)
+		SlotPos.RING:
+			_select_slot_pos(_last_clothes)
+		_:
+			pass
+
+
+func _on_move_right() -> void:
+	match _slot_pos:
+		SlotPos.CLOTHES_HEAD, SlotPos.CLOTHES_ARMOR, SlotPos.CLOTHES_BOOTS:
+			_last_clothes = _slot_pos
+			_select_slot_pos(SlotPos.RING)
+		SlotPos.WEAPON:
+			_select_slot_pos(_last_clothes)
+		_:
+			pass
 
 
 func _set_focus(m: EquipFocus) -> void:
@@ -215,12 +210,24 @@ func _select_hero(i: int) -> void:
 	_update_stats()
 
 
-func _select_slot(i: int) -> void:
-	if _slots.is_empty():
-		return
-	_slot_idx = clampi(i, 0, _slots.size() - 1)
+func _select_slot_pos(p: SlotPos) -> void:
+	_slot_pos = p
+
+	if p in [SlotPos.CLOTHES_HEAD, SlotPos.CLOTHES_ARMOR, SlotPos.CLOTHES_BOOTS]:
+		_last_clothes = p
+
 	_update_slots_highlight()
 	_update_stats()
+
+
+func _current_slot_button() -> BaseButton:
+	match _slot_pos:
+		SlotPos.CLOTHES_HEAD: return _slot_head
+		SlotPos.CLOTHES_ARMOR: return _slot_armor
+		SlotPos.CLOTHES_BOOTS: return _slot_boots
+		SlotPos.WEAPON: return _slot_weapon
+		SlotPos.RING: return _slot_ring
+		_: return null
 
 
 func _update_party_highlight() -> void:
@@ -230,18 +237,19 @@ func _update_party_highlight() -> void:
 
 
 func _update_slots_highlight() -> void:
+	_clear_slots_highlight()
 	if _focus != EquipFocus.SLOTS:
-		_clear_slots_highlight()
 		return
 
-	for i in range(_slots.size()):
-		var b := _slots[i]
-		b.self_modulate = cursor_tint if i == _slot_idx else cursor_modulate
+	var b := _current_slot_button()
+	if b:
+		b.self_modulate = cursor_tint
 
 
 func _clear_slots_highlight() -> void:
-	for b in _slots:
-		b.self_modulate = cursor_modulate
+	for b in [_slot_head, _slot_armor, _slot_boots, _slot_weapon, _slot_ring]:
+		if b:
+			b.self_modulate = cursor_modulate
 
 
 func _update_stats() -> void:
@@ -249,9 +257,10 @@ func _update_stats() -> void:
 		return
 
 	var hero_name := "Hero %d" % (_hero_idx + 1)
-	var slot_name := "Slot"
-	if _slots.size() > 0:
-		slot_name = _slots[_slot_idx].name
+	var slot_name := ""
+	var b := _current_slot_button()
+	if b:
+		slot_name = b.name
 
 	stats_text.bbcode_enabled = true
-	stats_text.text = "[b]%s[/b]\nSelected: %s" % [hero_name, slot_name]
+	stats_text.text = "[b]%s[/b]\\nSelected: %s" % [hero_name, slot_name]
