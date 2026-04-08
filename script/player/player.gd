@@ -16,8 +16,9 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	var menu_ui = get_tree().current_scene.get_node_or_null("Menu_ui")
-	if menu_ui != null and menu_ui.is_open:
+	if menu_ui != null and menu_ui.has_method("is_ui_blocking") and menu_ui.is_ui_blocking():
 		return
+		
 	var dialogue_ui = get_tree().current_scene.get_node_or_null("DialogueUI")
 	if dialogue_ui != null and dialogue_ui.is_active:
 		return
@@ -78,9 +79,8 @@ func start_move(direction: Vector2) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	
 	var menu_ui = get_tree().current_scene.get_node_or_null("Menu_ui")
-	if menu_ui != null and menu_ui.is_open:
+	if menu_ui != null and menu_ui.has_method("is_ui_blocking") and menu_ui.is_ui_blocking(): 
 		return
-	
 	if event.is_action_pressed("action"):
 		var dialogue_ui = get_tree().current_scene.get_node_or_null("DialogueUI")
 

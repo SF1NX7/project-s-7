@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://bumswkw0sdpc0" path="res://scene/ui/InventoryScreen.tscn" id="2_o0okg"]
 [ext_resource type="Script" uid="uid://t1mc6m4ghibm" path="res://script/system/ItemData.gd" id="3_n48eu"]
 [ext_resource type="Resource" uid="uid://ba23nsgsui2d5" path="res://data/items/donut.tres" id="4_2n1li"]
+[ext_resource type="PackedScene" uid="uid://biwrcng8rbjq" path="res://scene/ui/EquipScreen.tscn" id="5_2n1li"]
 
 [node name="menu_ui" type="CanvasLayer" unique_id=211641837]
 script = ExtResource("1_edgug")
@@ -119,3 +120,6 @@ text = "Inventory"
 [node name="InventoryScreen" parent="UiRoot" unique_id=596111100 instance=ExtResource("2_o0okg")]
 layout_mode = 1
 starting_items = Array[ExtResource("3_n48eu")]([ExtResource("4_2n1li")])
+
+[node name="EquipScreen" parent="UiRoot" unique_id=1821564016 instance=ExtResource("5_2n1li")]
+layout_mode = 1

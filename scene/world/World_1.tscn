@@ -5014,7 +5014,6 @@ rotation = 0.7853982
 gizmo_extents = 16.0
 
 [node name="DialogueUI" parent="." unique_id=203183458 groups=["dialogue_ui"] instance=ExtResource("10_eiplj")]
-visible = false
 
 [node name="Portal" parent="." unique_id=1250424720 instance=ExtResource("11_heg0q")]
 position = Vector2(-368, 48)
@@ -5030,7 +5029,6 @@ target_scene = "res://scene/world/house1_inside.tscn"
 target_spawn_id = "spawn_1"
 
 [node name="Menu_ui" parent="." unique_id=211641837 instance=ExtResource("15_mpv6a")]
-visible = false
 
 [node name="SecretWall" parent="." unique_id=1035232696 instance=ExtResource("18_qy5u4")]
 position = Vector2(176, -112)

@@ -1,0 +1,144 @@
+[gd_scene format=3 uid="uid://biwrcng8rbjq"]
+
+[ext_resource type="Script" uid="uid://dwbp0mbom48n5" path="res://script/ui/equip_screen.gd" id="1_2hqyj"]
+
+[node name="EquipScreen" type="Control" unique_id=1821564016]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_2hqyj")
+
+[node name="Background" type="Panel" parent="." unique_id=569404428]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PartyBar" type="Control" parent="Background" unique_id=466985089]
+layout_mode = 1
+anchor_left = 0.013
+anchor_top = 0.023000002
+anchor_right = 0.98700005
+anchor_bottom = 0.256
+offset_left = -0.112000465
+offset_top = 0.087999344
+offset_right = 0.11199951
+offset_bottom = -0.06400299
+
+[node name="Portrait1" type="TextureButton" parent="Background/PartyBar" unique_id=864755956]
+layout_mode = 0
+offset_right = 80.0
+offset_bottom = 80.0
+
+[node name="Portrait2" type="TextureButton" parent="Background/PartyBar" unique_id=525734198]
+layout_mode = 0
+offset_left = 88.0
+offset_right = 168.0
+offset_bottom = 80.0
+
+[node name="Portrait3" type="TextureButton" parent="Background/PartyBar" unique_id=1328855830]
+layout_mode = 0
+offset_left = 176.0
+offset_right = 256.0
+offset_bottom = 80.0
+
+[node name="Portrait4" type="TextureButton" parent="Background/PartyBar" unique_id=592257045]
+layout_mode = 0
+offset_left = 264.0
+offset_right = 344.0
+offset_bottom = 80.0
+
+[node name="Portrait5" type="TextureButton" parent="Background/PartyBar" unique_id=1743992518]
+layout_mode = 0
+offset_left = 352.0
+offset_right = 432.0
+offset_bottom = 80.0
+
+[node name="Portrait6" type="TextureButton" parent="Background/PartyBar" unique_id=177978162]
+layout_mode = 0
+offset_left = 440.0
+offset_right = 520.0
+offset_bottom = 80.0
+
+[node name="Portrait7" type="TextureButton" parent="Background/PartyBar" unique_id=144657693]
+layout_mode = 0
+offset_left = 528.0
+offset_right = 608.0
+offset_bottom = 80.0
+
+[node name="EquipSlots" type="Control" parent="Background" unique_id=1788165177]
+layout_mode = 1
+anchor_left = 0.013
+anchor_top = 0.279
+anchor_right = 0.48700002
+anchor_bottom = 0.97700006
+offset_left = -0.112000465
+offset_top = 0.023994446
+offset_right = 0.11199951
+offset_bottom = -0.088012695
+grow_vertical = 0
+
+[node name="SlotHead" type="TextureButton" parent="Background/EquipSlots" unique_id=1208165670]
+layout_mode = 0
+offset_left = 112.0
+offset_top = 16.0
+offset_right = 176.0
+offset_bottom = 80.0
+action_mode = 0
+
+[node name="SlotArmor" type="TextureButton" parent="Background/EquipSlots" unique_id=55565088]
+layout_mode = 0
+offset_left = 112.0
+offset_top = 88.0
+offset_right = 176.0
+offset_bottom = 152.0
+
+[node name="SlotBoots" type="TextureButton" parent="Background/EquipSlots" unique_id=910411164]
+layout_mode = 0
+offset_left = 112.0
+offset_top = 160.0
+offset_right = 176.0
+offset_bottom = 224.0
+
+[node name="SlotWeapon" type="TextureButton" parent="Background/EquipSlots" unique_id=1826904674]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 64.0
+offset_right = 96.0
+offset_bottom = 128.0
+
+[node name="SlotRing" type="TextureButton" parent="Background/EquipSlots" unique_id=539212231]
+layout_mode = 0
+offset_left = 192.0
+offset_top = 64.0
+offset_right = 256.0
+offset_bottom = 128.0
+
+[node name="StatsPanel" type="Panel" parent="Background" unique_id=506982020]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.513
+anchor_top = 0.279
+anchor_right = 0.98700005
+anchor_bottom = 0.97700006
+offset_left = -0.11199951
+offset_top = 0.023994446
+offset_right = 0.11199951
+offset_bottom = -0.088012695
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="StatsText" type="RichTextLabel" parent="Background/StatsPanel" unique_id=1638219632]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0

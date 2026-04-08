@@ -7,6 +7,7 @@ extends CanvasLayer
 @onready var panel_equip: Control = $UiRoot/MenuRoot/EquipPanel
 @onready var panel_status: Control = $UiRoot/MenuRoot/StatusPanel
 @onready var inventory_screen: Control = $UiRoot/InventoryScreen
+@onready var equip_screen: Control = $UiRoot/EquipScreen
 
 var panels: Array[Control] = []
 var selected_index := 0
@@ -17,6 +18,10 @@ func _ready() -> void:
 	panels = [panel_inventory, panel_magic, panel_equip, panel_status]
 	menu_root.visible = false
 	inventory_screen.visible = false
+	equip_screen.visible = false
+	# Возврат из EquipScreen обратно в крест-меню
+	if equip_screen and equip_screen.has_signal("closed") and not equip_screen.closed.is_connected(_on_equip_closed):
+		equip_screen.closed.connect(_on_equip_closed)
 	is_open = false
 	selected_index = 0
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
@@ -40,6 +45,10 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Tab открывает/закрывает меню. Если открыт инвентарь — закрываем инвентарь.
+	# Если открыт EquipScreen — пусть он сам обработает Tab (возврат на PartyBar/закрытие).
+	if equip_screen.visible:
+		return
+
 	if event.is_action_pressed("menu"):
 		if inventory_screen.visible:
 			_hide_inventory()
@@ -96,7 +105,7 @@ func _activate_selected() -> void:
 		1:
 			print("Magic selected")
 		2:
-			print("Equip selected")
+			_open_equip()
 		3:
 			print("Status selected")
 
@@ -105,9 +114,22 @@ func _open_inventory() -> void:
 	inventory_screen.visible = true
 	inventory_screen.call("open")
 
-func _hide_inventory() -> void:
-	inventory_screen.call("close")
+func _open_equip() -> void:
+	_close_menu()
+	equip_screen.visible = true
+	if equip_screen.has_method("open"):
+		equip_screen.call("open")
+
+func _on_equip_closed() -> void:
+	# EquipScreen сообщил, что нужно вернуться в крест-меню
+	equip_screen.visible = false
 	_open_menu()
+
+func _hide_inventory() -> void:
+	# Close inventory and return to game.
+	inventory_screen.call("close")
+	is_open = false
+	menu_root.visible = false
 
 func _update_selection_frame() -> void:
 	if not is_open:
@@ -120,3 +142,9 @@ func _update_selection_frame() -> void:
 	selection_frame.position = pos
 	selection_frame.size = rect.size
 	selection_frame.visible = true
+	
+func is_ui_blocking() -> bool:
+	# блокируем движение, если открыто крест-меню или любой экран
+	return (menu_root and menu_root.visible) \
+		or (inventory_screen and inventory_screen.visible) \
+		or (equip_screen and equip_screen.visible)
