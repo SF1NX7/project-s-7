@@ -13,4 +13,5 @@ pickup_color = Color(0.6777546, 0.6177368, 0.7019075, 1)
 description = "Простой кожаный шлем, дающий небольшую защиту головы. "
 item_class = 1
 equip_slot = 1
+required_profs_mask = 47
 metadata/_custom_type_script = "uid://t1mc6m4ghibm"
