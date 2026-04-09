@@ -16,8 +16,8 @@
 [ext_resource type="PackedScene" uid="uid://beifm5ixvfjwe" path="res://scene/ui/fade_layer.tscn" id="12_by30h"]
 [ext_resource type="PackedScene" uid="uid://by6aaijw277na" path="res://scene/objects/door.tscn" id="14_u6jkk"]
 [ext_resource type="PackedScene" uid="uid://c64pa8ud8y83u" path="res://scene/ui/menu_ui.tscn" id="15_mpv6a"]
+[ext_resource type="Resource" uid="uid://ctlilrq411yft" path="res://data/items/helm_1.tres" id="18_5wcif"]
 [ext_resource type="PackedScene" uid="uid://c1ltsobni28d0" path="res://scene/objects/SecretWall.tscn" id="18_qy5u4"]
-[ext_resource type="Resource" uid="uid://ba23nsgsui2d5" path="res://data/items/donut.tres" id="19_b3hyh"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wygdx"]
 texture = ExtResource("2_ehcd8")
@@ -5021,7 +5021,6 @@ target_scene = "res://scene/world/World_2.tscn"
 target_spawn_id = "spawn_1"
 
 [node name="FadeLayer" parent="." unique_id=975937443 instance=ExtResource("12_by30h")]
-visible = false
 
 [node name="Portal2" parent="." unique_id=625714238 instance=ExtResource("11_heg0q")]
 position = Vector2(176, -48)
@@ -5032,4 +5031,5 @@ target_spawn_id = "spawn_1"
 
 [node name="SecretWall" parent="." unique_id=1035232696 instance=ExtResource("18_qy5u4")]
 position = Vector2(176, -112)
-item_data = ExtResource("19_b3hyh")
+item_data = ExtResource("18_5wcif")
+lines = Array[String](["Ты осматриваешь стену…", "В стене что-то есть! Поковырявшись, ты находишь шлем..."])

@@ -9,3 +9,7 @@ class_name ItemData
 
 enum ItemClass { WPN, ARM, POT, OTH }
 @export var item_class: ItemClass = ItemClass.OTH
+
+# экипировка
+enum EquipSlot { NONE, HEAD, ARMOR, BOOTS, WEAPON, RING }
+@export var equip_slot: EquipSlot = EquipSlot.NONE
