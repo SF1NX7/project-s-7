@@ -1,10 +1,15 @@
 [gd_scene format=3 uid="uid://biwrcng8rbjq"]
 
 [ext_resource type="Script" uid="uid://dwbp0mbom48n5" path="res://script/ui/equip_screen.gd" id="1_2hqyj"]
-[ext_resource type="Texture2D" uid="uid://co5jpflwu0cw6" path="res://art/Portrait/sara1.jpeg" id="2_1h8o3"]
-[ext_resource type="Texture2D" uid="uid://cj62bt4khoty4" path="res://art/Portrait/Dorf.jpeg" id="3_fijw3"]
+[ext_resource type="Script" uid="uid://drif5nqii2jwo" path="res://script/player/HeroData.gd" id="2_02lvd"]
+[ext_resource type="Script" uid="uid://b66sdjwiqfrg2" path="res://script/player/PartyData.gd" id="3_uajq1"]
 [ext_resource type="Texture2D" uid="uid://6kd22wuv7ltx" path="res://art/Portrait/slot_empty.jpg" id="4_fijw3"]
 [ext_resource type="Script" uid="uid://dv5d65ux30nl4" path="res://script/system/equip_slot_button.gd" id="5_02lvd"]
+[ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="6_uajq1"]
+
+[sub_resource type="Resource" id="Resource_ftmgd"]
+script = ExtResource("3_uajq1")
+metadata/_custom_type_script = "uid://b66sdjwiqfrg2"
 
 [node name="EquipScreen" type="Control" unique_id=1821564016]
 layout_mode = 3
@@ -16,6 +21,7 @@ grow_vertical = 2
 script = ExtResource("1_2hqyj")
 cursor_modulate = Color(0.41674656, 0.4167466, 0.41674656, 0.9411765)
 cursor_tint = Color(0.972549, 0.972549, 0.9647059, 1)
+party = SubResource("Resource_ftmgd")
 
 [node name="Background" type="Panel" parent="." unique_id=569404428]
 layout_mode = 1
@@ -44,7 +50,7 @@ offset_bottom = -0.06400299
 layout_mode = 0
 offset_right = 80.0
 offset_bottom = 80.0
-texture_normal = ExtResource("2_1h8o3")
+texture_normal = ExtResource("4_fijw3")
 ignore_texture_size = true
 stretch_mode = 5
 flip_h = true
@@ -54,7 +60,7 @@ layout_mode = 0
 offset_left = 88.0
 offset_right = 168.0
 offset_bottom = 80.0
-texture_normal = ExtResource("3_fijw3")
+texture_normal = ExtResource("4_fijw3")
 ignore_texture_size = true
 stretch_mode = 5
 flip_h = true
@@ -129,6 +135,16 @@ stretch_mode = 5
 script = ExtResource("5_02lvd")
 slot_type = 1
 
+[node name="Icon" type="TextureRect" parent="Background/EquipSlots/SlotHead" unique_id=329923128]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch_mode = 5
+
 [node name="SlotArmor" type="TextureButton" parent="Background/EquipSlots" unique_id=55565088]
 layout_mode = 0
 offset_left = 112.0
@@ -140,6 +156,16 @@ ignore_texture_size = true
 stretch_mode = 5
 script = ExtResource("5_02lvd")
 slot_type = 2
+
+[node name="Icon" type="TextureRect" parent="Background/EquipSlots/SlotArmor" unique_id=264308202]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch_mode = 5
 
 [node name="SlotBoots" type="TextureButton" parent="Background/EquipSlots" unique_id=910411164]
 layout_mode = 0
@@ -153,6 +179,16 @@ stretch_mode = 5
 script = ExtResource("5_02lvd")
 slot_type = 3
 
+[node name="Icon" type="TextureRect" parent="Background/EquipSlots/SlotBoots" unique_id=1092969157]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch_mode = 5
+
 [node name="SlotWeapon" type="TextureButton" parent="Background/EquipSlots" unique_id=1826904674]
 layout_mode = 0
 offset_left = 40.0
@@ -165,6 +201,16 @@ stretch_mode = 5
 script = ExtResource("5_02lvd")
 slot_type = 4
 
+[node name="Icon" type="TextureRect" parent="Background/EquipSlots/SlotWeapon" unique_id=1203572064]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch_mode = 5
+
 [node name="SlotRing" type="TextureButton" parent="Background/EquipSlots" unique_id=539212231]
 layout_mode = 0
 offset_left = 184.0
@@ -176,6 +222,16 @@ ignore_texture_size = true
 stretch_mode = 5
 script = ExtResource("5_02lvd")
 slot_type = 5
+
+[node name="Icon" type="TextureRect" parent="Background/EquipSlots/SlotRing" unique_id=1403997399]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch_mode = 5
 
 [node name="StatsPanel" type="Panel" parent="Background" unique_id=506982020]
 layout_mode = 1
@@ -196,3 +252,11 @@ layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
 anchor_bottom = 1.0
+mouse_filter = 2
+theme_override_constants/line_separation = -6
+theme_override_constants/table_h_separation = 100
+theme_override_constants/table_v_separation = 25
+theme_override_fonts/normal_font = ExtResource("6_uajq1")
+theme_override_fonts/bold_font = ExtResource("6_uajq1")
+theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/bold_font_size = 20

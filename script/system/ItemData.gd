@@ -6,6 +6,7 @@ class_name ItemData
 @export var title: String = ""
 @export var pickup_color: Color = Color(0.615, 0.299, 0.373, 1.0)
 @export_multiline var description: String = ""
+@export var bonuses: StatsBonus = StatsBonus.new()
 
 # Вкладки инвентаря (фильтр)
 enum ItemClass { WPN, ARM, POT, OTH }

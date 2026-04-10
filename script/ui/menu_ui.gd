@@ -1,32 +1,64 @@
 extends CanvasLayer
 
-@onready var menu_root: Control = $UiRoot/MenuRoot
+# Uses get_node_or_null so the script won't crash if a node path is missing.
 
-@onready var panel_inventory: Control = $UiRoot/MenuRoot/InventoryPanel
-@onready var panel_magic: Control = $UiRoot/MenuRoot/MagicPanel
-@onready var panel_equip: Control = $UiRoot/MenuRoot/EquipPanel
-@onready var panel_status: Control = $UiRoot/MenuRoot/StatusPanel
-@onready var inventory_screen: Control = $UiRoot/InventoryScreen
-@onready var equip_screen: Control = $UiRoot/EquipScreen
+@onready var ui_root: Node = $UiRoot
+@onready var menu_root: Control = ui_root.get_node_or_null("MenuRoot")
+@onready var inventory_screen: Node = ui_root.get_node_or_null("InventoryScreen")
+@onready var equip_screen: Node = ui_root.get_node_or_null("EquipScreen")
+
+@onready var panel_inventory: Control = menu_root.get_node_or_null("InventoryPanel") if menu_root else null
+@onready var panel_magic: Control = menu_root.get_node_or_null("MagicPanel") if menu_root else null
+@onready var panel_equip: Control = menu_root.get_node_or_null("EquipPanel") if menu_root else null
+@onready var panel_status: Control = menu_root.get_node_or_null("StatusPanel") if menu_root else null
 
 var panels: Array[Control] = []
 var selected_index := 0
 var is_open := false
 var selection_frame: Panel
 
+# Equip pick context
+var _pending_hero_idx: int = -1
+var _pending_slot: ItemData.EquipSlot = ItemData.EquipSlot.NONE
+
+
 func _ready() -> void:
+	if menu_root == null:
+		push_error("menu_ui.gd: UiRoot/MenuRoot not found. Check node paths.")
+		return
+	if inventory_screen == null:
+		push_error("menu_ui.gd: UiRoot/InventoryScreen not found. Check node paths.")
+		return
+
 	panels = [panel_inventory, panel_magic, panel_equip, panel_status]
 	menu_root.visible = false
 	inventory_screen.visible = false
-	equip_screen.visible = false
-	# Возврат из EquipScreen обратно в крест-меню
-	if equip_screen and equip_screen.has_signal("closed") and not equip_screen.closed.is_connected(_on_equip_closed):
-		equip_screen.closed.connect(_on_equip_closed)
+	if equip_screen:
+		equip_screen.visible = false
+
+	# Equip -> open inventory picker
+	if equip_screen and equip_screen.has_signal("request_equip_pick"):
+		if not equip_screen.request_equip_pick.is_connected(_on_request_equip_pick):
+			equip_screen.request_equip_pick.connect(_on_request_equip_pick)
+
+	# Return from Equip
+	if equip_screen and equip_screen.has_signal("closed"):
+		if not equip_screen.closed.is_connected(_on_equip_closed):
+			equip_screen.closed.connect(_on_equip_closed)
+
+	# Inventory picker result
+	if inventory_screen.has_signal("equip_item_selected"):
+		if not inventory_screen.equip_item_selected.is_connected(_on_equip_item_selected):
+			inventory_screen.equip_item_selected.connect(_on_equip_item_selected)
+	if inventory_screen.has_signal("equip_selection_canceled"):
+		if not inventory_screen.equip_selection_canceled.is_connected(_on_equip_pick_canceled):
+			inventory_screen.equip_selection_canceled.connect(_on_equip_pick_canceled)
+
 	is_open = false
 	selected_index = 0
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 
-	# Создаём рамку как Panel (самый надёжный)
+	# Selection frame
 	selection_frame = Panel.new()
 	selection_frame.name = "SelectionFrame"
 	selection_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -43,10 +75,10 @@ func _ready() -> void:
 	menu_root.add_child(selection_frame)
 	_update_selection_frame()
 
+
 func _unhandled_input(event: InputEvent) -> void:
-	# Tab открывает/закрывает меню. Если открыт инвентарь — закрываем инвентарь.
-	# Если открыт EquipScreen — пусть он сам обработает Tab (возврат на PartyBar/закрытие).
-	if equip_screen.visible:
+	# If equip is open, let equip handle Tab itself
+	if equip_screen and equip_screen.visible:
 		return
 
 	if event.is_action_pressed("menu"):
@@ -83,20 +115,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		_close_menu()
 		get_viewport().set_input_as_handled()
 
+
 func _toggle_menu() -> void:
 	if is_open:
 		_close_menu()
 	else:
 		_open_menu()
 
+
 func _open_menu() -> void:
 	is_open = true
 	menu_root.visible = true
 	_update_selection_frame()
 
+
 func _close_menu() -> void:
 	is_open = false
 	menu_root.visible = false
+
 
 func _activate_selected() -> void:
 	match selected_index:
@@ -109,42 +145,91 @@ func _activate_selected() -> void:
 		3:
 			print("Status selected")
 
+
 func _open_inventory() -> void:
 	_close_menu()
 	inventory_screen.visible = true
-	inventory_screen.call("open")
+	if inventory_screen.has_method("open"):
+		inventory_screen.call("open")
+
 
 func _open_equip() -> void:
 	_close_menu()
+	if equip_screen == null:
+		return
 	equip_screen.visible = true
 	if equip_screen.has_method("open"):
 		equip_screen.call("open")
 
+
+func _on_request_equip_pick(hero_idx: int, slot: ItemData.EquipSlot) -> void:
+	_pending_hero_idx = hero_idx
+	_pending_slot = slot
+
+	# Hide equip while picking
+	if equip_screen:
+		equip_screen.visible = false
+
+	# Open inventory as picker (filtered by slot)
+	inventory_screen.visible = true
+	if inventory_screen.has_method("open_equip_selection"):
+		inventory_screen.call("open_equip_selection", slot, 0)
+	else:
+		push_error("InventoryScreen: open_equip_selection() not found. Replace inventory_screen.gd with the picker version.")
+
+
+func _on_equip_item_selected(item: ItemData) -> void:
+	inventory_screen.visible = false
+
+	if equip_screen and equip_screen.has_method("set_equipped_item"):
+		equip_screen.call("set_equipped_item", _pending_hero_idx, _pending_slot, item)
+
+	if equip_screen:
+		equip_screen.visible = true
+
+	_pending_hero_idx = -1
+	_pending_slot = ItemData.EquipSlot.NONE
+
+
+func _on_equip_pick_canceled() -> void:
+	inventory_screen.visible = false
+	if equip_screen:
+		equip_screen.visible = true
+
+	_pending_hero_idx = -1
+	_pending_slot = ItemData.EquipSlot.NONE
+
+
 func _on_equip_closed() -> void:
-	# EquipScreen сообщил, что нужно вернуться в крест-меню
-	equip_screen.visible = false
+	if equip_screen:
+		equip_screen.visible = false
 	_open_menu()
 
+
 func _hide_inventory() -> void:
-	# Close inventory and return to game.
-	inventory_screen.call("close")
+	if inventory_screen.has_method("close"):
+		inventory_screen.call("close")
 	is_open = false
 	menu_root.visible = false
+
 
 func _update_selection_frame() -> void:
 	if not is_open:
 		return
-
 	var p := panels[selected_index]
-	# Рамка должна совпасть с панелью (в координатах menu_root)
-	var rect := p.get_rect()
-	var pos := p.position
-	selection_frame.position = pos
-	selection_frame.size = rect.size
+	if p == null:
+		return
+	selection_frame.position = p.position
+	selection_frame.size = p.size
 	selection_frame.visible = true
-	
+
+
+# IMPORTANT: Player uses this to decide whether movement should be blocked.
 func is_ui_blocking() -> bool:
-	# блокируем движение, если открыто крест-меню или любой экран
-	return (menu_root and menu_root.visible) \
-		or (inventory_screen and inventory_screen.visible) \
-		or (equip_screen and equip_screen.visible)
+	if menu_root != null and menu_root.visible:
+		return true
+	if inventory_screen != null and inventory_screen.visible:
+		return true
+	if equip_screen != null and equip_screen.visible:
+		return true
+	return false

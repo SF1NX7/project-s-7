@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="PartyData" format=3 uid="uid://bvnm458hqdkrd"]
+
+[ext_resource type="Script" uid="uid://drif5nqii2jwo" path="res://script/player/HeroData.gd" id="1_0c3kw"]
+[ext_resource type="Script" uid="uid://b66sdjwiqfrg2" path="res://script/player/PartyData.gd" id="2_cyode"]
+[ext_resource type="Script" uid="uid://crdx2krqtdpx" path="res://script/system/stats_bonus.gd" id="2_h7okd"]
+[ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="2_tkf0n"]
+
+[sub_resource type="Resource" id="Resource_wsnol"]
+script = ExtResource("2_h7okd")
+hp = 10
+attack = 3
+defense = 3
+speed = 2
+luck = 1
+metadata/_custom_type_script = "uid://crdx2krqtdpx"
+
+[sub_resource type="Resource" id="Resource_ee88u"]
+script = ExtResource("1_0c3kw")
+hero_name = "Max"
+profession_name = "Мечник"
+portrait = ExtResource("2_tkf0n")
+allowed_profs_mask = 385
+base_stats = SubResource("Resource_wsnol")
+
+[resource]
+script = ExtResource("2_cyode")
+heroes = Array[ExtResource("1_0c3kw")]([SubResource("Resource_ee88u")])
