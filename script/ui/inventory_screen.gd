@@ -29,19 +29,16 @@ var _tabs_nodes: Array[Control] = []
 
 enum UiMode { GRID, ACTION }
 var _mode: UiMode = UiMode.GRID
-var _action_index := 0 # 0=Use, 1=Drop
+var _action_index := 0
 
-# Tabs: 0=ALL,1=WPN,2=ARM,3=POT,4=OTH
 var _tab := 0
 var _focus_tabs := false
 
-# Slots
 var slots: Array[Node] = []
 var _slot_items: Array[ItemData] = []
 var selected_slot := -1
 var _slot_count := 0
 
-# Equip-select mode
 enum ScreenMode { NORMAL, EQUIP_SELECT }
 var _screen_mode: ScreenMode = ScreenMode.NORMAL
 var _equip_filter_slot: ItemData.EquipSlot = ItemData.EquipSlot.NONE
@@ -80,7 +77,6 @@ func open(item_count: int = -1) -> void:
 		item_count = default_item_count
 
 	_build_slots(item_count)
-
 	_tab = 0
 	_update_tab_highlight()
 	_apply_filter()
@@ -104,7 +100,6 @@ func open_equip_selection(slot: ItemData.EquipSlot, allowed_profs_mask: int = 0,
 		item_count = default_item_count
 
 	_build_slots(item_count)
-
 	_tab = 0
 	_update_tab_highlight()
 	_apply_filter()
@@ -124,6 +119,22 @@ func close() -> void:
 	closed.emit()
 
 
+func add_item_to_inventory(item: ItemData) -> void:
+	if item == null:
+		return
+	starting_items.append(item)
+	_apply_filter()
+
+
+func _remove_one_instance_from_inventory(item: ItemData) -> void:
+	# Remove only one matching instance, so duplicates (multiple same items) still work.
+	if item == null:
+		return
+	var idx := starting_items.find(item)
+	if idx != -1:
+		starting_items.remove_at(idx)
+
+
 func _build_slots(count: int) -> void:
 	if slot_scene == null:
 		push_error("InventoryScreen: slot_scene is EMPTY. Set it in Inspector.")
@@ -141,14 +152,6 @@ func _build_slots(count: int) -> void:
 
 	for i in range(slots.size()):
 		slots[i].visible = (i < count)
-
-
-func _set_tab(t: int) -> void:
-	_tab = clampi(t, 0, _tabs_nodes.size() - 1)
-	_update_tab_highlight()
-	_apply_filter()
-	if _focus_tabs:
-		_clear_slot_highlight()
 
 
 func _update_tab_highlight() -> void:
@@ -175,11 +178,9 @@ func _apply_filter() -> void:
 			continue
 		if not _passes_equip_filter(it):
 			continue
-
 		if _tab == 0:
 			filtered.append(it)
 		else:
-			# WPN=0, ARM=1, POT=2, OTH=3 (based on your ItemData)
 			var want := -1
 			match _tab:
 				1: want = 0
@@ -234,12 +235,6 @@ func _select_slot(i: int) -> void:
 		scroll.ensure_control_visible(slots[selected_slot])
 
 
-func _clear_slot_highlight() -> void:
-	for j in range(slots.size()):
-		if slots[j].has_method("set_selected"):
-			slots[j].call("set_selected", false)
-
-
 func _set_action_selected(idx: int) -> void:
 	_action_index = clampi(idx, 0, 1)
 	if btn_use:
@@ -263,7 +258,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
 
-	# Tab / cancel / close
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("menu"):
 		if _screen_mode == ScreenMode.EQUIP_SELECT:
 			equip_selection_canceled.emit()
@@ -278,10 +272,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	# Equip pick: E selects immediately
+	# EQUIP SELECT: E selects and REMOVES item from inventory list before emitting.
 	if _screen_mode == ScreenMode.EQUIP_SELECT and event.is_action_pressed("action"):
 		var item := _slot_items[selected_slot] if selected_slot >= 0 and selected_slot < _slot_items.size() else null
 		if item != null:
+			_remove_one_instance_from_inventory(item)
+			_apply_filter() # refresh UI so item disappears immediately
 			equip_item_selected.emit(item)
 			close()
 		get_viewport().set_input_as_handled()
@@ -303,24 +299,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		return
 
-	# TABS FOCUS
-	if _focus_tabs:
-		if event.is_action_pressed("move_left"):
-			_set_tab(max(_tab - 1, 0))
-			get_viewport().set_input_as_handled()
-			return
-		if event.is_action_pressed("move_right"):
-			_set_tab(min(_tab + 1, _tabs_nodes.size() - 1))
-			get_viewport().set_input_as_handled()
-			return
-		if event.is_action_pressed("move_down"):
-			_focus_tabs = false
-			_select_slot(0)
-			get_viewport().set_input_as_handled()
-			return
-		return
-
-	# GRID MODE navigation
 	var cols: int = max(grid.columns, 1)
 	var idx: int = max(selected_slot, 0)
 	var row: int = idx / cols
@@ -339,7 +317,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			moved = true
 		else:
 			_focus_tabs = true
-			_clear_slot_highlight()
 			get_viewport().set_input_as_handled()
 			return
 	elif event.is_action_pressed("move_down") and idx + cols < _slot_count:
@@ -351,7 +328,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	# NORMAL: E enters action mode
 	if _screen_mode == ScreenMode.NORMAL and event.is_action_pressed("action"):
 		var item: ItemData = _slot_items[selected_slot] if selected_slot >= 0 and selected_slot < _slot_items.size() else null
 		if item != null:

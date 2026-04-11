@@ -4,12 +4,18 @@
 [ext_resource type="Script" uid="uid://drif5nqii2jwo" path="res://script/player/HeroData.gd" id="2_02lvd"]
 [ext_resource type="Script" uid="uid://b66sdjwiqfrg2" path="res://script/player/PartyData.gd" id="3_uajq1"]
 [ext_resource type="Texture2D" uid="uid://6kd22wuv7ltx" path="res://art/Portrait/slot_empty.jpg" id="4_fijw3"]
+[ext_resource type="Texture2D" uid="uid://rnlmndtxb2ld" path="res://art/BG11.jpeg" id="4_ftmgd"]
 [ext_resource type="Script" uid="uid://dv5d65ux30nl4" path="res://script/system/equip_slot_button.gd" id="5_02lvd"]
+[ext_resource type="Texture2D" uid="uid://bq2j4p1bu6sc" path="res://art/Portrait/Empty_char.jpeg" id="5_tanvs"]
 [ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="6_uajq1"]
 
 [sub_resource type="Resource" id="Resource_ftmgd"]
 script = ExtResource("3_uajq1")
 metadata/_custom_type_script = "uid://b66sdjwiqfrg2"
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_tanvs"]
+texture = ExtResource("4_ftmgd")
+modulate_color = Color(1, 1, 1, 0.91764706)
 
 [node name="EquipScreen" type="Control" unique_id=1821564016]
 layout_mode = 3
@@ -34,6 +40,7 @@ offset_right = -8.0
 offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_tanvs")
 
 [node name="PartyBar" type="Control" parent="Background" unique_id=466985089]
 layout_mode = 1
@@ -50,27 +57,25 @@ offset_bottom = -0.06400299
 layout_mode = 0
 offset_right = 80.0
 offset_bottom = 80.0
-texture_normal = ExtResource("4_fijw3")
+texture_normal = ExtResource("5_tanvs")
 ignore_texture_size = true
 stretch_mode = 5
-flip_h = true
 
 [node name="Portrait2" type="TextureButton" parent="Background/PartyBar" unique_id=525734198]
 layout_mode = 0
 offset_left = 88.0
 offset_right = 168.0
 offset_bottom = 80.0
-texture_normal = ExtResource("4_fijw3")
+texture_normal = ExtResource("5_tanvs")
 ignore_texture_size = true
 stretch_mode = 5
-flip_h = true
 
 [node name="Portrait3" type="TextureButton" parent="Background/PartyBar" unique_id=1328855830]
 layout_mode = 0
 offset_left = 176.0
 offset_right = 256.0
 offset_bottom = 80.0
-texture_normal = ExtResource("4_fijw3")
+texture_normal = ExtResource("5_tanvs")
 ignore_texture_size = true
 stretch_mode = 5
 
@@ -79,7 +84,7 @@ layout_mode = 0
 offset_left = 264.0
 offset_right = 344.0
 offset_bottom = 80.0
-texture_normal = ExtResource("4_fijw3")
+texture_normal = ExtResource("5_tanvs")
 ignore_texture_size = true
 stretch_mode = 5
 
@@ -88,7 +93,7 @@ layout_mode = 0
 offset_left = 352.0
 offset_right = 432.0
 offset_bottom = 80.0
-texture_normal = ExtResource("4_fijw3")
+texture_normal = ExtResource("5_tanvs")
 ignore_texture_size = true
 stretch_mode = 5
 
@@ -97,7 +102,7 @@ layout_mode = 0
 offset_left = 440.0
 offset_right = 520.0
 offset_bottom = 80.0
-texture_normal = ExtResource("4_fijw3")
+texture_normal = ExtResource("5_tanvs")
 ignore_texture_size = true
 stretch_mode = 5
 
@@ -106,7 +111,7 @@ layout_mode = 0
 offset_left = 528.0
 offset_right = 608.0
 offset_bottom = 80.0
-texture_normal = ExtResource("4_fijw3")
+texture_normal = ExtResource("5_tanvs")
 ignore_texture_size = true
 stretch_mode = 5
 

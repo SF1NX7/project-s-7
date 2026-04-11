@@ -3,6 +3,7 @@ class_name EquipScreen
 
 signal closed
 signal request_equip_pick(hero_idx: int, slot: ItemData.EquipSlot)
+signal request_unequip(hero_idx: int, slot: ItemData.EquipSlot, item: ItemData)
 
 @export var cursor_modulate: Color = Color(1, 1, 1, 1)
 @export var cursor_tint: Color = Color(1, 1, 0.85, 1)
@@ -30,6 +31,7 @@ enum SlotPos { CLOTHES_HEAD, CLOTHES_ARMOR, CLOTHES_BOOTS, WEAPON, RING }
 var _slot_pos: SlotPos = SlotPos.CLOTHES_HEAD
 var _last_clothes: SlotPos = SlotPos.CLOTHES_HEAD
 
+# per hero -> per slot -> item
 var _equipped := {} # Dictionary[int, Dictionary[int, ItemData]]
 
 
@@ -58,8 +60,14 @@ func close() -> void:
 
 
 func set_equipped_item(hero_idx: int, slot: ItemData.EquipSlot, item: ItemData) -> void:
+	# If we are replacing an already equipped item, return the old one to inventory.
+	var old_item := _get_equipped_item(hero_idx, slot)
+	if old_item != null and item != null and old_item != item:
+		request_unequip.emit(hero_idx, slot, old_item)
+
 	if not _equipped.has(hero_idx):
 		_equipped[hero_idx] = {}
+
 	_equipped[hero_idx][int(slot)] = item
 	_apply_slot_visual(slot, item)
 	_update_stats()
@@ -89,14 +97,11 @@ func _collect_nodes() -> void:
 		_apply_slot_visual(s, _get_equipped_item(_hero_idx, s))
 
 
-# --------- Portraits (keep placeholders visible) ----------
 func _apply_party_portraits() -> void:
 	for btn in _portraits:
 		btn.visible = true
-
 	if party == null or party.heroes.is_empty():
 		return
-
 	for i in range(min(_portraits.size(), party.heroes.size())):
 		var btn: BaseButton = _portraits[i]
 		var hero: HeroData = party.heroes[i]
@@ -106,7 +111,6 @@ func _apply_party_portraits() -> void:
 			(btn as TextureButton).texture_normal = hero.portrait
 
 
-# --------- Input ----------
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
@@ -122,6 +126,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
+	# Unequip action (bind unequip to R in Input Map)
+	if _focus == EquipFocus.SLOTS and event.is_action_pressed("unequip"):
+		var slot := _slotpos_to_equipslot(_slot_pos)
+		var it := _get_equipped_item(_hero_idx, slot)
+		if it != null:
+			request_unequip.emit(_hero_idx, slot, it)
+			set_equipped_item(_hero_idx, slot, null)
+		get_viewport().set_input_as_handled()
+		return
+
+	# Confirm (E)
 	if event.is_action_pressed("action") or event.is_action_pressed("ui_accept"):
 		if _focus == EquipFocus.PARTY:
 			_set_focus(EquipFocus.SLOTS)
@@ -216,7 +231,6 @@ func _select_hero(i: int) -> void:
 		_update_party_highlight()
 		_update_stats()
 		return
-
 	_hero_idx = clampi(i, 0, party.heroes.size() - 1)
 	_update_party_highlight()
 	_update_stats()
@@ -262,7 +276,7 @@ func _clear_slots_highlight() -> void:
 			b.self_modulate = cursor_modulate
 
 
-# --------- Slot icon overlay (Icon child recommended) ----------
+# Slot icon overlay: if child TextureRect named Icon exists, we use it.
 func _set_slot_icon(btn: BaseButton, tex: Texture2D) -> void:
 	if btn == null:
 		return
@@ -270,8 +284,9 @@ func _set_slot_icon(btn: BaseButton, tex: Texture2D) -> void:
 	if icon_node != null and icon_node is TextureRect:
 		(icon_node as TextureRect).texture = tex
 		return
-	if btn is TextureButton:
-		(btn as TextureButton).texture_normal = tex if tex != null else (btn as TextureButton).texture_normal
+	# fallback: do not erase placeholder when clearing
+	if btn is TextureButton and tex != null:
+		(btn as TextureButton).texture_normal = tex
 
 
 func _apply_slot_visual(slot: ItemData.EquipSlot, item: ItemData) -> void:
@@ -287,7 +302,7 @@ func _apply_slot_visual(slot: ItemData.EquipSlot, item: ItemData) -> void:
 	_set_slot_icon(b, item.icon if item != null else null)
 
 
-# --------- Stats ----------
+# ------- Stats -------
 func _get_hero_data(idx: int) -> HeroData:
 	if party == null:
 		return null
@@ -324,7 +339,6 @@ func _format_line(stat_name: String, base: int, bonus: int) -> String:
 func _update_stats() -> void:
 	if stats_text == null:
 		return
-
 	var hero := _get_hero_data(_hero_idx)
 	if hero == null:
 		stats_text.bbcode_enabled = true
@@ -334,11 +348,7 @@ func _update_stats() -> void:
 	var base_stats := hero.base_stats if hero.base_stats != null else StatsBonus.new()
 	var eq := _sum_equipment_bonuses(_hero_idx)
 
-	# Two columns, four rows:
-	# Left: HP/MP/ATK/MAG
-	# Right: DEF/RES/SPD/LUK
 	var header := "[center][b]%s (%s)[/b][/center]\n\n" % [hero.hero_name, hero.profession_name]
-
 	var t := header
 	t += "[table=2]"
 	t += "[cell]%s[/cell][cell]%s[/cell]" % [_format_line("HP", base_stats.hp, eq.hp), _format_line("DEF", base_stats.defense, eq.defense)]
@@ -346,6 +356,5 @@ func _update_stats() -> void:
 	t += "[cell]%s[/cell][cell]%s[/cell]" % [_format_line("ATK", base_stats.attack, eq.attack), _format_line("SPD", base_stats.speed, eq.speed)]
 	t += "[cell]%s[/cell][cell]%s[/cell]" % [_format_line("MAG", base_stats.magic, eq.magic), _format_line("LUK", base_stats.luck, eq.luck)]
 	t += "[/table]"
-
 	stats_text.bbcode_enabled = true
 	stats_text.text = t
