@@ -29,16 +29,19 @@ var _tabs_nodes: Array[Control] = []
 
 enum UiMode { GRID, ACTION }
 var _mode: UiMode = UiMode.GRID
-var _action_index := 0
+var _action_index := 0 # 0=Use, 1=Drop
 
+# Tabs: 0=ALL,1=WPN,2=ARM,3=POT,4=OTH
 var _tab := 0
 var _focus_tabs := false
 
+# Slots
 var slots: Array[Node] = []
 var _slot_items: Array[ItemData] = []
 var selected_slot := -1
 var _slot_count := 0
 
+# Equip-select mode
 enum ScreenMode { NORMAL, EQUIP_SELECT }
 var _screen_mode: ScreenMode = ScreenMode.NORMAL
 var _equip_filter_slot: ItemData.EquipSlot = ItemData.EquipSlot.NONE
@@ -49,6 +52,7 @@ func _ready() -> void:
 	if slot_scene == null:
 		push_warning("InventoryScreen: Slot Scene is empty in Inspector!")
 
+	# Mouse click support
 	if btn_use:
 		btn_use.pressed.connect(_on_use_pressed)
 	if btn_drop:
@@ -61,6 +65,7 @@ func _ready() -> void:
 	_exit_action_mode()
 
 
+# -------- Public --------
 func open(item_count: int = -1) -> void:
 	_screen_mode = ScreenMode.NORMAL
 	_equip_filter_slot = ItemData.EquipSlot.NONE
@@ -126,15 +131,18 @@ func add_item_to_inventory(item: ItemData) -> void:
 	_apply_filter()
 
 
-func _remove_one_instance_from_inventory(item: ItemData) -> void:
-	# Remove only one matching instance, so duplicates (multiple same items) still work.
+# -------- Inventory operations --------
+func _remove_one_instance_from_inventory(item: ItemData) -> bool:
 	if item == null:
-		return
+		return false
 	var idx := starting_items.find(item)
-	if idx != -1:
-		starting_items.remove_at(idx)
+	if idx == -1:
+		return false
+	starting_items.remove_at(idx)
+	return true
 
 
+# -------- Slots --------
 func _build_slots(count: int) -> void:
 	if slot_scene == null:
 		push_error("InventoryScreen: slot_scene is EMPTY. Set it in Inspector.")
@@ -154,6 +162,7 @@ func _build_slots(count: int) -> void:
 		slots[i].visible = (i < count)
 
 
+# -------- Tabs / Filter --------
 func _update_tab_highlight() -> void:
 	for i in range(_tabs_nodes.size()):
 		_tabs_nodes[i].self_modulate = Color(1, 1, 1, 1) if i == _tab else Color(0.6, 0.6, 0.6, 1)
@@ -178,6 +187,7 @@ func _apply_filter() -> void:
 			continue
 		if not _passes_equip_filter(it):
 			continue
+
 		if _tab == 0:
 			filtered.append(it)
 		else:
@@ -205,6 +215,13 @@ func _apply_filter() -> void:
 	_select_slot(selected_slot)
 
 
+# -------- Selection / Preview --------
+func _get_selected_item() -> ItemData:
+	if selected_slot < 0 or selected_slot >= _slot_items.size():
+		return null
+	return _slot_items[selected_slot]
+
+
 func _select_slot(i: int) -> void:
 	if _slot_count <= 0:
 		selected_slot = -1
@@ -216,7 +233,7 @@ func _select_slot(i: int) -> void:
 		if slots[j].has_method("set_selected"):
 			slots[j].call("set_selected", j == selected_slot and slots[j].visible)
 
-	var item: ItemData = _slot_items[selected_slot] if selected_slot >= 0 and selected_slot < _slot_items.size() else null
+	var item := _get_selected_item()
 	if preview_icon: preview_icon.texture = item.preview if item != null else null
 	if item != null:
 		if title_label: title_label.text = item.title
@@ -235,6 +252,7 @@ func _select_slot(i: int) -> void:
 		scroll.ensure_control_visible(slots[selected_slot])
 
 
+# -------- Action mode (Use/Drop) --------
 func _set_action_selected(idx: int) -> void:
 	_action_index = clampi(idx, 0, 1)
 	if btn_use:
@@ -254,6 +272,15 @@ func _exit_action_mode() -> void:
 	if btn_drop: btn_drop.self_modulate = Color(1, 1, 1, 1)
 
 
+func _confirm_action_mode() -> void:
+	# Keyboard confirm while in ACTION mode
+	if _action_index == 0:
+		_on_use_pressed()
+	else:
+		_on_drop_pressed()
+
+
+# -------- Input --------
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
@@ -272,18 +299,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	# EQUIP SELECT: E selects and REMOVES item from inventory list before emitting.
+	# EQUIP SELECT: E selects and removes from inventory
 	if _screen_mode == ScreenMode.EQUIP_SELECT and event.is_action_pressed("action"):
-		var item := _slot_items[selected_slot] if selected_slot >= 0 and selected_slot < _slot_items.size() else null
+		var item := _get_selected_item()
 		if item != null:
 			_remove_one_instance_from_inventory(item)
-			_apply_filter() # refresh UI so item disappears immediately
+			_apply_filter()
 			equip_item_selected.emit(item)
 			close()
 		get_viewport().set_input_as_handled()
 		return
 
-	# ACTION MODE
+	# ACTION MODE input (THIS was the missing part)
 	if _mode == UiMode.ACTION:
 		if event.is_action_pressed("move_up"):
 			_set_action_selected(0)
@@ -294,11 +321,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if event.is_action_pressed("action"):
+			_confirm_action_mode()
 			_exit_action_mode()
 			get_viewport().set_input_as_handled()
 			return
 		return
 
+	# GRID navigation
 	var cols: int = max(grid.columns, 1)
 	var idx: int = max(selected_slot, 0)
 	var row: int = idx / cols
@@ -328,16 +357,30 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
+	# Enter action mode with E
 	if _screen_mode == ScreenMode.NORMAL and event.is_action_pressed("action"):
-		var item: ItemData = _slot_items[selected_slot] if selected_slot >= 0 and selected_slot < _slot_items.size() else null
+		var item := _get_selected_item()
 		if item != null:
 			_enter_action_mode()
 			get_viewport().set_input_as_handled()
 
 
+# -------- Button callbacks --------
 func _on_use_pressed() -> void:
+	# TODO later (use potion, etc.)
 	print("USE pressed on slot:", selected_slot)
 
 
 func _on_drop_pressed() -> void:
-	print("DROP pressed on slot:", selected_slot)
+	# Remove selected item from inventory.
+	if _screen_mode != ScreenMode.NORMAL:
+		return
+
+	var item := _get_selected_item()
+	if item == null:
+		return
+
+	if _remove_one_instance_from_inventory(item):
+		_apply_filter()
+		selected_slot = clampi(selected_slot, 0, max(_slot_count - 1, 0))
+		_select_slot(selected_slot)

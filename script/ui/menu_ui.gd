@@ -2,8 +2,10 @@ extends CanvasLayer
 
 @onready var ui_root: Node = $UiRoot
 @onready var menu_root: Control = ui_root.get_node_or_null("MenuRoot")
+
 @onready var inventory_screen: Node = ui_root.get_node_or_null("InventoryScreen")
 @onready var equip_screen: Node = ui_root.get_node_or_null("EquipScreen")
+@onready var status_screen: Node = ui_root.get_node_or_null("StatusScreen")
 
 @onready var panel_inventory: Control = menu_root.get_node_or_null("InventoryPanel") if menu_root else null
 @onready var panel_magic: Control = menu_root.get_node_or_null("MagicPanel") if menu_root else null
@@ -15,6 +17,7 @@ var selected_index := 0
 var is_open := false
 var selection_frame: Panel
 
+# Equip pick context
 var _pending_hero_idx: int = -1
 var _pending_slot: ItemData.EquipSlot = ItemData.EquipSlot.NONE
 
@@ -26,13 +29,21 @@ func _ready() -> void:
 	if inventory_screen == null:
 		push_error("menu_ui.gd: UiRoot/InventoryScreen not found. Check node paths.")
 		return
+	if equip_screen == null:
+		push_warning("menu_ui.gd: UiRoot/EquipScreen not found (Equip will be disabled).")
+	if status_screen == null:
+		push_warning("menu_ui.gd: UiRoot/StatusScreen not found (Status will be disabled).")
 
 	panels = [panel_inventory, panel_magic, panel_equip, panel_status]
+
 	menu_root.visible = false
 	inventory_screen.visible = false
 	if equip_screen:
 		equip_screen.visible = false
+	if status_screen:
+		status_screen.visible = false
 
+	# Equip connections
 	if equip_screen:
 		if equip_screen.has_signal("request_equip_pick") and not equip_screen.request_equip_pick.is_connected(_on_request_equip_pick):
 			equip_screen.request_equip_pick.connect(_on_request_equip_pick)
@@ -43,6 +54,11 @@ func _ready() -> void:
 		if equip_screen.has_signal("closed") and not equip_screen.closed.is_connected(_on_equip_closed):
 			equip_screen.closed.connect(_on_equip_closed)
 
+	# Status connection
+	if status_screen and status_screen.has_signal("closed") and not status_screen.closed.is_connected(_on_status_closed):
+		status_screen.closed.connect(_on_status_closed)
+
+	# Inventory picker result
 	if inventory_screen.has_signal("equip_item_selected") and not inventory_screen.equip_item_selected.is_connected(_on_equip_item_selected):
 		inventory_screen.equip_item_selected.connect(_on_equip_item_selected)
 	if inventory_screen.has_signal("equip_selection_canceled") and not inventory_screen.equip_selection_canceled.is_connected(_on_equip_pick_canceled):
@@ -52,6 +68,7 @@ func _ready() -> void:
 	selected_index = 0
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 
+	# Selection frame (menu cursor)
 	selection_frame = Panel.new()
 	selection_frame.name = "SelectionFrame"
 	selection_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -70,14 +87,16 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# If another UI screen is open, let it handle Tab itself.
 	if equip_screen and equip_screen.visible:
+		return
+	if inventory_screen and inventory_screen.visible:
+		return
+	if status_screen and status_screen.visible:
 		return
 
 	if event.is_action_pressed("menu"):
-		if inventory_screen.visible:
-			_hide_inventory()
-		else:
-			_toggle_menu()
+		_toggle_menu()
 		get_viewport().set_input_as_handled()
 		return
 
@@ -128,10 +147,14 @@ func _close_menu() -> void:
 
 func _activate_selected() -> void:
 	match selected_index:
-		0: _open_inventory()
-		1: print("Magic selected")
-		2: _open_equip()
-		3: print("Status selected")
+		0:
+			_open_inventory()
+		1:
+			print("Magic selected")
+		2:
+			_open_equip()
+		3:
+			_open_status()
 
 
 func _open_inventory() -> void:
@@ -144,12 +167,26 @@ func _open_inventory() -> void:
 func _open_equip() -> void:
 	_close_menu()
 	if equip_screen == null:
+		print("Equip selected (no EquipScreen node found)")
 		return
 	equip_screen.visible = true
 	if equip_screen.has_method("open"):
 		equip_screen.call("open")
 
 
+func _open_status() -> void:
+	_close_menu()
+	if status_screen == null:
+		print("Status selected (no StatusScreen node found)")
+		return
+	status_screen.visible = true
+	if status_screen.has_method("open"):
+		status_screen.call("open")
+	else:
+		push_warning("StatusScreen missing open() method.")
+
+
+# ---- Equip picking ----
 func _on_request_equip_pick(hero_idx: int, slot: ItemData.EquipSlot) -> void:
 	_pending_hero_idx = hero_idx
 	_pending_slot = slot
@@ -189,15 +226,16 @@ func _on_request_unequip(hero_idx: int, slot: ItemData.EquipSlot, item: ItemData
 
 
 func _on_equip_closed() -> void:
-	equip_screen.visible = false
+	if equip_screen:
+		equip_screen.visible = false
 	_open_menu()
 
 
-func _hide_inventory() -> void:
-	if inventory_screen.has_method("close"):
-		inventory_screen.call("close")
-	is_open = false
-	menu_root.visible = false
+# ---- Status ----
+func _on_status_closed() -> void:
+	if status_screen:
+		status_screen.visible = false
+	_open_menu()
 
 
 func _update_selection_frame() -> void:
@@ -212,4 +250,7 @@ func _update_selection_frame() -> void:
 
 
 func is_ui_blocking() -> bool:
-	return (menu_root and menu_root.visible) or (inventory_screen and inventory_screen.visible) or (equip_screen and equip_screen.visible)
+	return (menu_root and menu_root.visible) \
+		or (inventory_screen and inventory_screen.visible) \
+		or (equip_screen and equip_screen.visible) \
+		or (status_screen and status_screen.visible)

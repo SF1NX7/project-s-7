@@ -1,11 +1,13 @@
 [gd_scene format=3 uid="uid://c64pa8ud8y83u"]
 
 [ext_resource type="Script" uid="uid://dd4r1boquuthn" path="res://script/ui/menu_ui.gd" id="1_edgug"]
+[ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="2_c23pe"]
 [ext_resource type="PackedScene" uid="uid://bumswkw0sdpc0" path="res://scene/ui/InventoryScreen.tscn" id="2_o0okg"]
 [ext_resource type="Script" uid="uid://t1mc6m4ghibm" path="res://script/system/ItemData.gd" id="3_n48eu"]
 [ext_resource type="Resource" uid="uid://ba23nsgsui2d5" path="res://data/items/donut.tres" id="4_2n1li"]
 [ext_resource type="PackedScene" uid="uid://biwrcng8rbjq" path="res://scene/ui/EquipScreen.tscn" id="5_2n1li"]
 [ext_resource type="Resource" uid="uid://bvnm458hqdkrd" path="res://data/items/party_data.tres" id="6_o5e1d"]
+[ext_resource type="PackedScene" uid="uid://c2y713mivp5ry" path="res://scene/ui/StatusScreen.tscn" id="7_58ccl"]
 
 [node name="menu_ui" type="CanvasLayer" unique_id=211641837]
 script = ExtResource("1_edgug")
@@ -38,9 +40,10 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -40.0
-offset_top = -25.0
-offset_bottom = 25.0
+offset_left = -48.00006
+offset_top = -24.0
+offset_right = -8.000061
+offset_bottom = 24.0
 grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
@@ -51,6 +54,7 @@ offset_left = 4.9998703
 offset_top = 14.999989
 offset_right = 32.99987
 offset_bottom = 31.486225
+theme_override_fonts/font = ExtResource("2_c23pe")
 theme_override_font_sizes/font_size = 10
 text = "Equip"
 vertical_alignment = 1
@@ -60,9 +64,10 @@ layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_top = -25.0
-offset_right = 40.0
-offset_bottom = 25.0
+offset_left = 8.000061
+offset_top = -24.0
+offset_right = 48.00006
+offset_bottom = 24.0
 grow_vertical = 2
 mouse_filter = 2
 
@@ -72,6 +77,7 @@ offset_left = 2.0
 offset_top = 16.0
 offset_right = 37.0
 offset_bottom = 39.0
+theme_override_fonts/font = ExtResource("2_c23pe")
 theme_override_font_sizes/font_size = 12
 text = "Magic"
 
@@ -82,9 +88,9 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -25.0
+offset_left = -24.0
 offset_top = -40.0
-offset_right = 25.0
+offset_right = 24.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
@@ -95,6 +101,7 @@ offset_left = 4.999939
 offset_top = 11.0
 offset_right = 44.99994
 offset_bottom = 31.0
+theme_override_fonts/font = ExtResource("2_c23pe")
 theme_override_font_sizes/font_size = 12
 text = "Status"
 
@@ -103,9 +110,10 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -25.0
-offset_right = 25.0
-offset_bottom = 40.0
+offset_left = -24.0
+offset_top = 8.0
+offset_right = 24.0
+offset_bottom = 48.0
 grow_horizontal = 2
 mouse_filter = 2
 
@@ -115,13 +123,20 @@ offset_left = 3.999939
 offset_top = 11.0
 offset_right = 45.99994
 offset_bottom = 25.0
+theme_override_fonts/font = ExtResource("2_c23pe")
 theme_override_font_sizes/font_size = 9
 text = "Inventory"
 
 [node name="InventoryScreen" parent="UiRoot" unique_id=596111100 instance=ExtResource("2_o0okg")]
+visible = false
 layout_mode = 1
 starting_items = Array[ExtResource("3_n48eu")]([ExtResource("4_2n1li")])
 
 [node name="EquipScreen" parent="UiRoot" unique_id=1821564016 instance=ExtResource("5_2n1li")]
+visible = false
 layout_mode = 1
 party = ExtResource("6_o5e1d")
+
+[node name="StatusScreen" parent="UiRoot" unique_id=1032469721 instance=ExtResource("7_58ccl")]
+visible = false
+layout_mode = 1

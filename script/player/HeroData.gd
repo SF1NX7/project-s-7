@@ -12,3 +12,15 @@ var allowed_profs_mask: int = 0
 
 @export_group("Base Stats")
 @export var base_stats: StatsBonus = StatsBonus.new()
+
+@export_group("Progress")
+@export var level: int = 1
+@export var xp: int = 0
+@export var xp_to_next: int = 100
+@export var hp_current: int = 0
+@export var mp_current: int = 0
+
+@export_group("Talent")
+@export var talent_icon: Texture2D
+@export var talent_name: String = ""
+@export_multiline var talent_desc: String = ""

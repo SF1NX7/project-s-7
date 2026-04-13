@@ -1,0 +1,177 @@
+[gd_scene format=3 uid="uid://c2y713mivp5ry"]
+
+[ext_resource type="Script" uid="uid://hmjntesufkut" path="res://script/ui/status_screen.gd" id="1_prjxs"]
+[ext_resource type="Resource" uid="uid://bvnm458hqdkrd" path="res://data/items/party_data.tres" id="2_1my0q"]
+[ext_resource type="Texture2D" uid="uid://rnlmndtxb2ld" path="res://art/BG11.jpeg" id="2_t6er3"]
+[ext_resource type="Texture2D" uid="uid://6kd22wuv7ltx" path="res://art/Portrait/slot_empty.jpg" id="3_1my0q"]
+[ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="4_1my0q"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_gq6sn"]
+texture = ExtResource("2_t6er3")
+modulate_color = Color(0.79661584, 0.7843895, 0.75910294, 0.9647059)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_11ryh"]
+bg_color = Color(0.28627452, 0.27058825, 0.21568628, 0.9019608)
+
+[node name="StatusScreen" type="Control" unique_id=1032469721]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_prjxs")
+party = ExtResource("2_1my0q")
+
+[node name="Background" type="Panel" parent="." unique_id=1731012149]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.012
+anchor_top = 0.022000002
+anchor_right = 0.98700005
+anchor_bottom = 0.97800004
+offset_left = 0.3199997
+offset_top = 0.07999945
+offset_right = 0.3199463
+offset_bottom = -0.08001709
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_gq6sn")
+
+[node name="Hint" type="Label" parent="Background" unique_id=1989877501]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.026
+anchor_top = 0.674
+anchor_right = 0.282
+anchor_bottom = 0.74100006
+offset_left = -0.22400093
+offset_top = 0.14399719
+offset_right = 0.03199768
+offset_bottom = 0.09597778
+theme_override_colors/font_color = Color(0.9490196, 0.9490196, 0.9490196, 0.88235295)
+theme_override_colors/font_shadow_color = Color(0.14509805, 0.14509805, 0.14509805, 0.49019608)
+theme_override_fonts/font = ExtResource("4_1my0q")
+theme_override_font_sizes/font_size = 16
+text = "W / S - выбор героя"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="InfoPanel" type="Panel" parent="Background" unique_id=791656302]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.29500002
+anchor_top = 0.047000002
+anchor_right = 0.97400004
+anchor_bottom = 0.651
+offset_left = -0.08001709
+offset_top = -0.16800117
+offset_right = 0.22399902
+offset_bottom = 0.055999756
+grow_horizontal = 0
+
+[node name="InfoText" type="RichTextLabel" parent="Background/InfoPanel" unique_id=673548911]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/line_separation = 8
+theme_override_constants/shadow_outline_size = 0
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 0
+theme_override_constants/outline_size = 0
+theme_override_constants/text_highlight_h_padding = 0
+theme_override_constants/text_highlight_v_padding = 0
+theme_override_constants/table_h_separation = 100
+theme_override_constants/table_v_separation = 4
+theme_override_fonts/normal_font = ExtResource("4_1my0q")
+theme_override_fonts/bold_font = ExtResource("4_1my0q")
+theme_override_font_sizes/normal_font_size = 20
+theme_override_font_sizes/bold_font_size = 24
+bbcode_enabled = true
+scroll_active = false
+
+[node name="TalentPanel" type="Panel" parent="Background" unique_id=345971424]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.29500002
+anchor_top = 0.674
+anchor_right = 0.97400004
+anchor_bottom = 0.95300007
+offset_left = -0.08001709
+offset_top = 0.14399719
+offset_right = 0.22399902
+offset_bottom = 0.16796875
+
+[node name="TalentText" type="RichTextLabel" parent="Background/TalentPanel" unique_id=2015376138]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.22600001
+anchor_top = 0.083000004
+anchor_right = 0.98100007
+anchor_bottom = 0.91700006
+offset_left = 0.17599487
+offset_top = 0.031999588
+offset_right = 0.05596924
+offset_bottom = -0.03200531
+theme_override_fonts/normal_font = ExtResource("4_1my0q")
+theme_override_fonts/bold_font = ExtResource("4_1my0q")
+theme_override_font_sizes/normal_font_size = 14
+theme_override_font_sizes/bold_font_size = 18
+
+[node name="TalentIconFrame" type="Panel" parent="Background/TalentPanel" unique_id=906876195]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.019000001
+anchor_top = 0.083000004
+anchor_right = 0.208
+anchor_bottom = 0.91700006
+offset_left = -0.05599308
+offset_top = 0.031999588
+offset_right = -0.19199371
+offset_bottom = -0.03200531
+
+[node name="TalentIcon" type="TextureRect" parent="Background/TalentPanel/TalentIconFrame" unique_id=1778790684]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch_mode = 5
+
+[node name="Portrait" type="TextureRect" parent="Background" unique_id=1680652405]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.026
+anchor_top = 0.186
+anchor_right = 0.282
+anchor_bottom = 0.651
+offset_left = -0.22400093
+offset_top = 0.01599884
+offset_right = 0.03199768
+offset_bottom = 0.055999756
+texture = ExtResource("3_1my0q")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="Background" unique_id=1731607476]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.026
+anchor_top = 0.047000002
+anchor_right = 0.282
+anchor_bottom = 0.163
+offset_left = -0.22400093
+offset_top = -0.16800117
+offset_right = 0.03199768
+offset_bottom = -0.07200241
+theme_override_fonts/font = ExtResource("4_1my0q")
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBoxFlat_11ryh")
+text = "AAAAZZZZ"
+horizontal_alignment = 1
+vertical_alignment = 1

@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://b3ujpswtw5sjs" path="res://script/ui/inventory_screen.gd" id="1_xxaoe"]
 [ext_resource type="PackedScene" uid="uid://cgw0vdbgakw6m" path="res://scene/ui/InventorySlot.tscn" id="2_8euqg"]
 [ext_resource type="FontFile" uid="uid://b44y6g3w8o64t" path="res://font/thin_pixel-7.ttf" id="3_8euqg"]
-[ext_resource type="Texture2D" uid="uid://kw8bet1bb6qp" path="res://art/BG4.jpeg" id="3_08iob"]
+[ext_resource type="Texture2D" uid="uid://rnlmndtxb2ld" path="res://art/BG11.jpeg" id="3_08iob"]
 [ext_resource type="Texture2D" uid="uid://clq5b2wany078" path="res://data/items/previews/donut1L-removebg-preview.png" id="4_pbgst"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_gr2t4"]
@@ -14,7 +14,7 @@ expand_margin_right = 6.0
 expand_margin_bottom = 6.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_08iob"]
-bg_color = Color(0.8666667, 0.87058824, 0.6117647, 0.5882353)
+bg_color = Color(0.8616538, 0.86153823, 0.72021765, 0.3137255)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -24,7 +24,7 @@ shadow_size = 4
 shadow_offset = Vector2(-4, 4)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gr2t4"]
-bg_color = Color(0.8666667, 0.87058824, 0.6117647, 0.5882353)
+bg_color = Color(0.8666667, 0.87058824, 0.6117647, 0.46666667)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8

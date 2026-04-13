@@ -17,6 +17,8 @@ metadata/_custom_type_script = "uid://b66sdjwiqfrg2"
 texture = ExtResource("4_ftmgd")
 modulate_color = Color(1, 1, 1, 0.91764706)
 
+[sub_resource type="Theme" id="Theme_tanvs"]
+
 [node name="EquipScreen" type="Control" unique_id=1821564016]
 layout_mode = 3
 anchors_preset = 15
@@ -148,6 +150,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+theme = SubResource("Theme_tanvs")
 stretch_mode = 5
 
 [node name="SlotArmor" type="TextureButton" parent="Background/EquipSlots" unique_id=55565088]
