@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SpellData" format=3 uid="uid://bjmk7v12vva26"]
+
+[ext_resource type="Script" uid="uid://bu35dva6wp5a6" path="res://script/system/SpellData.gd" id="1_in5fy"]
+[ext_resource type="Texture2D" uid="uid://cfa2pbtmth4gh" path="res://data/items/Magic data/Fire/11.png" id="1_yv6pe"]
+
+[resource]
+script = ExtResource("1_in5fy")
+title = "Огненный шар"
+description = "Запускает малый шар огня, нанося небольшой урон огнём"
+icon = ExtResource("1_yv6pe")
+element = 1
+mp_cost = 5

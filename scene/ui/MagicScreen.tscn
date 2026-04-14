@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cyqah1tui8m1k"]
 
 [ext_resource type="Texture2D" uid="uid://cg0illldopiro" path="res://art/BG_magic.png" id="1_dvwhj"]
+[ext_resource type="Script" uid="uid://s8d8okpuuya1" path="res://script/ui/magic_screen.gd" id="1_qy2al"]
 [ext_resource type="Texture2D" uid="uid://bq2j4p1bu6sc" path="res://art/Portrait/Empty_char.jpeg" id="2_b424r"]
 [ext_resource type="Texture2D" uid="uid://6kd22wuv7ltx" path="res://art/Portrait/slot_empty.jpg" id="3_b424r"]
 
@@ -14,6 +15,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_qy2al")
 
 [node name="Background" type="Panel" parent="." unique_id=1010221968]
 layout_mode = 1
@@ -170,12 +172,16 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Lock" type="TextureRect" parent="Background/MagicGrid/MagicSlot_1" unique_id=939542374]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="MagicSlot_2" type="TextureButton" parent="Background/MagicGrid" unique_id=716407173]
 layout_mode = 1
@@ -228,6 +234,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Lock" type="TextureRect" parent="Background/MagicGrid/MagicSlot_3" unique_id=1073583496]
 layout_mode = 1
@@ -257,6 +265,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Lock" type="TextureRect" parent="Background/MagicGrid/MagicSlot_4" unique_id=758519797]
 layout_mode = 1
@@ -286,12 +296,16 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Lock" type="TextureRect" parent="Background/MagicGrid/MagicSlot_5" unique_id=2014613779]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="MagicSlot_6" type="TextureButton" parent="Background/MagicGrid" unique_id=888328448]
 layout_mode = 1
@@ -344,6 +358,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Lock" type="TextureRect" parent="Background/MagicGrid/MagicSlot_7" unique_id=1206938345]
 layout_mode = 1
@@ -373,6 +389,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Lock" type="TextureRect" parent="Background/MagicGrid/MagicSlot_8" unique_id=134126658]
 layout_mode = 1
@@ -402,12 +420,16 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Lock" type="TextureRect" parent="Background/MagicGrid/MagicSlot_9" unique_id=1684934944]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="MagicSlot_10" type="TextureButton" parent="Background/MagicGrid" unique_id=1029496367]
 layout_mode = 1
@@ -460,6 +482,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Lock" type="TextureRect" parent="Background/MagicGrid/MagicSlot_11" unique_id=1946508135]
 layout_mode = 1
@@ -489,6 +513,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Lock" type="TextureRect" parent="Background/MagicGrid/MagicSlot_12" unique_id=1893483257]
 layout_mode = 1
@@ -518,12 +544,16 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Lock" type="TextureRect" parent="Background/MagicGrid/MagicSlot_13" unique_id=103043061]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="MagicSlot_14" type="TextureButton" parent="Background/MagicGrid" unique_id=1503225841]
 layout_mode = 1
@@ -576,6 +606,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Lock" type="TextureRect" parent="Background/MagicGrid/MagicSlot_15" unique_id=842804019]
 layout_mode = 1
@@ -605,6 +637,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Lock" type="TextureRect" parent="Background/MagicGrid/MagicSlot_16" unique_id=222745341]
 layout_mode = 1

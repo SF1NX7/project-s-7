@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SpellData" format=3 uid="uid://3mgd67y4ijho"]
+
+[ext_resource type="Texture2D" uid="uid://13s2qes5mobo" path="res://data/items/Magic data/Fire/22.png" id="1_yaamw"]
+[ext_resource type="Script" uid="uid://bu35dva6wp5a6" path="res://script/system/SpellData.gd" id="2_12ga0"]
+
+[resource]
+script = ExtResource("2_12ga0")
+title = "Раскаленный осколок"
+description = "Выпускает осколок разогретый до огромной температуры"
+icon = ExtResource("1_yaamw")
+element = 1
+mp_cost = 10
+power = 15

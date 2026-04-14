@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://crdx2krqtdpx" path="res://script/system/stats_bonus.gd" id="2_h7okd"]
 [ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="2_tkf0n"]
 [ext_resource type="Texture2D" uid="uid://co5jpflwu0cw6" path="res://art/Portrait/sara1.jpeg" id="4_h7okd"]
+[ext_resource type="Resource" uid="uid://cahp85q1vhurl" path="res://data/items/Magic data/sara_magic_tree.tres" id="4_wsnol"]
 
 [sub_resource type="Resource" id="Resource_tkf0n"]
 script = ExtResource("2_h7okd")
@@ -47,8 +48,9 @@ allowed_profs_mask = 80
 base_stats = SubResource("Resource_wsnol")
 hp_current = 8
 mp_current = 10
-talent_name = "Огненный шар"
-talent_desc = "Запускает огненный шар"
+talent_name = "Всплеск маны"
+talent_desc = "Перезагружает всё"
+magic_tree = ExtResource("4_wsnol")
 metadata/_custom_type_script = "uid://drif5nqii2jwo"
 
 [resource]

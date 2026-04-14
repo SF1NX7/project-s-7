@@ -24,3 +24,6 @@ var allowed_profs_mask: int = 0
 @export var talent_icon: Texture2D
 @export var talent_name: String = ""
 @export_multiline var talent_desc: String = ""
+
+@export_group("Magic")
+@export var magic_tree: HeroMagicTree

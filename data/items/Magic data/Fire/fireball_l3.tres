@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SpellData" format=3 uid="uid://dx52g8rhhren7"]
+
+[ext_resource type="Texture2D" uid="uid://1776mms11r6m" path="res://data/items/Magic data/Fire/33.png" id="1_yaamw"]
+[ext_resource type="Script" uid="uid://bu35dva6wp5a6" path="res://script/system/SpellData.gd" id="2_12ga0"]
+
+[resource]
+script = ExtResource("2_12ga0")
+title = "Комета"
+description = "Комета призванная с небес на землю"
+icon = ExtResource("1_yaamw")
+element = 1
+mp_cost = 15
+power = 25
+area_radius = 1

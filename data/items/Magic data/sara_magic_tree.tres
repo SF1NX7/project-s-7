@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="HeroMagicTree" format=3 uid="uid://cahp85q1vhurl"]
+
+[ext_resource type="Script" uid="uid://ceaxls2yoxkf4" path="res://script/system/MagicBranch.gd" id="1_fr705"]
+[ext_resource type="Script" uid="uid://canmaexwtsvkd" path="res://script/system/SpellUnlock.gd" id="2_ejosl"]
+[ext_resource type="Script" uid="uid://k7rt87d6vjkw" path="res://script/system/HeroMagicTree.gd" id="3_ubemi"]
+
+[sub_resource type="Resource" id="Resource_slagc"]
+script = ExtResource("1_fr705")
+branch_name = "Fire"
+levels = Array[ExtResource("2_ejosl")]([null, null, null, null])
+metadata/_custom_type_script = "uid://ceaxls2yoxkf4"
+
+[resource]
+script = ExtResource("3_ubemi")
+branches = Array[ExtResource("1_fr705")]([SubResource("Resource_slagc"), null, null, null])
+metadata/_custom_type_script = "uid://k7rt87d6vjkw"
