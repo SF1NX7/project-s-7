@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://biwrcng8rbjq" path="res://scene/ui/EquipScreen.tscn" id="5_2n1li"]
 [ext_resource type="Resource" uid="uid://bvnm458hqdkrd" path="res://data/items/party_data.tres" id="6_o5e1d"]
 [ext_resource type="PackedScene" uid="uid://c2y713mivp5ry" path="res://scene/ui/StatusScreen.tscn" id="7_58ccl"]
+[ext_resource type="PackedScene" uid="uid://cyqah1tui8m1k" path="res://scene/ui/MagicScreen.tscn" id="9_m3c1e"]
 
 [node name="menu_ui" type="CanvasLayer" unique_id=211641837]
 script = ExtResource("1_edgug")
@@ -128,15 +129,16 @@ theme_override_font_sizes/font_size = 9
 text = "Inventory"
 
 [node name="InventoryScreen" parent="UiRoot" unique_id=596111100 instance=ExtResource("2_o0okg")]
-visible = false
 layout_mode = 1
 starting_items = Array[ExtResource("3_n48eu")]([ExtResource("4_2n1li")])
 
 [node name="EquipScreen" parent="UiRoot" unique_id=1821564016 instance=ExtResource("5_2n1li")]
-visible = false
 layout_mode = 1
 party = ExtResource("6_o5e1d")
 
 [node name="StatusScreen" parent="UiRoot" unique_id=1032469721 instance=ExtResource("7_58ccl")]
-visible = false
 layout_mode = 1
+
+[node name="MagicScreen" parent="UiRoot" unique_id=1953106850 instance=ExtResource("9_m3c1e")]
+layout_mode = 1
+party = ExtResource("6_o5e1d")

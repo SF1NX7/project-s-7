@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("1_in5fy")
+id = "F1"
 title = "Огненный шар"
 description = "Запускает малый шар огня, нанося небольшой урон огнём"
 icon = ExtResource("1_yv6pe")

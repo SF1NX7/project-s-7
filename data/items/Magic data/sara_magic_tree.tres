@@ -7,10 +7,13 @@
 [sub_resource type="Resource" id="Resource_slagc"]
 script = ExtResource("1_fr705")
 branch_name = "Fire"
-levels = Array[ExtResource("2_ejosl")]([null, null, null, null])
+metadata/_custom_type_script = "uid://ceaxls2yoxkf4"
+
+[sub_resource type="Resource" id="Resource_fr705"]
+script = ExtResource("1_fr705")
 metadata/_custom_type_script = "uid://ceaxls2yoxkf4"
 
 [resource]
 script = ExtResource("3_ubemi")
-branches = Array[ExtResource("1_fr705")]([SubResource("Resource_slagc"), null, null, null])
+branches = Array[ExtResource("1_fr705")]([SubResource("Resource_slagc"), SubResource("Resource_fr705")])
 metadata/_custom_type_script = "uid://k7rt87d6vjkw"

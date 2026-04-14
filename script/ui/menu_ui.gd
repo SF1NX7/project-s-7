@@ -6,6 +6,7 @@ extends CanvasLayer
 @onready var inventory_screen: Node = ui_root.get_node_or_null("InventoryScreen")
 @onready var equip_screen: Node = ui_root.get_node_or_null("EquipScreen")
 @onready var status_screen: Node = ui_root.get_node_or_null("StatusScreen")
+@onready var magic_screen: Node = ui_root.get_node_or_null("MagicScreen")
 
 @onready var panel_inventory: Control = menu_root.get_node_or_null("InventoryPanel") if menu_root else null
 @onready var panel_magic: Control = menu_root.get_node_or_null("MagicPanel") if menu_root else null
@@ -29,10 +30,6 @@ func _ready() -> void:
 	if inventory_screen == null:
 		push_error("menu_ui.gd: UiRoot/InventoryScreen not found. Check node paths.")
 		return
-	if equip_screen == null:
-		push_warning("menu_ui.gd: UiRoot/EquipScreen not found (Equip will be disabled).")
-	if status_screen == null:
-		push_warning("menu_ui.gd: UiRoot/StatusScreen not found (Status will be disabled).")
 
 	panels = [panel_inventory, panel_magic, panel_equip, panel_status]
 
@@ -42,6 +39,8 @@ func _ready() -> void:
 		equip_screen.visible = false
 	if status_screen:
 		status_screen.visible = false
+	if magic_screen:
+		magic_screen.visible = false
 
 	# Equip connections
 	if equip_screen:
@@ -57,6 +56,10 @@ func _ready() -> void:
 	# Status connection
 	if status_screen and status_screen.has_signal("closed") and not status_screen.closed.is_connected(_on_status_closed):
 		status_screen.closed.connect(_on_status_closed)
+
+	# Magic connection
+	if magic_screen and magic_screen.has_signal("closed") and not magic_screen.closed.is_connected(_on_magic_closed):
+		magic_screen.closed.connect(_on_magic_closed)
 
 	# Inventory picker result
 	if inventory_screen.has_signal("equip_item_selected") and not inventory_screen.equip_item_selected.is_connected(_on_equip_item_selected):
@@ -93,6 +96,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if inventory_screen and inventory_screen.visible:
 		return
 	if status_screen and status_screen.visible:
+		return
+	if magic_screen and magic_screen.visible:
 		return
 
 	if event.is_action_pressed("menu"):
@@ -150,7 +155,7 @@ func _activate_selected() -> void:
 		0:
 			_open_inventory()
 		1:
-			print("Magic selected")
+			_open_magic()
 		2:
 			_open_equip()
 		3:
@@ -162,6 +167,18 @@ func _open_inventory() -> void:
 	inventory_screen.visible = true
 	if inventory_screen.has_method("open"):
 		inventory_screen.call("open")
+
+
+func _open_magic() -> void:
+	_close_menu()
+	if magic_screen == null:
+		print("Magic selected (no MagicScreen node found)")
+		return
+	magic_screen.visible = true
+	if magic_screen.has_method("open"):
+		magic_screen.call("open")
+	else:
+		push_warning("MagicScreen missing open() method.")
 
 
 func _open_equip() -> void:
@@ -238,6 +255,13 @@ func _on_status_closed() -> void:
 	_open_menu()
 
 
+# ---- Magic ----
+func _on_magic_closed() -> void:
+	if magic_screen:
+		magic_screen.visible = false
+	_open_menu()
+
+
 func _update_selection_frame() -> void:
 	if not is_open:
 		return
@@ -253,4 +277,5 @@ func is_ui_blocking() -> bool:
 	return (menu_root and menu_root.visible) \
 		or (inventory_screen and inventory_screen.visible) \
 		or (equip_screen and equip_screen.visible) \
-		or (status_screen and status_screen.visible)
+		or (status_screen and status_screen.visible) \
+		or (magic_screen and magic_screen.visible)
