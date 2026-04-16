@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://d2iilp577gfmq"]
+
+[ext_resource type="Script" uid="uid://cuomdb3xaesf4" path="res://script/system/Chest.gd" id="1_5v4fd"]
+[ext_resource type="Script" uid="uid://t1mc6m4ghibm" path="res://script/system/ItemData.gd" id="2_rpp8y"]
+[ext_resource type="Script" uid="uid://erxev3a6uqsb" path="res://script/system/ChestData.gd" id="3_072wn"]
+[ext_resource type="Texture2D" uid="uid://nmoq5eydpm5e" path="res://art/items/Chest/chest_bronze_1.png" id="4_xetvg"]
+[ext_resource type="Texture2D" uid="uid://ygjhl3dh0d78" path="res://art/items/Chest/chest_bronze_2.png" id="5_34hjl"]
+
+[sub_resource type="Resource" id="Resource_5v4fd"]
+script = ExtResource("3_072wn")
+metadata/_custom_type_script = "uid://erxev3a6uqsb"
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_5v4fd"]
+size = Vector2(30, 30)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rpp8y"]
+size = Vector2(30, 30)
+
+[node name="Chest" type="Node2D" unique_id=1956883340 groups=["chests"]]
+position = Vector2(16, 16)
+script = ExtResource("1_5v4fd")
+data = SubResource("Resource_5v4fd")
+closed_texture = ExtResource("4_xetvg")
+opened_texture = ExtResource("5_34hjl")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=453282891]
+texture = ExtResource("4_xetvg")
+region_filter_clip_enabled = true
+
+[node name="Area2D" type="Area2D" parent="." unique_id=932410878]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1141253106]
+visible = false
+shape = SubResource("RectangleShape2D_5v4fd")
+
+[node name="Blocker" type="StaticBody2D" parent="." unique_id=513604166]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Blocker" unique_id=2081130403]
+visible = false
+shape = SubResource("RectangleShape2D_rpp8y")

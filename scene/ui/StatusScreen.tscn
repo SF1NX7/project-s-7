@@ -8,10 +8,16 @@
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_gq6sn"]
 texture = ExtResource("2_t6er3")
-modulate_color = Color(0.79661584, 0.7843895, 0.75910294, 0.9647059)
+modulate_color = Color(0.6727087, 0.6571415, 0.6260211, 0.9647059)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1my0q"]
+bg_color = Color(0.16470589, 0.21960784, 0.37254903, 0.9019608)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gq6sn"]
+bg_color = Color(0.16470589, 0.21960784, 0.37254903, 0.9019608)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_11ryh"]
-bg_color = Color(0.28627452, 0.27058825, 0.21568628, 0.9019608)
+bg_color = Color(0.16470589, 0.21960784, 0.37254903, 0.9019608)
 
 [node name="StatusScreen" type="Control" unique_id=1032469721]
 layout_mode = 3
@@ -69,6 +75,7 @@ offset_top = -0.16800117
 offset_right = 0.22399902
 offset_bottom = 0.055999756
 grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_1my0q")
 
 [node name="InfoText" type="RichTextLabel" parent="Background/InfoPanel" unique_id=673548911]
 layout_mode = 1
@@ -104,6 +111,7 @@ offset_left = -0.08001709
 offset_top = 0.14399719
 offset_right = 0.22399902
 offset_bottom = 0.16796875
+theme_override_styles/panel = SubResource("StyleBoxFlat_gq6sn")
 
 [node name="TalentText" type="RichTextLabel" parent="Background/TalentPanel" unique_id=2015376138]
 layout_mode = 1

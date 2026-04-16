@@ -6,9 +6,10 @@
 [resource]
 script = ExtResource("2_12ga0")
 title = "Комета"
-description = "Комета призванная с небес на землю"
+description = "Комета призванная с небес на землю, раскалываемая при ударе о землю"
 icon = ExtResource("1_yaamw")
 element = 1
 mp_cost = 15
-power = 25
+damage_min = 15
+damage_max = 30
 area_radius = 1

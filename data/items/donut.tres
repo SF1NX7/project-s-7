@@ -3,6 +3,12 @@
 [ext_resource type="Script" uid="uid://t1mc6m4ghibm" path="res://script/system/ItemData.gd" id="1_6qkm6"]
 [ext_resource type="Texture2D" uid="uid://bhxcasrayu6bc" path="res://data/items/icons/donut1S.png" id="1_endx4"]
 [ext_resource type="Texture2D" uid="uid://clq5b2wany078" path="res://data/items/previews/donut1L-removebg-preview.png" id="2_endx4"]
+[ext_resource type="Script" uid="uid://bgevxru0y4mao" path="res://script/system/ItemUseEffect.gd" id="4_ef2or"]
+
+[sub_resource type="Resource" id="Resource_lj3sd"]
+script = ExtResource("4_ef2or")
+hp_restore = 5
+metadata/_custom_type_script = "uid://bgevxru0y4mao"
 
 [resource]
 script = ExtResource("1_6qkm6")
@@ -12,4 +18,6 @@ title = "Пончик Тестовый"
 pickup_color = Color(0.7377491, 0.44643027, 0.54920304, 1)
 description = "Тестовый пончик любезно приготовленный Mrs. Ololo"
 item_class = 2
+usable_in_inventory = true
+use_effect = SubResource("Resource_lj3sd")
 metadata/_custom_type_script = "uid://t1mc6m4ghibm"

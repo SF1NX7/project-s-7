@@ -39,7 +39,7 @@ resistance = 1
 speed = 1
 metadata/_custom_type_script = "uid://crdx2krqtdpx"
 
-[sub_resource type="Resource" id="Resource_ee88u"]
+[sub_resource type="Resource" id="Resource_0pmno"]
 script = ExtResource("1_0c3kw")
 hero_name = "Sara"
 profession_name = "Маг"
@@ -55,4 +55,4 @@ metadata/_custom_type_script = "uid://drif5nqii2jwo"
 
 [resource]
 script = ExtResource("2_cyode")
-heroes = Array[ExtResource("1_0c3kw")]([SubResource("Resource_0c3kw"), SubResource("Resource_ee88u")])
+heroes = Array[ExtResource("1_0c3kw")]([SubResource("Resource_0c3kw"), SubResource("Resource_0pmno")])

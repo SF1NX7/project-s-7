@@ -12,12 +12,15 @@
 [ext_resource type="Texture2D" uid="uid://b8lvk3dvn43xm" path="res://art/Tiles/WaterTiles/water_animatiom_1.png" id="8_b3hyh"]
 [ext_resource type="Texture2D" uid="uid://c8on8n1ktsf2k" path="res://art/Portrait/cat128.png" id="9_b3hyh"]
 [ext_resource type="PackedScene" uid="uid://d5r87lolq6o8" path="res://scene/ui/dialogue_ui.tscn" id="10_eiplj"]
+[ext_resource type="Script" uid="uid://t1mc6m4ghibm" path="res://script/system/ItemData.gd" id="10_heg0q"]
+[ext_resource type="Script" uid="uid://erxev3a6uqsb" path="res://script/system/ChestData.gd" id="11_by30h"]
 [ext_resource type="PackedScene" uid="uid://bsxqpd3pfv3fa" path="res://scene/ui/portal.tscn" id="11_heg0q"]
 [ext_resource type="PackedScene" uid="uid://beifm5ixvfjwe" path="res://scene/ui/fade_layer.tscn" id="12_by30h"]
 [ext_resource type="PackedScene" uid="uid://by6aaijw277na" path="res://scene/objects/door.tscn" id="14_u6jkk"]
 [ext_resource type="PackedScene" uid="uid://c64pa8ud8y83u" path="res://scene/ui/menu_ui.tscn" id="15_mpv6a"]
 [ext_resource type="Resource" uid="uid://ctlilrq411yft" path="res://data/items/helm_1.tres" id="18_5wcif"]
 [ext_resource type="PackedScene" uid="uid://c1ltsobni28d0" path="res://scene/objects/SecretWall.tscn" id="18_qy5u4"]
+[ext_resource type="PackedScene" uid="uid://d2iilp577gfmq" path="res://scene/objects/chest.tscn" id="19_5wcif"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wygdx"]
 texture = ExtResource("2_ehcd8")
@@ -4955,6 +4958,11 @@ sources/3 = SubResource("TileSetAtlasSource_ehcd8")
 sources/1 = SubResource("TileSetAtlasSource_qy5u4")
 sources/5 = SubResource("TileSetAtlasSource_eiplj")
 
+[sub_resource type="Resource" id="Resource_eiplj"]
+script = ExtResource("11_by30h")
+gold = 100
+metadata/_custom_type_script = "uid://erxev3a6uqsb"
+
 [node name="World" type="Node2D" unique_id=269618916]
 script = ExtResource("1_43fva")
 
@@ -4980,6 +4988,10 @@ tile_set = SubResource("TileSet_wygdx")
 [node name="Door" parent="." unique_id=484262521 instance=ExtResource("14_u6jkk")]
 z_index = 0
 position = Vector2(176, -48)
+
+[node name="Chest_tscn" parent="." unique_id=1956883340 instance=ExtResource("19_5wcif")]
+position = Vector2(112, -48)
+data = SubResource("Resource_eiplj")
 
 [node name="Player" parent="." unique_id=1879990349 instance=ExtResource("6_d6ows")]
 position = Vector2(16, 48)

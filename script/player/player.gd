@@ -63,6 +63,10 @@ func start_move(direction: Vector2) -> void:
 		play_idle_animation()
 		return
 
+	if is_chest_on_tile(next_feet_position):
+		play_idle_animation()
+		return
+
 	if is_closed_door_on_tile(next_feet_position):
 		play_idle_animation()
 		return
@@ -120,6 +124,14 @@ func is_npc_on_tile(world_pos: Vector2) -> bool:
 		if npc_cell == target_cell:
 			return true
 
+	return false
+
+func is_chest_on_tile(world_pos: Vector2) -> bool:
+	var target_cell = world_to_cell(world_pos)
+	for chest in get_tree().get_nodes_in_group("chests"):
+		var chest_cell = world_to_cell(chest.global_position)
+		if chest_cell == target_cell:
+			return true
 	return false
 
 func play_walk_animation(direction: Vector2) -> void:

@@ -7,14 +7,31 @@ signal closed
 @export var party: PartyData
 
 @export_group("UI")
-@export var cursor_modulate: Color = Color(0.31, 0.31, 0.31, 0.522)
+# Keep these as your preferred values:
+@export var cursor_modulate: Color = Color(0.294, 0.294, 0.294, 0.447)
 @export var cursor_tint: Color = Color(1.0, 1.0, 1.0, 1.0)
+@export var cursor_tint_strong: Color = Color(1.0, 1.0, 1.0, 1.0)
 
+@export_group("Behavior")
+@export var show_description_only_in_grid: bool = true
+
+@export_group("Selection Scale")
+# Small scale pop for the currently selected slot (only in GRID focus).
+@export var selected_slot_scale: Vector2 = Vector2(1.06, 1.06)
+@export var normal_slot_scale: Vector2 = Vector2(1.0, 1.0)
+
+@onready var background: Node = $Background
 @onready var party_bar: Control = $Background/PartyBar
 @onready var magic_grid: Control = $Background/MagicGrid
-@onready var spell_name: Label = $Background/DescPanel/SpellName
-@onready var desc_text: RichTextLabel = $Background/DescPanel/SpellDesc
-@onready var spell_icon: TextureRect = $Background/DescPanel/SpellIcon if has_node("Background/DescPanel/SpellIcon") else null
+
+# Optional branch icon UI:
+# Background/BranchIcons/BranchIcon_1..BranchIcon_4 (TextureRect)
+@onready var branch_icons_root: Node = $Background/BranchIcons if has_node("Background/BranchIcons") else null
+
+# Desc UI (resolved in _ready)
+var spell_name: Label
+var desc_text: RichTextLabel
+var spell_icon: TextureRect
 
 var _portraits: Array[BaseButton] = []
 var _slots: Array[MagicSlot] = []
@@ -22,7 +39,7 @@ var _slots: Array[MagicSlot] = []
 enum Focus { PARTY, GRID }
 var _focus: Focus = Focus.PARTY
 var _hero_idx: int = 0
-var _slot_idx: int = 0  # 0..15
+var _slot_idx: int = 0  # 0..15, left->right, top->bottom
 
 
 func _ready() -> void:
@@ -30,6 +47,7 @@ func _ready() -> void:
 	set_process_unhandled_input(false)
 	_collect_nodes()
 	_try_autofill_party()
+	_resolve_desc_nodes()
 	_set_focus(Focus.PARTY)
 	_refresh_all()
 
@@ -39,6 +57,7 @@ func open() -> void:
 	set_process_unhandled_input(true)
 	_collect_nodes()
 	_try_autofill_party()
+	_resolve_desc_nodes()
 	_set_focus(Focus.PARTY)
 	_hero_idx = clampi(_hero_idx, 0, max(_hero_count() - 1, 0))
 	_slot_idx = clampi(_slot_idx, 0, max(_slots.size() - 1, 0))
@@ -142,7 +161,6 @@ func _collect_magic_slots_recursive(n: Node, out_arr: Array[MagicSlot]) -> void:
 
 
 func _try_autofill_party() -> void:
-	# If Party isn't set in Inspector, try to grab it from sibling screens.
 	if party != null:
 		return
 	var parent := get_parent()
@@ -180,6 +198,7 @@ func _select_hero(i: int) -> void:
 		_hero_idx = 0
 	else:
 		_hero_idx = clampi(i, 0, n - 1)
+	_slot_idx = clampi(_slot_idx, 0, max(_slots.size() - 1, 0))
 	_refresh_all()
 
 
@@ -193,15 +212,28 @@ func _set_focus(f: Focus) -> void:
 func _update_party_highlight() -> void:
 	for i in range(_portraits.size()):
 		var b: BaseButton = _portraits[i]
-		var active: bool = (_focus == Focus.PARTY and i == _hero_idx)
-		b.self_modulate = cursor_tint if active else cursor_modulate
+		var is_selected: bool = (i == _hero_idx)
+		if is_selected:
+			b.self_modulate = cursor_tint_strong if _focus == Focus.PARTY else cursor_tint
+		else:
+			b.self_modulate = cursor_modulate
 
 
 func _update_grid_highlight() -> void:
+	# When not in GRID focus: keep grid neutral (no tint, no scale).
+	if _focus != Focus.GRID:
+		for i in range(_slots.size()):
+			_slots[i].self_modulate = Color(1, 1, 1, 1)
+			_slots[i].scale = normal_slot_scale
+		return
+
+	# In GRID focus:
 	for i in range(_slots.size()):
 		var b: MagicSlot = _slots[i]
-		var active: bool = (_focus == Focus.GRID and i == _slot_idx)
-		b.self_modulate = cursor_tint if active else cursor_modulate
+		var active: bool = (i == _slot_idx)
+		# Keep backgrounds white, but add a small scale pop to the active slot.
+		b.self_modulate = cursor_tint if active else Color(1, 1, 1, 1)
+		b.scale = selected_slot_scale if active else normal_slot_scale
 
 
 func _apply_party_portraits() -> void:
@@ -218,6 +250,7 @@ func _apply_party_portraits() -> void:
 
 func _refresh_all() -> void:
 	_apply_party_portraits()
+	_update_branch_icons()
 	_fill_grid_from_hero()
 	_update_party_highlight()
 	_update_grid_highlight()
@@ -235,12 +268,12 @@ func _fill_grid_from_hero() -> void:
 
 	for i in range(_slots.size()):
 		var slot: MagicSlot = _slots[i]
-		var branch: int = i % 4
-		var level_index: int = i / 4
+		var branch_index: int = i / 4
+		var level_index: int = i % 4
 
 		var unlock: SpellUnlock = null
 		if tree != null:
-			unlock = tree.get_unlock(branch, level_index)
+			unlock = tree.get_unlock(branch_index, level_index)
 
 		if unlock == null or unlock.enabled == false:
 			slot.set_state(null, false, true)
@@ -252,39 +285,83 @@ func _fill_grid_from_hero() -> void:
 		slot.set_state(unlock.spell, true, is_locked)
 
 
+func _update_branch_icons() -> void:
+	if branch_icons_root == null:
+		return
+
+	var hero := _get_hero()
+	var tree: HeroMagicTree = hero.magic_tree if hero != null and ("magic_tree" in hero) else null
+
+	for i in range(4):
+		var n := branch_icons_root.get_node_or_null("BranchIcon_%d" % (i + 1))
+		if n == null or not (n is TextureRect):
+			continue
+		var tr := n as TextureRect
+		if tree == null or i >= tree.branches.size() or tree.branches[i] == null:
+			tr.texture = null
+			continue
+		tr.texture = tree.branches[i].branch_icon
+
+
+func _resolve_desc_nodes() -> void:
+	var dp := background.get_node_or_null("DescPanel")
+	if dp == null:
+		dp = _find_by_name(background, "DescPanel")
+
+	if dp != null:
+		spell_name = (dp.get_node_or_null("SpellName") as Label)
+		desc_text = (dp.get_node_or_null("SpellDesc") as RichTextLabel)
+		spell_icon = (dp.get_node_or_null("SpellIcon") as TextureRect)
+
+	if spell_name == null:
+		spell_name = _find_by_name(background, "SpellName") as Label
+	if desc_text == null:
+		desc_text = _find_by_name(background, "SpellDesc") as RichTextLabel
+	if spell_icon == null:
+		spell_icon = _find_by_name(background, "SpellIcon") as TextureRect
+
+
+func _find_by_name(root: Node, target_name: String) -> Node:
+	if root.name == target_name:
+		return root
+	for ch in root.get_children():
+		var found := _find_by_name(ch, target_name)
+		if found != null:
+			return found
+	return null
+
+
+func _clear_desc_panel() -> void:
+	if spell_name:
+		spell_name.text = ""
+	if desc_text:
+		desc_text.text = ""
+	if spell_icon:
+		spell_icon.texture = null
+
+
 func _show_selected_spell() -> void:
 	if desc_text == null or spell_name == null:
 		return
 
+	if show_description_only_in_grid and _focus == Focus.PARTY:
+		_clear_desc_panel()
+		return
+
 	var hero := _get_hero()
-
-	# While choosing hero, show hint (no mouse).
-	if _focus == Focus.PARTY:
-		spell_name.text = hero.hero_name if hero != null else "—"
-		desc_text.bbcode_enabled = true
-		desc_text.text = "A/D — выбрать героя\nE — перейти к магии\nTab/Esc — назад"
-		if spell_icon: spell_icon.texture = null
-		return
-
-	# GRID focus:
 	if hero == null:
-		spell_name.text = ""
-		desc_text.text = ""
-		if spell_icon: spell_icon.texture = null
+		_clear_desc_panel()
 		return
 
-	# If hero has no tree assigned, explain it.
 	if not ("magic_tree" in hero) or hero.magic_tree == null:
 		spell_name.text = hero.hero_name
 		desc_text.bbcode_enabled = true
-		desc_text.text = "Для этого героя не назначено дерево магии (magic_tree).\nНазначь его в party_data.tres -> Heroes[%d]." % _hero_idx
+		desc_text.text = "Нет дерева магии (magic_tree)."
 		if spell_icon: spell_icon.texture = null
 		return
 
 	if _slots.is_empty():
-		spell_name.text = ""
-		desc_text.text = ""
-		if spell_icon: spell_icon.texture = null
+		_clear_desc_panel()
 		return
 
 	_slot_idx = clampi(_slot_idx, 0, _slots.size() - 1)
@@ -293,14 +370,14 @@ func _show_selected_spell() -> void:
 	if not s.exists:
 		spell_name.text = "???"
 		desc_text.bbcode_enabled = true
-		desc_text.text = "Этот слот недоступен для этого героя."
+		desc_text.text = "Слот недоступен."
 		if spell_icon: spell_icon.texture = null
 		return
 
 	if s.locked or s.spell == null:
 		spell_name.text = "???"
 		desc_text.bbcode_enabled = true
-		desc_text.text = "Заклинание ещё не открыто (проверь required_level)."
+		desc_text.text = "Магия закрыта."
 		if spell_icon: spell_icon.texture = null
 		return
 
@@ -310,10 +387,8 @@ func _show_selected_spell() -> void:
 
 	desc_text.bbcode_enabled = true
 	var elem: String = str(SpellData.Element.keys()[int(sp.element)])
-	var eff: String = str(SpellData.EffectType.keys()[int(sp.effect_type)])
-	desc_text.text = "%s\n\n[b]MP:[/b] %d\n[b]Element:[/b] %s\n[b]Type:[/b] %s" % [
+	desc_text.text = "%s\n\nMana: %d\nElement: %s" % [
 		sp.description,
 		sp.mp_cost,
-		elem,
-		eff
+		elem
 	]

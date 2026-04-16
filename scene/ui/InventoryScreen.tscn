@@ -2,29 +2,25 @@
 
 [ext_resource type="Script" uid="uid://b3ujpswtw5sjs" path="res://script/ui/inventory_screen.gd" id="1_xxaoe"]
 [ext_resource type="PackedScene" uid="uid://cgw0vdbgakw6m" path="res://scene/ui/InventorySlot.tscn" id="2_8euqg"]
-[ext_resource type="FontFile" uid="uid://b44y6g3w8o64t" path="res://font/thin_pixel-7.ttf" id="3_8euqg"]
 [ext_resource type="Texture2D" uid="uid://rnlmndtxb2ld" path="res://art/BG11.jpeg" id="3_08iob"]
 [ext_resource type="Texture2D" uid="uid://clq5b2wany078" path="res://data/items/previews/donut1L-removebg-preview.png" id="4_pbgst"]
+[ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="6_gr2t4"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_gr2t4"]
 texture = ExtResource("3_08iob")
-expand_margin_left = 8.0
-expand_margin_top = 6.0
-expand_margin_right = 6.0
-expand_margin_bottom = 6.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_08iob"]
-bg_color = Color(0.8616538, 0.86153823, 0.72021765, 0.3137255)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-shadow_color = Color(0, 0, 0, 0.4745098)
+bg_color = Color(0.7294118, 0.61960787, 0.5568628, 0.5882353)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.4)
 shadow_size = 4
 shadow_offset = Vector2(-4, 4)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gr2t4"]
-bg_color = Color(0.8666667, 0.87058824, 0.6117647, 0.46666667)
+bg_color = Color(0.7294118, 0.61960787, 0.5568628, 0.5882353)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -49,200 +45,219 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_xxaoe")
 slot_scene = ExtResource("2_8euqg")
+gold_amount = 50
 
 [node name="Root" type="Control" parent="." unique_id=2096078012]
 layout_mode = 1
-anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
 
 [node name="Background" type="Panel" parent="Root" unique_id=1129830167]
-modulate = Color(0.86064225, 0.817808, 0.7949653, 1)
+modulate = Color(0.8613958, 0.81400067, 0.82792974, 1)
 self_modulate = Color(0.7608655, 0.85499096, 0.65714246, 1)
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+anchors_preset = -1
+anchor_left = 0.012
+anchor_top = 0.022000002
+anchor_right = 0.98700005
+anchor_bottom = 0.97800004
+offset_left = 0.3199997
+offset_top = 0.080001354
+offset_right = 0.3199463
+offset_bottom = -0.08001709
 theme_override_styles/panel = SubResource("StyleBoxTexture_gr2t4")
 
-[node name="InnerMargin" type="MarginContainer" parent="Root" unique_id=872078095]
+[node name="Content" type="Control" parent="Root/Background" unique_id=1917672610]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
+anchor_left = 0.026
+anchor_top = 0.047000002
+anchor_right = 0.97400004
+anchor_bottom = 0.95300007
+offset_left = -0.22400093
+offset_top = -0.16800308
+offset_right = 0.22399902
+offset_bottom = 0.16796875
 
-[node name="Content" type="HBoxContainer" parent="Root/InnerMargin" unique_id=738148163]
-layout_mode = 2
-theme_override_constants/separation = 24
-
-[node name="left" type="VBoxContainer" parent="Root/InnerMargin/Content" unique_id=1793640692]
-layout_mode = 2
+[node name="left" type="VBoxContainer" parent="Root/Background/Content" unique_id=1793640692]
+layout_mode = 0
+offset_right = 392.0
+offset_bottom = 312.0
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="tabs" type="HBoxContainer" parent="Root/InnerMargin/Content/left" unique_id=280122776]
+[node name="tabs" type="HBoxContainer" parent="Root/Background/Content/left" unique_id=280122776]
 custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="TabAll" type="Button" parent="Root/InnerMargin/Content/left/tabs" unique_id=573243906]
+[node name="TabAll" type="Button" parent="Root/Background/Content/left/tabs" unique_id=573243906]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
 size_flags_horizontal = 7
 size_flags_vertical = 5
 theme_override_constants/line_spacing = 0
-theme_override_fonts/font = ExtResource("3_8euqg")
-theme_override_font_sizes/font_size = 30
+theme_override_fonts/font = ExtResource("6_gr2t4")
+theme_override_font_sizes/font_size = 16
 text = "All"
 
-[node name="TabWeapon" type="Button" parent="Root/InnerMargin/Content/left/tabs" unique_id=286427656]
+[node name="TabWeapon" type="Button" parent="Root/Background/Content/left/tabs" unique_id=286427656]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
 size_flags_horizontal = 7
 size_flags_vertical = 5
-theme_override_fonts/font = ExtResource("3_8euqg")
-theme_override_font_sizes/font_size = 30
+theme_override_fonts/font = ExtResource("6_gr2t4")
+theme_override_font_sizes/font_size = 16
 text = "Weapon"
 
-[node name="TabArmor" type="Button" parent="Root/InnerMargin/Content/left/tabs" unique_id=115004254]
+[node name="TabArmor" type="Button" parent="Root/Background/Content/left/tabs" unique_id=115004254]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
 size_flags_horizontal = 7
 size_flags_vertical = 5
-theme_override_fonts/font = ExtResource("3_8euqg")
-theme_override_font_sizes/font_size = 30
+theme_override_fonts/font = ExtResource("6_gr2t4")
+theme_override_font_sizes/font_size = 16
 text = "Armor"
 
-[node name="TabPotion" type="Button" parent="Root/InnerMargin/Content/left/tabs" unique_id=56390533]
+[node name="TabPotion" type="Button" parent="Root/Background/Content/left/tabs" unique_id=56390533]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
 size_flags_horizontal = 7
 size_flags_vertical = 5
-theme_override_fonts/font = ExtResource("3_8euqg")
-theme_override_font_sizes/font_size = 30
+theme_override_fonts/font = ExtResource("6_gr2t4")
+theme_override_font_sizes/font_size = 16
 text = "Potion"
 
-[node name="TabOther" type="Button" parent="Root/InnerMargin/Content/left/tabs" unique_id=523736555]
+[node name="TabOther" type="Button" parent="Root/Background/Content/left/tabs" unique_id=523736555]
 custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
 size_flags_horizontal = 7
 size_flags_vertical = 5
-theme_override_fonts/font = ExtResource("3_8euqg")
-theme_override_font_sizes/font_size = 30
+theme_override_fonts/font = ExtResource("6_gr2t4")
+theme_override_font_sizes/font_size = 16
 text = "Other
 "
 
-[node name="Scroll" type="ScrollContainer" parent="Root/InnerMargin/Content/left" unique_id=1018038091]
+[node name="Scroll" type="ScrollContainer" parent="Root/Background/Content/left" unique_id=1018038091]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 3
 
-[node name="Grid" type="GridContainer" parent="Root/InnerMargin/Content/left/Scroll" unique_id=25719634]
+[node name="Grid" type="GridContainer" parent="Root/Background/Content/left/Scroll" unique_id=25719634]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 8
 
-[node name="Action" type="VBoxContainer" parent="Root/InnerMargin/Content/left" unique_id=1033734682]
+[node name="Action" type="VBoxContainer" parent="Root/Background/Content/left" unique_id=1033734682]
 layout_mode = 2
 size_flags_horizontal = 0
 
-[node name="BtnUse" type="Button" parent="Root/InnerMargin/Content/left/Action" unique_id=133409]
+[node name="BtnUse" type="Button" parent="Root/Background/Content/left/Action" unique_id=133409]
 custom_minimum_size = Vector2(128, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.90005445, 0.84463793, 0.25768656, 1)
-theme_override_fonts/font = ExtResource("3_8euqg")
-theme_override_font_sizes/font_size = 24
+theme_override_fonts/font = ExtResource("6_gr2t4")
+theme_override_font_sizes/font_size = 16
 button_mask = 0
 text = "USE"
 
-[node name="BtnDrop" type="Button" parent="Root/InnerMargin/Content/left/Action" unique_id=1032428161]
+[node name="BtnDrop" type="Button" parent="Root/Background/Content/left/Action" unique_id=1032428161]
 custom_minimum_size = Vector2(128, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.90005445, 0.84463793, 0.25768656, 1)
-theme_override_fonts/font = ExtResource("3_8euqg")
-theme_override_font_sizes/font_size = 24
+theme_override_fonts/font = ExtResource("6_gr2t4")
+theme_override_font_sizes/font_size = 16
 button_mask = 0
 text = "DROP"
 
-[node name="Right" type="VBoxContainer" parent="Root/InnerMargin/Content" unique_id=130569827]
-layout_mode = 2
+[node name="GoldLabel" type="Label" parent="Root/Background/Content" unique_id=893098856]
+custom_minimum_size = Vector2(128, 0)
+layout_mode = 0
+offset_left = 168.0
+offset_top = 280.0
+offset_right = 392.0
+offset_bottom = 312.0
+size_flags_horizontal = 8
+size_flags_vertical = 8
+theme_override_colors/font_color = Color(1, 1, 1, 0.7529412)
+theme_override_constants/line_spacing = 3
+theme_override_constants/outline_size = 4
+theme_override_constants/shadow_outline_size = 1
+theme_override_fonts/font = ExtResource("6_gr2t4")
+theme_override_font_sizes/font_size = 24
+text = "GOLD : "
+vertical_alignment = 2
+
+[node name="Right" type="VBoxContainer" parent="Root/Background/Content" unique_id=130569827]
+layout_mode = 0
+offset_left = 400.0
+offset_right = 592.0
+offset_bottom = 312.0
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="PreviewPanel" type="Panel" parent="Root/InnerMargin/Content/Right" unique_id=1308763506]
-custom_minimum_size = Vector2(192, 192)
+[node name="PreviewPanel" type="Panel" parent="Root/Background/Content/Right" unique_id=1308763506]
+custom_minimum_size = Vector2(160, 160)
 layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_08iob")
 
-[node name="PreviewIcon" type="TextureRect" parent="Root/InnerMargin/Content/Right/PreviewPanel" unique_id=977694942]
+[node name="PreviewIcon" type="TextureRect" parent="Root/Background/Content/Right/PreviewPanel" unique_id=977694942]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 3.0
-offset_right = -4.0
-offset_bottom = -3.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("4_pbgst")
 
-[node name="DescPanel" type="Panel" parent="Root/InnerMargin/Content/Right" unique_id=677189925]
+[node name="DescPanel" type="Panel" parent="Root/Background/Content/Right" unique_id=677189925]
+custom_minimum_size = Vector2(160, 144)
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_horizontal = 8
+size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_gr2t4")
 
-[node name="TitleLabel" type="Label" parent="Root/InnerMargin/Content/Right/DescPanel" unique_id=1311108564]
-layout_mode = 0
-offset_left = 1.0
-offset_top = 1.0
-offset_right = 191.0
-offset_bottom = 28.0
-theme_override_colors/font_color = Color(0.032967977, 0.032967992, 0.03296798, 1)
+[node name="TitleLabel" type="Label" parent="Root/Background/Content/Right/DescPanel" unique_id=1311108564]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 0.215
+offset_bottom = 0.03999901
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_constants/line_spacing = 3
 theme_override_constants/shadow_outline_size = 1
-theme_override_fonts/font = ExtResource("3_8euqg")
-theme_override_font_sizes/font_size = 26
-text = "Тестовый текст"
+theme_override_fonts/font = ExtResource("6_gr2t4")
+theme_override_font_sizes/font_size = 18
+text = "Тест"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
 clip_text = true
 text_overrun_behavior = 6
 
-[node name="DescLabel" type="RichTextLabel" parent="Root/InnerMargin/Content/Right/DescPanel" unique_id=271850502]
+[node name="DescLabel" type="RichTextLabel" parent="Root/Background/Content/Right/DescPanel" unique_id=271850502]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = -1
+anchor_top = 0.22200002
 anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -5.0
-offset_top = 26.0
-offset_right = 5.0
-offset_bottom = 2.0
+anchor_bottom = 0.97900003
+offset_top = 0.031993866
+offset_bottom = 3.024002
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/default_color = Color(0.10822462, 0.10822461, 0.10822461, 1)
-theme_override_fonts/normal_font = ExtResource("3_8euqg")
-theme_override_font_sizes/normal_font_size = 22
+theme_override_colors/default_color = Color(1, 1, 1, 1)
+theme_override_fonts/normal_font = ExtResource("6_gr2t4")
+theme_override_font_sizes/normal_font_size = 14
 theme_override_styles/normal = SubResource("StyleBoxFlat_8euqg")
 bbcode_enabled = true
-text = "Тестовое описание предмета, который описывает тестовый предмет и который описывает тестовый предмет."
+text = "лыоварыловралоырвалоырвалыорвалоырвлаорылвоарлыовра"
 fit_content = true
 scroll_active = false
