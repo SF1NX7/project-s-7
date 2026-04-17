@@ -126,12 +126,19 @@ func is_npc_on_tile(world_pos: Vector2) -> bool:
 
 	return false
 
+
 func is_chest_on_tile(world_pos: Vector2) -> bool:
 	var target_cell = world_to_cell(world_pos)
+
 	for chest in get_tree().get_nodes_in_group("chests"):
-		var chest_cell = world_to_cell(chest.global_position)
-		if chest_cell == target_cell:
-			return true
+		if chest == null:
+			continue
+		# Chests are Node2D. Use their global_position as the tile anchor.
+		if chest is Node2D:
+			var chest_cell = world_to_cell((chest as Node2D).global_position)
+			if chest_cell == target_cell:
+				return true
+
 	return false
 
 func play_walk_animation(direction: Vector2) -> void:

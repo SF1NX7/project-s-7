@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://cyjoylj3306pj"]
+
+[node name="Main" type="Node2D" unique_id=578203897]
+
+[node name="WorldRoot" type="Node2D" parent="." unique_id=1201764741]
+
+[node name="UIRoot" type="CanvasLayer" parent="." unique_id=1914726706]
