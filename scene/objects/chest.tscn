@@ -34,6 +34,7 @@ visible = false
 shape = SubResource("RectangleShape2D_5v4fd")
 
 [node name="Blocker" type="StaticBody2D" parent="." unique_id=513604166]
+visible = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Blocker" unique_id=2081130403]
 shape = SubResource("RectangleShape2D_rpp8y")

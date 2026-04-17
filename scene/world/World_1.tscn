@@ -5085,6 +5085,7 @@ visible = false
 visible = false
 
 [node name="WanderArea_NPC1" type="Area2D" parent="." unique_id=419219353]
+visible = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="WanderArea_NPC1" unique_id=2143701999]
 position = Vector2(-100.5, 0)
