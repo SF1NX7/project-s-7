@@ -208,7 +208,7 @@ shape = SubResource("RectangleShape2D_js7pq")
 debug_color = Color(0.011764706, 0.7490196, 0.023529412, 0.41960785)
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1265035345]
-zoom = Vector2(1.38, 1.38)
+zoom = Vector2(1.1, 1.1)
 
 [node name="InteractionArea" type="Area2D" parent="." unique_id=1693438874]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://div8os81h6yy6"
-path="res://.godot/imported/tiles grass and trail.png-f849374a95b7457c0d5ff8f47be8c9b0.ctex"
+uid="uid://vxnjjd3m3iwb"
+path="res://.godot/imported/stones_1.png-081ed494416c1c37b1a700e3dc12a6e3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/tiles grass and trail.png"
-dest_files=["res://.godot/imported/tiles grass and trail.png-f849374a95b7457c0d5ff8f47be8c9b0.ctex"]
+source_file="res://art/stones_1.png"
+dest_files=["res://.godot/imported/stones_1.png-081ed494416c1c37b1a700e3dc12a6e3.ctex"]
 
 [params]
 

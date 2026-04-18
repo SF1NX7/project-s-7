@@ -24,6 +24,7 @@ closed_texture = ExtResource("4_xetvg")
 opened_texture = ExtResource("5_34hjl")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=453282891]
+position = Vector2(0, -10)
 texture = ExtResource("4_xetvg")
 region_filter_clip_enabled = true
 

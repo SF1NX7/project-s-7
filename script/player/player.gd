@@ -7,10 +7,15 @@ var target_position: Vector2
 var can_move: bool = true
 var last_direction: Vector2 = Vector2.DOWN
 
+# Reservation: while moving, we reserve the target cell.
+var reserved_cell_valid: bool = false
+var reserved_cell: Vector2i = Vector2i.ZERO
+
 @onready var blocked_layer = $"../Blocked"
 @onready var anim = $AnimatedSprite2D
 
 func _ready() -> void:
+	add_to_group("player")
 	target_position = global_position
 	play_idle_animation()
 
@@ -31,6 +36,7 @@ func _process(delta: float) -> void:
 	if global_position.distance_to(target_position) < 1.0:
 		global_position = target_position
 		moving = false
+	reserved_cell_valid = false
 
 	try_move()
 
@@ -78,6 +84,8 @@ func start_move(direction: Vector2) -> void:
 	play_walk_animation(direction)
 
 	target_position = next_position
+	reserved_cell = cell
+	reserved_cell_valid = true
 	moving = true
 
 func _unhandled_input(event: InputEvent) -> void:

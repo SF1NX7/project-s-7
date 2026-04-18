@@ -2,13 +2,18 @@
 
 [ext_resource type="Script" uid="uid://bx702ewe0ye4n" path="res://script/ui/dialogue_ui.gd" id="1_2x5cq"]
 [ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="2_75ktm"]
+[ext_resource type="Texture2D" uid="uid://c4n22js2les01" path="res://art/Portrait/Text_Frame.png" id="3_eg32v"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q4et8"]
-bg_color = Color(0.25490198, 0.1764706, 0.078431375, 0.80784315)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
+bg_color = Color(0.2177499, 0.15199581, 0.07613736, 0.80784315)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+corner_detail = 1
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_eg32v"]
+texture = ExtResource("3_eg32v")
 
 [sub_resource type="Theme" id="Theme_p1v5b"]
 
@@ -30,22 +35,6 @@ grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_q4et8")
 metadata/_edit_use_anchors_ = true
 
-[node name="DialogueText" type="RichTextLabel" parent="DialogueBox" unique_id=1746066210]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.26900002
-anchor_top = 0.05
-anchor_right = 0.98700005
-anchor_bottom = 0.95000005
-offset_left = 0.14398193
-offset_right = 0.11199951
-theme = SubResource("Theme_p1v5b")
-theme_type_variation = &"GraphFrameTitleLabel"
-theme_override_fonts/normal_font = ExtResource("2_75ktm")
-theme_override_font_sizes/normal_font_size = 28
-bbcode_enabled = true
-metadata/_edit_use_anchors_ = true
-
 [node name="Portrait" type="TextureRect" parent="DialogueBox" unique_id=1326713532]
 layout_mode = 1
 anchors_preset = -1
@@ -55,4 +44,37 @@ anchor_right = 0.24400002
 anchor_bottom = 0.95000005
 offset_left = -0.112000465
 offset_right = -0.25601196
+metadata/_edit_use_anchors_ = true
+
+[node name="Panel" type="Panel" parent="DialogueBox" unique_id=37929884]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.256
+anchor_top = 0.05
+anchor_right = 0.98700005
+anchor_bottom = 0.95000005
+offset_left = 0.2559967
+offset_right = 0.11199951
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_eg32v")
+
+[node name="DialogueText" type="RichTextLabel" parent="DialogueBox/Panel" unique_id=1746066210]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = -0.549041
+anchor_top = -1.3194444
+anchor_right = 0.6304854
+anchor_bottom = -0.43655545
+offset_left = 266.36267
+offset_top = 198.0
+offset_right = 157.72084
+offset_bottom = 198.86398
+theme = SubResource("Theme_p1v5b")
+theme_type_variation = &"GraphFrameTitleLabel"
+theme_override_colors/default_color = Color(1, 0.7780593, 0.613696, 1)
+theme_override_fonts/normal_font = ExtResource("2_75ktm")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "Abcd"
 metadata/_edit_use_anchors_ = true
