@@ -13,8 +13,11 @@
 [ext_resource type="Script" uid="uid://t1mc6m4ghibm" path="res://script/system/ItemData.gd" id="10_heg0q"]
 [ext_resource type="Script" uid="uid://erxev3a6uqsb" path="res://script/system/ChestData.gd" id="11_by30h"]
 [ext_resource type="PackedScene" uid="uid://bsxqpd3pfv3fa" path="res://scene/ui/portal.tscn" id="11_heg0q"]
+[ext_resource type="Resource" uid="uid://cy6n0261cs7eq" path="res://art/items/Potions/hp_small.tres" id="12_kuyyy"]
 [ext_resource type="PackedScene" uid="uid://by6aaijw277na" path="res://scene/objects/door.tscn" id="14_u6jkk"]
 [ext_resource type="Texture2D" uid="uid://cn7a5vusrxgkn" path="res://art/Portrait/oldman1.png" id="15_heg0q"]
+[ext_resource type="Script" uid="uid://pwpwjeiayhhk" path="res://script/dialogue/DialogueVariant.gd" id="16_by30h"]
+[ext_resource type="Script" uid="uid://bmojo4bqyiu5y" path="res://script/dialogue/NPCDialogue.gd" id="16_kuyyy"]
 [ext_resource type="Resource" uid="uid://ctlilrq411yft" path="res://data/items/helm_1.tres" id="18_5wcif"]
 [ext_resource type="PackedScene" uid="uid://c1ltsobni28d0" path="res://scene/objects/SecretWall.tscn" id="18_qy5u4"]
 [ext_resource type="PackedScene" uid="uid://d2iilp577gfmq" path="res://scene/objects/chest.tscn" id="19_5wcif"]
@@ -1586,7 +1589,6 @@ texture_region_size = Vector2i(32, 32)
 31:31/0 = 0
 
 [sub_resource type="CompressedTexture2D" id="CompressedTexture2D_kuyyy"]
-load_path = "res://.godot/imported/tiles grass and trail.png-f849374a95b7457c0d5ff8f47be8c9b0.ctex"
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qy5u4"]
 texture = SubResource("CompressedTexture2D_kuyyy")
@@ -1692,6 +1694,38 @@ script = ExtResource("11_by30h")
 gold = 100
 metadata/_custom_type_script = "uid://erxev3a6uqsb"
 
+[sub_resource type="Resource" id="Resource_t8ryi"]
+script = ExtResource("11_by30h")
+items = Array[ExtResource("10_heg0q")]([ExtResource("12_kuyyy")])
+metadata/_custom_type_script = "uid://erxev3a6uqsb"
+
+[sub_resource type="Resource" id="Resource_by30h"]
+script = ExtResource("16_by30h")
+condition_type = 3
+key = "helm_leather"
+lines = Array[String](["Какой классный шлем."])
+metadata/_custom_type_script = "uid://pwpwjeiayhhk"
+
+[sub_resource type="Resource" id="Resource_kuyyy"]
+script = ExtResource("16_by30h")
+lines = Array[String](["Добрый день... что-то хотел?"])
+metadata/_custom_type_script = "uid://pwpwjeiayhhk"
+
+[sub_resource type="Resource" id="Resource_ndirx"]
+script = ExtResource("16_kuyyy")
+variants = Array[ExtResource("16_by30h")]([SubResource("Resource_by30h"), SubResource("Resource_kuyyy")])
+metadata/_custom_type_script = "uid://bmojo4bqyiu5y"
+
+[sub_resource type="Resource" id="Resource_65i5v"]
+script = ExtResource("16_by30h")
+lines = Array[String](["Дарова"])
+metadata/_custom_type_script = "uid://pwpwjeiayhhk"
+
+[sub_resource type="Resource" id="Resource_bev6x"]
+script = ExtResource("16_kuyyy")
+variants = Array[ExtResource("16_by30h")]([SubResource("Resource_65i5v")])
+metadata/_custom_type_script = "uid://bmojo4bqyiu5y"
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_heg0q"]
 size = Vector2(253, 62)
 
@@ -1731,23 +1765,28 @@ base_lines = Array[String](["Вы открываете сундук..."])
 header_font_size = 36
 loot_font_size = 36
 
+[node name="Chest_tscn2" parent="." unique_id=1953529173 instance=ExtResource("19_5wcif")]
+position = Vector2(-240, 16)
+data = SubResource("Resource_t8ryi")
+base_lines = Array[String](["Вы открываете сундук..."])
+header_font_size = 36
+loot_font_size = 36
+
 [node name="Player" parent="." unique_id=1879990349 instance=ExtResource("6_d6ows")]
 position = Vector2(16, 48)
 
 [node name="NPC 1" parent="." unique_id=841262844 instance=ExtResource("7_qy5u4")]
 position = Vector2(-48, 16)
-dialogue_lines = Array[String](["Добрый день юноша. Хорошая погодка не правда ли?", "Ладно  , давай уже топай"])
 portrait = ExtResource("15_heg0q")
+npc_dialogue = SubResource("Resource_ndirx")
 move_speed = 30.0
-center_epsilon = 0.1
 wander_area_path = NodePath("../WanderArea_NPC1")
 
 [node name="NPC 2" parent="." unique_id=327999039 instance=ExtResource("7_qy5u4")]
 position = Vector2(16, -112)
-dialogue_lines = Array[String](["Какие интересные деревья, люблю ходить возле них"])
 portrait = ExtResource("15_heg0q")
+npc_dialogue = SubResource("Resource_bev6x")
 move_speed = 30.0
-center_epsilon = 0.1
 wander_area_path = NodePath("../WanderArea_NPC2")
 
 [node name="Roof" type="TileMapLayer" parent="." unique_id=932412935]
@@ -1789,13 +1828,10 @@ item_data = ExtResource("18_5wcif")
 lines = Array[String](["Ты осматриваешь стену…", "В стене что-то есть! Поковырявшись, ты находишь шлем..."])
 
 [node name="Menu_ui" parent="." unique_id=211641837 instance=ExtResource("20_heg0q")]
-visible = false
 
 [node name="DialogueUI" parent="." unique_id=203183458 groups=["dialogue_ui"] instance=ExtResource("21_by30h")]
-visible = false
 
 [node name="FadeLayer" parent="." unique_id=3859083 instance=ExtResource("22_kuyyy")]
-visible = false
 
 [node name="WanderArea_NPC1" type="Area2D" parent="." unique_id=419219353]
 

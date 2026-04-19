@@ -1,17 +1,25 @@
 [gd_resource type="Resource" script_class="ItemData" format=3 uid="uid://ctlilrq411yft"]
 
+[ext_resource type="Script" uid="uid://crdx2krqtdpx" path="res://script/system/stats_bonus.gd" id="1_34uis"]
 [ext_resource type="Texture2D" uid="uid://3afsjis3jor5" path="res://data/items/icons/Helm_1s.png" id="1_fxycv"]
 [ext_resource type="Texture2D" uid="uid://dv72ohhyd4ov7" path="res://data/items/previews/Helm_1L.png" id="2_34uis"]
 [ext_resource type="Script" uid="uid://t1mc6m4ghibm" path="res://script/system/ItemData.gd" id="3_ognft"]
 
+[sub_resource type="Resource" id="Resource_ognft"]
+script = ExtResource("1_34uis")
+defense = 1
+metadata/_custom_type_script = "uid://crdx2krqtdpx"
+
 [resource]
 script = ExtResource("3_ognft")
+id = "helm_leather"
 icon = ExtResource("1_fxycv")
 preview = ExtResource("2_34uis")
-title = "Кожаный шлем"
 pickup_color = Color(0.6777546, 0.6177368, 0.7019075, 1)
+title = "Кожаный шлем"
 description = "Простой кожаный шлем, дающий небольшую защиту головы. "
 item_class = 1
 equip_slot = 1
-required_profs_mask = 47
+required_profs_mask = 511
+bonuses = SubResource("Resource_ognft")
 metadata/_custom_type_script = "uid://t1mc6m4ghibm"

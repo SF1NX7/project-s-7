@@ -124,7 +124,9 @@ func _refresh() -> void:
 	name_label.text = hero.hero_name
 	portrait.texture = hero.portrait
 
-	var bs := hero.base_stats if hero.base_stats != null else StatsBonus.new()
+	var bs: StatsBonus = hero.base_stats if hero.base_stats != null else StatsBonus.new()
+	var eb: StatsBonus = _get_equipment_bonus(_index)
+	var ts: StatsBonus = _sum_stats(bs, eb)
 
 	var level := hero.level if "level" in hero else 1
 	var xp := hero.xp if "xp" in hero else 0
@@ -136,8 +138,8 @@ func _refresh() -> void:
 	var talent_desc := hero.talent_desc if "talent_desc" in hero else ""
 	var talent_icon_tex := hero.talent_icon if "talent_icon" in hero else null
 
-	var max_hp := bs.hp
-	var max_mp := bs.mp
+	var max_hp: int = ts.hp
+	var max_mp: int = ts.mp
 	var cur_hp := _clamp_current_to_max(hp_current, max_hp)
 	var cur_mp := _clamp_current_to_max(mp_current, max_mp)
 
@@ -152,16 +154,16 @@ func _refresh() -> void:
 
 	# --- Stats: 2 columns, bigger labels look better with your font size ---
 	var left := ""
-	left += "%sHealth: %d / %d\n" % [_pad(left_column_pad), cur_hp, max_hp]
-	left += "%sAttack: %d\n" % [_pad(left_column_pad), bs.attack]
-	left += "%sDefense: %d\n" % [_pad(left_column_pad), bs.defense]
-	left += "%sSpeed: %d\n" % [_pad(left_column_pad), bs.speed]
+	left += "%sHealth: %d / %d%s\n" % [_pad(left_column_pad), cur_hp, max_hp, _fmt_bonus(eb.hp)]
+	left += "%sAttack: %d%s\n" % [_pad(left_column_pad), ts.attack, _fmt_bonus(eb.attack)]
+	left += "%sDefense: %d%s\n" % [_pad(left_column_pad), ts.defense, _fmt_bonus(eb.defense)]
+	left += "%sSpeed: %d%s\n" % [_pad(left_column_pad), ts.speed, _fmt_bonus(eb.speed)]
 
 	var right := ""
-	right += "%sMana: %d / %d\n" % [_pad(right_column_pad), cur_mp, max_mp]
-	right += "%sMagic: %d\n" % [_pad(right_column_pad), bs.magic]
-	right += "%sResistance: %d\n" % [_pad(right_column_pad), bs.resistance]
-	right += "%sLuck: %d\n" % [_pad(right_column_pad), bs.luck]
+	right += "%sMana: %d / %d%s\n" % [_pad(right_column_pad), cur_mp, max_mp, _fmt_bonus(eb.mp)]
+	right += "%sMagic: %d%s\n" % [_pad(right_column_pad), ts.magic, _fmt_bonus(eb.magic)]
+	right += "%sResistance: %d%s\n" % [_pad(right_column_pad), ts.resistance, _fmt_bonus(eb.resistance)]
+	right += "%sLuck: %d%s\n" % [_pad(right_column_pad), ts.luck, _fmt_bonus(eb.luck)]
 
 	var stats := "[table=2]"
 	stats += "[cell]%s[/cell][cell]%s[/cell]" % [left, right]
@@ -177,3 +179,66 @@ func _refresh() -> void:
 		talent_text.text = "[b]Особый талант:[/b]\n—"
 	else:
 		talent_text.text = "[b]Особый талант: %s[/b]\n%s" % [talent_name, talent_desc]
+
+
+# ---------------- Equipment bonus helpers ----------------
+
+func _sum_stats(a: StatsBonus, b: StatsBonus) -> StatsBonus:
+	var s: StatsBonus = StatsBonus.new()
+	s.hp = a.hp + b.hp
+	s.mp = a.mp + b.mp
+	s.attack = a.attack + b.attack
+	s.magic = a.magic + b.magic
+	s.defense = a.defense + b.defense
+	s.resistance = a.resistance + b.resistance
+	s.speed = a.speed + b.speed
+	s.luck = a.luck + b.luck
+	return s
+
+
+func _item_bonus(item: Resource) -> StatsBonus:
+	# Supports both 'bonus' and 'bonuses' naming (in case ItemData changed).
+	if item == null:
+		return StatsBonus.new()
+	if ("bonuses" in item) and item.bonuses != null:
+		return item.bonuses
+	if ("bonus" in item) and item.bonus != null:
+		return item.bonus
+	return StatsBonus.new()
+
+
+func _get_equipment_bonus(hero_idx: int) -> StatsBonus:
+	# Sums bonuses from items equipped in EquipScreen._equipped[hero_idx]
+	var out: StatsBonus = StatsBonus.new()
+
+	var root: Node = get_tree().current_scene
+	if root == null:
+		return out
+
+	# Find EquipScreen by name (as in your menu scene)
+	var equip_screen: Node = root.find_child("EquipScreen", true, false)
+	if equip_screen == null:
+		return out
+
+	if not ("_equipped" in equip_screen):
+		return out
+
+	var eq: Dictionary = equip_screen._equipped
+	if not eq.has(hero_idx):
+		return out
+
+	var slots: Dictionary = eq[hero_idx]
+	for k in slots.keys():
+		var item = slots[k]
+		if item == null:
+			continue
+		out = _sum_stats(out, _item_bonus(item))
+
+	return out
+
+
+func _fmt_bonus(v: int) -> String:
+	if v == 0:
+		return ""
+	var sign: String = "+" if v > 0 else ""
+	return " [color=#7CFF7C](%s%d)[/color]" % [sign, v]

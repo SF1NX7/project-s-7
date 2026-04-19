@@ -13,6 +13,8 @@ class_name NPC
 @export var dialogue_lines: Array[String] = []
 @export var portrait: Texture2D
 
+
+@export var npc_dialogue: NPCDialogue
 @export_group("Grid")
 @export var tile_size: int = 32
 @export var move_speed: float = 96.0
@@ -117,6 +119,7 @@ func _process(delta: float) -> void:
 
 # Player calls interact(). Dialogue will start only when centered (queued otherwise).
 func interact(player: Node = null) -> void:
+	# Uses npc_dialogue (NPCDialogue.tres) if assigned, otherwise falls back to legacy dialogue_lines.
 	if _dialogue_active() or _in_dialogue:
 		return
 
@@ -129,11 +132,11 @@ func interact(player: Node = null) -> void:
 	_pending_player = pl
 	_pending_dialogue = true
 
-	# Start immediately only if we are already centered & not moving
+	# Only start when centered (keeps grid alignment)
 	if not moving and _is_on_tile_center():
 		_start_dialogue_now()
 		return
-	# else: let current step finish, then start
+	# else: queue until we reach center
 
 
 func _start_dialogue_now() -> void:
@@ -157,7 +160,7 @@ func _start_dialogue_now() -> void:
 	_play_idle()
 
 	if dialogue_ui.has_method("start_dialogue"):
-		dialogue_ui.start_dialogue(dialogue_lines, portrait)
+		dialogue_ui.start_dialogue(_pick_dialogue_lines(), portrait)
 
 		if dialogue_ui.has_signal("finished"):
 			await dialogue_ui.finished
@@ -455,3 +458,160 @@ func _find_first_animated_sprite(root: Node) -> AnimatedSprite2D:
 		if found != null:
 			return found
 	return null
+
+
+# ---------------- Dialogue selection (Inspector-driven) ----------------
+
+func _pick_dialogue_lines() -> Array[String]:
+	# Priority:
+	# 1) npc_dialogue.variants (first match)
+	# 2) npc_dialogue.default_lines
+	# 3) dialogue_lines (legacy)
+	if npc_dialogue == null:
+		return dialogue_lines
+
+	var lines := _pick_from_variants(npc_dialogue)
+	if not lines.is_empty():
+		return lines
+
+	if not npc_dialogue.default_lines.is_empty():
+		return npc_dialogue.default_lines
+
+	return dialogue_lines
+
+
+func _pick_from_variants(pack: NPCDialogue) -> Array[String]:
+	for v in pack.variants:
+		if v == null:
+			continue
+		if _variant_matches(v):
+			_apply_variant_effects(v)
+			return v.lines
+	return []
+
+
+func _variant_matches(v: DialogueVariant) -> bool:
+	# If you don't have GameState yet, conditions will mostly be false,
+	# and the system will fall back to default_lines.
+	match v.condition_type:
+		DialogueVariant.ConditionType.NONE:
+			return true
+		DialogueVariant.ConditionType.FLAG_TRUE:
+			return _get_flag(v.key) == true
+		DialogueVariant.ConditionType.FLAG_FALSE:
+			return _get_flag(v.key) == false
+		DialogueVariant.ConditionType.HAS_ITEM:
+			return _has_item(v.key)
+		DialogueVariant.ConditionType.QUEST_STAGE_EQ:
+			return _get_quest_stage(v.key) == v.stage_value
+		DialogueVariant.ConditionType.QUEST_STAGE_GTE:
+			return _get_quest_stage(v.key) >= v.stage_value
+		DialogueVariant.ConditionType.QUEST_STAGE_LTE:
+			return _get_quest_stage(v.key) <= v.stage_value
+	return false
+
+
+func _apply_variant_effects(v: DialogueVariant) -> void:
+	# Optional: set flags / quest stages when this variant is selected.
+	for k in v.set_flags_true:
+		_set_flag(k, true)
+	for k in v.set_flags_false:
+		_set_flag(k, false)
+
+	var n: int = int(min(v.set_quest_keys.size(), v.set_quest_values.size()))
+	for i in range(n):
+		_set_quest_stage(v.set_quest_keys[i], v.set_quest_values[i])
+
+
+# ---- GameState hooks (robust) ----
+# This expects (later) an Autoload or node called GameState with:
+#   flags: Dictionary
+#   quests: Dictionary
+# And optionally Global inventory list.
+# If GameState doesn't exist yet, it safely returns defaults.
+
+func _get_game_state() -> Node:
+	var gs := get_tree().get_first_node_in_group("game_state")
+	if gs != null:
+		return gs
+	return get_tree().root.find_child("GameState", true, false)
+
+
+func _get_flag(key: String) -> bool:
+	if key == "":
+		return false
+	var gs := _get_game_state()
+	if gs != null and "flags" in gs:
+		var d: Dictionary = gs.flags
+		if d.has(key):
+			return bool(d[key])
+	return false
+
+
+func _set_flag(key: String, val: bool) -> void:
+	if key == "":
+		return
+	var gs := _get_game_state()
+	if gs != null and "flags" in gs:
+		gs.flags[key] = val
+
+
+func _get_quest_stage(key: String) -> int:
+	if key == "":
+		return 0
+	var gs := _get_game_state()
+	if gs != null and "quests" in gs:
+		var d: Dictionary = gs.quests
+		if d.has(key):
+			return int(d[key])
+	return 0
+
+
+func _set_quest_stage(key: String, stage: int) -> void:
+	if key == "":
+		return
+	var gs := _get_game_state()
+	if gs != null and "quests" in gs:
+		gs.quests[key] = stage
+
+
+func _has_item(key: String) -> bool:
+	# Checks INVENTORY (not equipment).
+	# key should match ItemData.id.
+	var want: String = key.strip_edges()
+	if want == "":
+		return false
+
+	# Find InventoryScreen node (it exists even if the inventory UI is closed)
+	var inv: Node = get_tree().get_first_node_in_group("inventory_screen")
+	if inv == null:
+		inv = get_tree().current_scene.find_child("InventoryScreen", true, false)
+
+	# Prefer the real source of truth: InventoryScreen.starting_items
+	if inv != null and ("starting_items" in inv):
+		var items: Array = inv.starting_items
+		for it in items:
+			if it == null:
+				continue
+			if ("id" in it and str(it.id) == want):
+				return true
+			# optional fallbacks (title / filename)
+			if ("title" in it and str(it.title) == want):
+				return true
+			var rp: String = ""
+			if ("resource_path" in it):
+				rp = str(it.resource_path)
+			if rp != "":
+				var tail: String = rp.get_file().get_basename()
+				if tail == want:
+					return true
+
+	# Fallback: if you later add Global.inventory
+	if typeof(Global) != TYPE_NIL and ("inventory" in Global):
+		for it2 in Global.inventory:
+			if it2 == null:
+				continue
+			if ("id" in it2 and str(it2.id) == want):
+				return true
+
+	return false

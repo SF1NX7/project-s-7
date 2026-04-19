@@ -90,21 +90,27 @@ func _give_loot() -> void:
 	if data == null:
 		return
 
-	# Give items to InventoryScreen (same approach as secret_wall.gd)
+	# Give items to InventoryScreen.
 	var inv: Node = get_tree().get_first_node_in_group("inventory_screen")
 	if inv == null:
 		inv = get_tree().root.find_child("InventoryScreen", true, false)
 
-	if inv != null and inv.has_method("add_item"):
+	if inv != null:
 		for it in data.items:
-			if it != null:
-				inv.add_item(it)
+			if it == null:
+				continue
+			# Support both method names (project changed over time)
+			if inv.has_method("add_item_to_inventory"):
+				inv.call("add_item_to_inventory", it)
+			elif inv.has_method("add_item"):
+				inv.call("add_item", it)
 
-	# Gold: if you have a global gold store, switch this later.
-	if inv != null and inv.has_method("add_gold") and data.gold > 0:
-		inv.add_gold(data.gold)
-	elif Global != null and Global.has_method("add_gold") and data.gold > 0:
-		Global.add_gold(data.gold)
+		# Gold support (optional)
+		if data.gold > 0:
+			if inv.has_method("add_gold"):
+				inv.call("add_gold", data.gold)
+			elif Global != null and Global.has_method("add_gold"):
+				Global.add_gold(data.gold)
 
 	# Clear contents if one-time
 	if data.one_time:

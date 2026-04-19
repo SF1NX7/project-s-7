@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="NPCDialogue" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://script/dialogue/NPCDialogue.gd" id="1"]
+[ext_resource type="Script" path="res://script/dialogue/DialogueVariant.gd" id="2"]
+
+[sub_resource type="Resource" script_class="DialogueVariant" id="DialogueVariant_1"]
+script = ExtResource("2")
+condition_type = 1 # FLAG_TRUE
+key = "met_old_man"
+stage_value = 0
+lines = PackedStringArray("Снова ты, юноша.", "Как продвигаются дела?")
+set_flags_true = PackedStringArray()
+set_flags_false = PackedStringArray()
+set_quest_keys = PackedStringArray()
+set_quest_values = PackedInt32Array()
+
+[sub_resource type="Resource" script_class="DialogueVariant" id="DialogueVariant_2"]
+script = ExtResource("2")
+condition_type = 3 # HAS_ITEM
+key = "item_key_01"
+stage_value = 0
+lines = PackedStringArray("О! У тебя есть ключ.", "Береги его.")
+set_flags_true = PackedStringArray("met_old_man")
+set_flags_false = PackedStringArray()
+set_quest_keys = PackedStringArray("quest_bandits")
+set_quest_values = PackedInt32Array(1)
+
+[resource]
+script = ExtResource("1")
+npc_id = "old_man_01"
+variants = Array[Resource]([SubResource("DialogueVariant_2"), SubResource("DialogueVariant_1")])
+default_lines = PackedStringArray("Добрый день, юноша. Хорошая погодка, не правда ли?")
