@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cyqah1tui8m1k"]
 
-[ext_resource type="Texture2D" uid="uid://cg0illldopiro" path="res://art/BG_magic.png" id="1_dvwhj"]
 [ext_resource type="Script" uid="uid://s8d8okpuuya1" path="res://script/ui/magic_screen.gd" id="1_qy2al"]
+[ext_resource type="Texture2D" uid="uid://b0ugqowlndqma" path="res://art/BG_magic1.png" id="2_3amhd"]
 [ext_resource type="Texture2D" uid="uid://b6wx5hsabfrnh" path="res://art/Portrait/Empty_char.png" id="3_3amhd"]
 [ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="4_t3l1o"]
 [ext_resource type="Script" uid="uid://xcyhdhjit8oe" path="res://script/system/MagicSlot.gd" id="5_038bp"]
@@ -9,8 +9,8 @@
 [ext_resource type="Texture2D" uid="uid://mhuf2d47s4s" path="res://art/Portrait/ALPHA128empty.png" id="7_t3l1o"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_qy2al"]
-texture = ExtResource("1_dvwhj")
-modulate_color = Color(0.5382165, 0.53774816, 0.4314465, 0.9647059)
+texture = ExtResource("2_3amhd")
+modulate_color = Color(0.6125077, 0.67876637, 0.78477776, 0.98100007)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3amhd"]
 bg_color = Color(0.5882353, 0.5764706, 0.5411765, 0)

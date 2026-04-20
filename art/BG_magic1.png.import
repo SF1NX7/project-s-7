@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b8v83cih7hjy"
-path="res://.godot/imported/TIleCastleAI.jpeg-f25d81baebc9d82dcdc846b93b13daca.ctex"
+uid="uid://b0ugqowlndqma"
+path="res://.godot/imported/BG_magic1.png-5a4860a0be8dc132cce1d2c2299b6100.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/Tiles/TIleCastleAI.jpeg"
-dest_files=["res://.godot/imported/TIleCastleAI.jpeg-f25d81baebc9d82dcdc846b93b13daca.ctex"]
+source_file="res://art/BG_magic1.png"
+dest_files=["res://.godot/imported/BG_magic1.png-5a4860a0be8dc132cce1d2c2299b6100.ctex"]
 
 [params]
 

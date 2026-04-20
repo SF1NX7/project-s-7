@@ -19,6 +19,7 @@ texture = ExtResource("3_eg32v")
 
 [node name="DialogueUI" type="CanvasLayer" unique_id=203183458]
 script = ExtResource("1_2x5cq")
+chars_per_second = 20.0
 
 [node name="DialogueBox" type="Panel" parent="." unique_id=1502954987]
 anchors_preset = -1
@@ -74,7 +75,9 @@ theme = SubResource("Theme_p1v5b")
 theme_type_variation = &"GraphFrameTitleLabel"
 theme_override_colors/default_color = Color(1, 0.7780593, 0.613696, 1)
 theme_override_fonts/normal_font = ExtResource("2_75ktm")
+theme_override_fonts/bold_font = ExtResource("2_75ktm")
 theme_override_font_sizes/normal_font_size = 28
+theme_override_font_sizes/bold_font_size = 28
 bbcode_enabled = true
 text = "Abcd"
 metadata/_edit_use_anchors_ = true
