@@ -1,14 +1,29 @@
 [gd_scene format=3 uid="uid://c64pa8ud8y83u"]
 
 [ext_resource type="Script" uid="uid://dd4r1boquuthn" path="res://script/ui/menu_ui.gd" id="1_edgug"]
+[ext_resource type="Script" uid="uid://clxyxdig3m7pj" path="res://script/ui/CrossMenuBlink.gd" id="2_8poee"]
 [ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="2_c23pe"]
 [ext_resource type="PackedScene" uid="uid://bumswkw0sdpc0" path="res://scene/ui/InventoryScreen.tscn" id="2_o0okg"]
+[ext_resource type="Texture2D" uid="uid://chvx7gdcnqsxk" path="res://art/anim/menu_anim/equip_anim1.png" id="3_gixir"]
 [ext_resource type="Script" uid="uid://t1mc6m4ghibm" path="res://script/system/ItemData.gd" id="3_n48eu"]
 [ext_resource type="Resource" uid="uid://ba23nsgsui2d5" path="res://data/items/donut.tres" id="4_2n1li"]
+[ext_resource type="Texture2D" uid="uid://cb4vhag6cf7vn" path="res://art/anim/menu_anim/equip_anim2.png" id="4_vcup3"]
 [ext_resource type="PackedScene" uid="uid://biwrcng8rbjq" path="res://scene/ui/EquipScreen.tscn" id="5_2n1li"]
 [ext_resource type="Resource" uid="uid://bvnm458hqdkrd" path="res://data/items/party_data.tres" id="6_o5e1d"]
+[ext_resource type="Texture2D" uid="uid://deqkxawpnlfph" path="res://art/anim/menu_anim/magic_anim1.png" id="6_y8ptk"]
 [ext_resource type="PackedScene" uid="uid://c2y713mivp5ry" path="res://scene/ui/StatusScreen.tscn" id="7_58ccl"]
+[ext_resource type="Texture2D" uid="uid://b2l0d847a0cgx" path="res://art/anim/menu_anim/magic_anim2.png" id="7_tgqol"]
+[ext_resource type="Texture2D" uid="uid://5f37a2bqyt6h" path="res://art/anim/menu_anim/status_anim1.png" id="8_vuwoc"]
+[ext_resource type="Texture2D" uid="uid://v8v7opm3goav" path="res://art/anim/menu_anim/status_anim2.png" id="9_8iyg0"]
 [ext_resource type="PackedScene" uid="uid://cyqah1tui8m1k" path="res://scene/ui/MagicScreen.tscn" id="9_m3c1e"]
+[ext_resource type="Texture2D" uid="uid://dyrbycp40if38" path="res://art/anim/menu_anim/inv_anim1.png" id="10_5jiwl"]
+[ext_resource type="Texture2D" uid="uid://cte6klltpehq3" path="res://art/anim/menu_anim/inv_anim2.png" id="11_cj5sl"]
+[ext_resource type="Texture2D" uid="uid://cg0illldopiro" path="res://art/BG_magic.png" id="12_tgqol"]
+[ext_resource type="Script" uid="uid://ctmwo0ltvf4a3" path="res://script/ui/CrossMenuNameHint.gd" id="13_vuwoc"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_vuwoc"]
+texture = ExtResource("12_tgqol")
+modulate_color = Color(0.3312111, 0.39501393, 0.26840487, 1)
 
 [node name="menu_ui" type="CanvasLayer" unique_id=211641837]
 script = ExtResource("1_edgug")
@@ -23,14 +38,14 @@ grow_vertical = 2
 
 [node name="MenuRoot" type="Control" parent="UiRoot" unique_id=2089326738]
 layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -80.00006
-offset_top = -96.0
-offset_right = 80.00006
+anchor_left = 0.37500003
+anchor_top = 0.711
+anchor_right = 0.625
+anchor_bottom = 0.97200006
+offset_left = -1.5258789e-05
+offset_top = 0.039993286
+offset_right = 6.1035156e-05
+offset_bottom = 2.0799866
 grow_horizontal = 2
 grow_vertical = 0
 
@@ -48,16 +63,27 @@ offset_bottom = 24.0
 grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
+script = ExtResource("2_8poee")
+frame_a = ExtResource("3_gixir")
+frame_b = ExtResource("4_vcup3")
+
+[node name="Bg" type="TextureRect" parent="UiRoot/MenuRoot/EquipPanel" unique_id=1106859990]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 0.99500006
+offset_bottom = 0.23999786
 
 [node name="Label" type="Label" parent="UiRoot/MenuRoot/EquipPanel" unique_id=343922149]
+visible = false
 layout_mode = 0
-offset_left = 4.9998703
-offset_top = 14.999989
-offset_right = 32.99987
-offset_bottom = 31.486225
+offset_top = 32.99999
+offset_right = 39.999992
+offset_bottom = 47.99999
 theme_override_fonts/font = ExtResource("2_c23pe")
 theme_override_font_sizes/font_size = 10
 text = "Equip"
+horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="MagicPanel" type="Panel" parent="UiRoot/MenuRoot" unique_id=830686586]
@@ -71,16 +97,27 @@ offset_right = 48.00006
 offset_bottom = 24.0
 grow_vertical = 2
 mouse_filter = 2
+script = ExtResource("2_8poee")
+frame_a = ExtResource("6_y8ptk")
+frame_b = ExtResource("7_tgqol")
+
+[node name="Bg" type="TextureRect" parent="UiRoot/MenuRoot/MagicPanel" unique_id=832911127]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
 
 [node name="Label" type="Label" parent="UiRoot/MenuRoot/MagicPanel" unique_id=420514049]
+visible = false
 layout_mode = 0
-offset_left = 2.0
-offset_top = 16.0
-offset_right = 37.0
-offset_bottom = 39.0
+offset_left = -6.1035156e-05
+offset_top = 33.0
+offset_right = 39.99994
+offset_bottom = 48.0
 theme_override_fonts/font = ExtResource("2_c23pe")
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 10
 text = "Magic"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="StatusPanel" type="Panel" parent="UiRoot/MenuRoot" unique_id=1253107604]
 layout_mode = 1
@@ -95,16 +132,27 @@ offset_right = 24.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
+script = ExtResource("2_8poee")
+frame_a = ExtResource("8_vuwoc")
+frame_b = ExtResource("9_8iyg0")
+
+[node name="Bg" type="TextureRect" parent="UiRoot/MenuRoot/StatusPanel" unique_id=432561286]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
 
 [node name="Label" type="Label" parent="UiRoot/MenuRoot/StatusPanel" unique_id=876593800]
+visible = false
 layout_mode = 0
-offset_left = 4.999939
-offset_top = 11.0
-offset_right = 44.99994
-offset_bottom = 31.0
+offset_left = -3.0517578e-05
+offset_top = 24.0
+offset_right = 47.99997
+offset_bottom = 40.0
 theme_override_fonts/font = ExtResource("2_c23pe")
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 10
 text = "Status"
+horizontal_alignment = 1
+vertical_alignment = 2
 
 [node name="InventoryPanel" type="Panel" parent="UiRoot/MenuRoot" unique_id=1274917682]
 layout_mode = 1
@@ -117,28 +165,69 @@ offset_right = 24.0
 offset_bottom = 48.0
 grow_horizontal = 2
 mouse_filter = 2
+script = ExtResource("2_8poee")
+frame_a = ExtResource("10_5jiwl")
+frame_b = ExtResource("11_cj5sl")
+
+[node name="Bg" type="TextureRect" parent="UiRoot/MenuRoot/InventoryPanel" unique_id=247295175]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
 
 [node name="Label" type="Label" parent="UiRoot/MenuRoot/InventoryPanel" unique_id=2017133810]
+visible = false
 layout_mode = 0
-offset_left = 3.999939
-offset_top = 11.0
-offset_right = 45.99994
-offset_bottom = 25.0
+offset_left = -3.0517578e-05
+offset_top = 28.0
+offset_right = 47.99997
+offset_bottom = 40.0
 theme_override_fonts/font = ExtResource("2_c23pe")
 theme_override_font_sizes/font_size = 9
 text = "Inventory"
+horizontal_alignment = 1
+
+[node name="NameHint" type="Panel" parent="UiRoot" unique_id=588242411]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.70000005
+anchor_top = 0.77800006
+anchor_right = 0.9620001
+anchor_bottom = 0.90800005
+offset_left = -3.0517578e-05
+offset_top = -0.08001709
+offset_right = 0.3199463
+offset_bottom = 0.11999512
+theme_override_styles/panel = SubResource("StyleBoxTexture_vuwoc")
+script = ExtResource("13_vuwoc")
+
+[node name="NameLabel" type="Label" parent="UiRoot/NameHint" unique_id=1491532943]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.8112624, 0.7044192, 0.49245518, 1)
+theme_override_colors/font_shadow_color = Color(0.856638, 0.7479107, 0.7128799, 0.541)
+theme_override_fonts/font = ExtResource("2_c23pe")
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
 
 [node name="InventoryScreen" parent="UiRoot" unique_id=596111100 instance=ExtResource("2_o0okg")]
+visible = false
 layout_mode = 1
 starting_items = Array[ExtResource("3_n48eu")]([ExtResource("4_2n1li")])
 
 [node name="EquipScreen" parent="UiRoot" unique_id=1821564016 instance=ExtResource("5_2n1li")]
+visible = false
 layout_mode = 1
 party = ExtResource("6_o5e1d")
 
 [node name="StatusScreen" parent="UiRoot" unique_id=1032469721 instance=ExtResource("7_58ccl")]
+visible = false
 layout_mode = 1
 
 [node name="MagicScreen" parent="UiRoot" unique_id=1953106850 instance=ExtResource("9_m3c1e")]
+visible = false
 layout_mode = 1
 party = ExtResource("6_o5e1d")

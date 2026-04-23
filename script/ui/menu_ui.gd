@@ -18,6 +18,16 @@ var selected_index := 0
 var is_open := false
 var selection_frame: Panel
 
+# --- Slide animation for the cross menu ---
+@export_group("Cross Menu Slide")
+@export var cross_menu_slide_time: float = 0.18
+@export var cross_menu_hidden_offset: Vector2 = Vector2(0, 220) # moves down when hidden
+
+var _menu_shown_pos: Vector2
+var _menu_hidden_pos: Vector2
+var _menu_tween: Tween
+
+
 # Equip pick context
 var _pending_hero_idx: int = -1
 var _pending_slot: ItemData.EquipSlot = ItemData.EquipSlot.NONE
@@ -86,9 +96,16 @@ func _ready() -> void:
 
 	selection_frame.add_theme_stylebox_override("panel", sb)
 	menu_root.add_child(selection_frame)
+	# Cache editor position as shown position, and define hidden position (slide down)
+	_menu_shown_pos = menu_root.position
+	_menu_hidden_pos = _menu_shown_pos + cross_menu_hidden_offset
+	# Start hidden off-screen
+	menu_root.position = _menu_hidden_pos
 	_update_selection_frame()
 
 
+
+	_update_crossmenu_visuals()
 func _unhandled_input(event: InputEvent) -> void:
 	# If another UI screen is open, let it handle Tab itself.
 	if equip_screen and equip_screen.visible:
@@ -111,18 +128,22 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("move_up"):
 		selected_index = 0
 		_update_selection_frame()
+		_update_crossmenu_visuals()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("move_left"):
 		selected_index = 1
 		_update_selection_frame()
+		_update_crossmenu_visuals()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("move_right"):
 		selected_index = 2
 		_update_selection_frame()
+		_update_crossmenu_visuals()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("move_down"):
 		selected_index = 3
 		_update_selection_frame()
+		_update_crossmenu_visuals()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("action"):
 		_activate_selected()
@@ -141,15 +162,17 @@ func _toggle_menu() -> void:
 
 func _open_menu() -> void:
 	is_open = true
-	menu_root.visible = true
+	_slide_cross_menu(true)
 	_update_selection_frame()
 
 
+	_update_crossmenu_visuals()
 func _close_menu() -> void:
 	is_open = false
-	menu_root.visible = false
+	_slide_cross_menu(false)
 
 
+	_update_crossmenu_visuals()
 func _activate_selected() -> void:
 	match selected_index:
 		0:
@@ -279,3 +302,32 @@ func is_ui_blocking() -> bool:
 		or (equip_screen and equip_screen.visible) \
 		or (status_screen and status_screen.visible) \
 		or (magic_screen and magic_screen.visible)
+
+
+# ---- Cross menu visuals (blink + dim) ----
+func _update_crossmenu_visuals() -> void:
+	# Panels array is already used by selection frame.
+	# Each panel should have CrossMenuBlink attached (or at least a method set_selected(bool)).
+	for i in range(panels.size()):
+		var p: Control = panels[i]
+		if p == null:
+			continue
+		var is_sel: bool = (is_open and i == selected_index)
+		if p.has_method("set_selected"):
+			p.call("set_selected", is_sel)
+
+
+func _slide_cross_menu(show: bool) -> void:
+	if menu_root == null:
+		return
+	if show:
+		menu_root.visible = true
+	if _menu_tween != null and _menu_tween.is_running():
+		_menu_tween.kill()
+	_menu_tween = create_tween()
+	_menu_tween.set_trans(Tween.TRANS_SINE)
+	_menu_tween.set_ease(Tween.EASE_OUT if show else Tween.EASE_IN)
+	var target: Vector2 = _menu_shown_pos if show else _menu_hidden_pos
+	_menu_tween.tween_property(menu_root, "position", target, cross_menu_slide_time)
+	if not show:
+		_menu_tween.tween_callback(func(): menu_root.visible = false)
