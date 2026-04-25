@@ -1,316 +1,352 @@
-extends CanvasLayer
+extends Control
+class_name MainMenuSlotsCustom
 
-@onready var ui_root: Node = $UiRoot
-@onready var menu_root: Control = ui_root.get_node_or_null("MenuRoot")
+# Attach to MainMenu root.
+# Uses your exact node names from the screenshot.
+# Controls: move_up/move_down + action. ui_up/ui_down/ui_accept also work.
 
-@onready var inventory_screen: Node = ui_root.get_node_or_null("InventoryScreen")
-@onready var equip_screen: Node = ui_root.get_node_or_null("EquipScreen")
-@onready var status_screen: Node = ui_root.get_node_or_null("StatusScreen")
-@onready var magic_screen: Node = ui_root.get_node_or_null("MagicScreen")
+@export_group("Scenes")
+@export var start_scene_path: String = "res://scene/world/World_1.tscn"
 
-@onready var panel_inventory: Control = menu_root.get_node_or_null("InventoryPanel") if menu_root else null
-@onready var panel_magic: Control = menu_root.get_node_or_null("MagicPanel") if menu_root else null
-@onready var panel_equip: Control = menu_root.get_node_or_null("EquipPanel") if menu_root else null
-@onready var panel_status: Control = menu_root.get_node_or_null("StatusPanel") if menu_root else null
+@export_group("Visual")
+@export var selected_color: Color = Color(1.0, 0.92, 0.60, 1.0)
+@export var normal_color: Color = Color(1.0, 1.0, 1.0, 1.0)
+@export var disabled_color: Color = Color(0.45, 0.45, 0.45, 1.0)
 
-var panels: Array[Control] = []
-var selected_index := 0
-var is_open := false
-var selection_frame: Panel
+@export_group("Text")
+@export var empty_text: String = "Пустой слот"
+@export var overwrite_text: String = "Есть сохранение. Будет перезаписано."
+@export var no_save_text: String = "Нет сохранения."
+@export var start_button_text: String = "Start New Game"
+@export var load_button_text: String = "Load Game"
+@export var hide_title_in_slot_menus: bool = true
 
-# Equip pick context
-var _pending_hero_idx: int = -1
-var _pending_slot: ItemData.EquipSlot = ItemData.EquipSlot.NONE
+@export_group("Slot Info Layout")
+@export var info_margin_left: float = 14.0
+@export var info_margin_top: float = 10.0
+@export var info_margin_right: float = 14.0
+@export var info_margin_bottom: float = 8.0
+@export var info_extra_line_spacing: float = 2.0
+@export var new_game_status_prefix: String = "Статус: "
+@export var load_game_status_prefix: String = "Статус: "
+@export var location_prefix: String = "Локация: "
+@export var gold_prefix: String = "Золото: "
+@export var time_prefix: String = "Дата: "
+
+enum MenuMode {
+	MAIN,
+	NEW_GAME,
+	LOAD_GAME
+}
+
+var _mode: MenuMode = MenuMode.MAIN
+var _selected_index: int = 0
+
+@onready var main_buttons: Control = $MainButtons
+@onready var start_button: BaseButton = $MainButtons/StartButton
+@onready var load_button: BaseButton = $MainButtons/LoadButton
+@onready var title_node: CanvasItem = $Title
+
+@onready var new_panel: Control = $NewGameSlotPanel
+@onready var new_slot_1: BaseButton = $NewGameSlotPanel/Newslot1
+@onready var new_slot_2: BaseButton = $NewGameSlotPanel/Newslot2
+@onready var new_slot_3: BaseButton = $NewGameSlotPanel/Newslot3
+@onready var new_info_1: Label = $NewGameSlotPanel/Slot1info
+@onready var new_info_2: Label = $NewGameSlotPanel/Slot2info
+@onready var new_info_3: Label = $NewGameSlotPanel/Slot3info
+@onready var new_back_button: BaseButton = $NewGameSlotPanel/NewBackButton
+
+@onready var load_panel: Control = $LoadGameSlotPanel
+@onready var load_slot_1: BaseButton = $LoadGameSlotPanel/Loadslot1
+@onready var load_slot_2: BaseButton = $LoadGameSlotPanel/Loadslot2
+@onready var load_slot_3: BaseButton = $LoadGameSlotPanel/Loadslot3
+@onready var load_info_1: Label = $LoadGameSlotPanel/Slot1info
+@onready var load_info_2: Label = $LoadGameSlotPanel/Slot2info
+@onready var load_info_3: Label = $LoadGameSlotPanel/Slot3info
+@onready var load_back_button: BaseButton = $LoadGameSlotPanel/LoadBackButton
+
+var _main_items: Array[BaseButton] = []
+var _new_items: Array[BaseButton] = []
+var _load_items: Array[BaseButton] = []
 
 
 func _ready() -> void:
-	if menu_root == null:
-		push_error("menu_ui.gd: UiRoot/MenuRoot not found. Check node paths.")
-		return
-	if inventory_screen == null:
-		push_error("menu_ui.gd: UiRoot/InventoryScreen not found. Check node paths.")
-		return
+	_main_items = [start_button, load_button]
+	_new_items = [new_slot_1, new_slot_2, new_slot_3, new_back_button]
+	_load_items = [load_slot_1, load_slot_2, load_slot_3, load_back_button]
 
-	panels = [panel_inventory, panel_magic, panel_equip, panel_status]
+	_set_button_text(start_button, start_button_text)
+	_set_button_text(load_button, load_button_text)
+	_set_button_text(new_slot_1, "Слот 1")
+	_set_button_text(new_slot_2, "Слот 2")
+	_set_button_text(new_slot_3, "Слот 3")
+	_set_button_text(new_back_button, "Назад")
+	_set_button_text(load_slot_1, "Слот 1")
+	_set_button_text(load_slot_2, "Слот 2")
+	_set_button_text(load_slot_3, "Слот 3")
+	_set_button_text(load_back_button, "Назад")
 
-	menu_root.visible = false
-	inventory_screen.visible = false
-	if equip_screen:
-		equip_screen.visible = false
-	if status_screen:
-		status_screen.visible = false
-	if magic_screen:
-		magic_screen.visible = false
+	_prepare_info_label(new_info_1)
+	_prepare_info_label(new_info_2)
+	_prepare_info_label(new_info_3)
+	_prepare_info_label(load_info_1)
+	_prepare_info_label(load_info_2)
+	_prepare_info_label(load_info_3)
 
-	# Equip connections
-	if equip_screen:
-		if equip_screen.has_signal("request_equip_pick") and not equip_screen.request_equip_pick.is_connected(_on_request_equip_pick):
-			equip_screen.request_equip_pick.connect(_on_request_equip_pick)
+	start_button.pressed.connect(_open_new_game_slots)
+	load_button.pressed.connect(_open_load_game_slots)
 
-		if equip_screen.has_signal("request_unequip") and not equip_screen.request_unequip.is_connected(_on_request_unequip):
-			equip_screen.request_unequip.connect(_on_request_unequip)
+	new_slot_1.pressed.connect(func() -> void: _start_new_game_in_slot(1))
+	new_slot_2.pressed.connect(func() -> void: _start_new_game_in_slot(2))
+	new_slot_3.pressed.connect(func() -> void: _start_new_game_in_slot(3))
+	new_back_button.pressed.connect(_back_to_main)
 
-		if equip_screen.has_signal("closed") and not equip_screen.closed.is_connected(_on_equip_closed):
-			equip_screen.closed.connect(_on_equip_closed)
+	load_slot_1.pressed.connect(func() -> void: _load_slot(1))
+	load_slot_2.pressed.connect(func() -> void: _load_slot(2))
+	load_slot_3.pressed.connect(func() -> void: _load_slot(3))
+	load_back_button.pressed.connect(_back_to_main)
 
-	# Status connection
-	if status_screen and status_screen.has_signal("closed") and not status_screen.closed.is_connected(_on_status_closed):
-		status_screen.closed.connect(_on_status_closed)
-
-	# Magic connection
-	if magic_screen and magic_screen.has_signal("closed") and not magic_screen.closed.is_connected(_on_magic_closed):
-		magic_screen.closed.connect(_on_magic_closed)
-
-	# Inventory picker result
-	if inventory_screen.has_signal("equip_item_selected") and not inventory_screen.equip_item_selected.is_connected(_on_equip_item_selected):
-		inventory_screen.equip_item_selected.connect(_on_equip_item_selected)
-	if inventory_screen.has_signal("equip_selection_canceled") and not inventory_screen.equip_selection_canceled.is_connected(_on_equip_pick_canceled):
-		inventory_screen.equip_selection_canceled.connect(_on_equip_pick_canceled)
-
-	is_open = false
-	selected_index = 0
-	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
-
-	# Selection frame (menu cursor)
-	selection_frame = Panel.new()
-	selection_frame.name = "SelectionFrame"
-	selection_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0, 0, 0, 0)
-	sb.border_width_left = 2
-	sb.border_width_top = 2
-	sb.border_width_right = 2
-	sb.border_width_bottom = 2
-	sb.border_color = Color(1, 1, 1, 1)
-
-	selection_frame.add_theme_stylebox_override("panel", sb)
-	menu_root.add_child(selection_frame)
-	_update_selection_frame()
+	_show_main()
 
 
-
-	_update_crossmenu_visuals()
 func _unhandled_input(event: InputEvent) -> void:
-	# If another UI screen is open, let it handle Tab itself.
-	if equip_screen and equip_screen.visible:
-		return
-	if inventory_screen and inventory_screen.visible:
-		return
-	if status_screen and status_screen.visible:
-		return
-	if magic_screen and magic_screen.visible:
+	if event.is_action_pressed("move_up") or event.is_action_pressed("ui_up"):
+		_move_selection(-1)
+		_accept_input_event()
 		return
 
-	if event.is_action_pressed("menu"):
-		_toggle_menu()
-		get_viewport().set_input_as_handled()
+	if event.is_action_pressed("move_down") or event.is_action_pressed("ui_down"):
+		_move_selection(1)
+		_accept_input_event()
 		return
 
-	if not is_open:
+	if event.is_action_pressed("action") or event.is_action_pressed("ui_accept"):
+		_accept_input_event()
+		_activate_current()
 		return
 
-	if event.is_action_pressed("move_up"):
-		selected_index = 0
-		_update_selection_frame()
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("move_left"):
-		selected_index = 1
-		_update_selection_frame()
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("move_right"):
-		selected_index = 2
-		_update_selection_frame()
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("move_down"):
-		selected_index = 3
-		_update_selection_frame()
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("action"):
-		_activate_selected()
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_cancel"):
-		_close_menu()
-		get_viewport().set_input_as_handled()
+	if event.is_action_pressed("ui_cancel"):
+		if _mode != MenuMode.MAIN:
+			_back_to_main()
+			_accept_input_event()
 
 
-func _toggle_menu() -> void:
-	if is_open:
-		_close_menu()
-	else:
-		_open_menu()
+func _show_main() -> void:
+	_mode = MenuMode.MAIN
+	_selected_index = 0
+	main_buttons.visible = true
+	new_panel.visible = false
+	load_panel.visible = false
+	_set_title_visible(true)
+	_update_visuals()
 
 
-func _open_menu() -> void:
-	is_open = true
-	menu_root.visible = true
-	_update_selection_frame()
+func _open_new_game_slots() -> void:
+	_mode = MenuMode.NEW_GAME
+	_selected_index = 0
+	main_buttons.visible = false
+	new_panel.visible = true
+	load_panel.visible = false
+	_set_title_visible(false)
+	_refresh_new_slot_info()
+	_update_visuals()
 
 
-
-	_update_crossmenu_visuals()
-func _close_menu() -> void:
-	is_open = false
-	menu_root.visible = false
-
-
-
-	_update_crossmenu_visuals()
-func _activate_selected() -> void:
-	match selected_index:
-		0:
-			_open_inventory()
-		1:
-			_open_magic()
-		2:
-			_open_equip()
-		3:
-			_open_status()
+func _open_load_game_slots() -> void:
+	_mode = MenuMode.LOAD_GAME
+	_selected_index = 0
+	main_buttons.visible = false
+	new_panel.visible = false
+	load_panel.visible = true
+	_set_title_visible(false)
+	_refresh_load_slot_info()
+	_update_visuals()
 
 
-func _open_inventory() -> void:
-	_close_menu()
-	inventory_screen.visible = true
-	if inventory_screen.has_method("open"):
-		inventory_screen.call("open")
+func _back_to_main() -> void:
+	_show_main()
 
 
-func _open_magic() -> void:
-	_close_menu()
-	if magic_screen == null:
-		print("Magic selected (no MagicScreen node found)")
+func _move_selection(delta: int) -> void:
+	var items: Array[BaseButton] = _current_items()
+	if items.is_empty():
 		return
-	magic_screen.visible = true
-	if magic_screen.has_method("open"):
-		magic_screen.call("open")
-	else:
-		push_warning("MagicScreen missing open() method.")
+
+	var count: int = items.size()
+	var next_index: int = _selected_index
+
+	for _step in range(count):
+		next_index = int(posmod(next_index + delta, count))
+		var b: BaseButton = items[next_index]
+		if b != null and not b.disabled:
+			_selected_index = next_index
+			_update_visuals()
+			return
 
 
-func _open_equip() -> void:
-	_close_menu()
-	if equip_screen == null:
-		print("Equip selected (no EquipScreen node found)")
+func _activate_current() -> void:
+	var items: Array[BaseButton] = _current_items()
+	if items.is_empty():
 		return
-	equip_screen.visible = true
-	if equip_screen.has_method("open"):
-		equip_screen.call("open")
-
-
-func _open_status() -> void:
-	_close_menu()
-	if status_screen == null:
-		print("Status selected (no StatusScreen node found)")
+	if _selected_index < 0 or _selected_index >= items.size():
 		return
-	status_screen.visible = true
-	if status_screen.has_method("open"):
-		status_screen.call("open")
-	else:
-		push_warning("StatusScreen missing open() method.")
 
-
-# ---- Equip picking ----
-func _on_request_equip_pick(hero_idx: int, slot: ItemData.EquipSlot) -> void:
-	_pending_hero_idx = hero_idx
-	_pending_slot = slot
-
-	equip_screen.visible = false
-	inventory_screen.visible = true
-
-	if inventory_screen.has_method("open_equip_selection"):
-		inventory_screen.call("open_equip_selection", slot, 0)
-	else:
-		push_error("InventoryScreen: open_equip_selection() not found.")
-
-
-func _on_equip_item_selected(item: ItemData) -> void:
-	inventory_screen.visible = false
-
-	if equip_screen and equip_screen.has_method("set_equipped_item"):
-		equip_screen.call("set_equipped_item", _pending_hero_idx, _pending_slot, item)
-
-	equip_screen.visible = true
-	_pending_hero_idx = -1
-	_pending_slot = ItemData.EquipSlot.NONE
-
-
-func _on_equip_pick_canceled() -> void:
-	inventory_screen.visible = false
-	equip_screen.visible = true
-	_pending_hero_idx = -1
-	_pending_slot = ItemData.EquipSlot.NONE
-
-
-func _on_request_unequip(hero_idx: int, slot: ItemData.EquipSlot, item: ItemData) -> void:
-	if inventory_screen and inventory_screen.has_method("add_item_to_inventory"):
-		inventory_screen.call("add_item_to_inventory", item)
-	else:
-		push_warning("InventoryScreen missing add_item_to_inventory().")
-
-
-func _on_equip_closed() -> void:
-	if equip_screen:
-		equip_screen.visible = false
-	_open_menu()
-
-
-# ---- Status ----
-func _on_status_closed() -> void:
-	if status_screen:
-		status_screen.visible = false
-	_open_menu()
-
-
-# ---- Magic ----
-func _on_magic_closed() -> void:
-	if magic_screen:
-		magic_screen.visible = false
-	_open_menu()
-
-
-func _update_selection_frame() -> void:
-	if not is_open:
+	var b: BaseButton = items[_selected_index]
+	if b == null or b.disabled:
 		return
-	var p := panels[selected_index]
-	if p == null:
-		return
-	selection_frame.position = p.position
-	selection_frame.size = p.size
-	selection_frame.visible = true
-	_update_crossmenu_visuals()
+
+	b.emit_signal("pressed")
 
 
-func is_ui_blocking() -> bool:
-	return (menu_root and menu_root.visible) \
-		or (inventory_screen and inventory_screen.visible) \
-		or (equip_screen and equip_screen.visible) \
-		or (status_screen and status_screen.visible) \
-		or (magic_screen and magic_screen.visible)
+func _current_items() -> Array[BaseButton]:
+	match _mode:
+		MenuMode.MAIN:
+			return _main_items
+		MenuMode.NEW_GAME:
+			return _new_items
+		MenuMode.LOAD_GAME:
+			return _load_items
+	return _main_items
 
 
-# ---- Cross menu visuals (blink + dim) ----
-func _find_bg(panel: Control) -> TextureRect:
-	# Looks for child named "Bg"
-	var n: Node = panel.find_child("Bg", true, false)
-	if n != null and n is TextureRect:
-		return n as TextureRect
-	return null
+func _update_visuals() -> void:
+	_apply_group_visuals(_main_items, _mode == MenuMode.MAIN)
+	_apply_group_visuals(_new_items, _mode == MenuMode.NEW_GAME)
+	_apply_group_visuals(_load_items, _mode == MenuMode.LOAD_GAME)
 
 
-func _update_crossmenu_visuals() -> void:
-	# Dims inactive icons and enables blinking only on selected one.
-	# Requires CrossMenuBlink script on the panel (or any node with set_selected(bool))
-	for i in range(panels.size()):
-		var p: Control = panels[i]
-		if p == null:
+func _apply_group_visuals(items: Array[BaseButton], active_group: bool) -> void:
+	for i in range(items.size()):
+		var b: BaseButton = items[i]
+		if b == null:
 			continue
-		var is_sel: bool = (is_open and i == selected_index)
 
-		# Drive blinking if the panel has CrossMenuBlink
-		if p.has_method("set_selected"):
-			p.call("set_selected", is_sel)
+		var is_selected: bool = active_group and i == _selected_index and not b.disabled
 
-		# Dim only the background image (Bg), keep label readable
-		var bg: TextureRect = _find_bg(p)
-		if bg != null:
-			bg.self_modulate = Color(1, 1, 1, 1) if is_sel else Color(0.55, 0.55, 0.55, 1)
+		if b.disabled:
+			b.self_modulate = disabled_color
+		elif is_selected:
+			b.self_modulate = selected_color
+			b.grab_focus()
+		else:
+			b.self_modulate = normal_color
+
+
+func _refresh_new_slot_info() -> void:
+	_set_new_slot_info(1, new_info_1)
+	_set_new_slot_info(2, new_info_2)
+	_set_new_slot_info(3, new_info_3)
+	new_slot_1.disabled = false
+	new_slot_2.disabled = false
+	new_slot_3.disabled = false
+
+
+func _refresh_load_slot_info() -> void:
+	_set_load_slot_info(1, load_info_1, load_slot_1)
+	_set_load_slot_info(2, load_info_2, load_slot_2)
+	_set_load_slot_info(3, load_info_3, load_slot_3)
+
+	var items: Array[BaseButton] = _current_items()
+	for i in range(items.size()):
+		var b: BaseButton = items[i]
+		if b != null and not b.disabled:
+			_selected_index = i
+			break
+
+
+func _set_new_slot_info(slot: int, label: Label) -> void:
+	if label == null:
+		return
+
+	var exists: bool = Save_Manager.slot_exists(slot)
+	if not exists:
+		label.text = empty_text
+		return
+
+	var data: Dictionary = Save_Manager.peek_slot_data(slot)
+	label.text = _compose_slot_info_text(data, new_game_status_prefix + overwrite_text)
+
+
+func _set_load_slot_info(slot: int, label: Label, button: BaseButton) -> void:
+	var exists: bool = Save_Manager.slot_exists(slot)
+
+	if label != null:
+		if exists:
+			var data: Dictionary = Save_Manager.peek_slot_data(slot)
+			label.text = _compose_slot_info_text(data, load_game_status_prefix + "Готово к загрузке")
+		else:
+			label.text = no_save_text
+
+	if button != null:
+		button.disabled = not exists
+
+
+func _compose_slot_info_text(data: Dictionary, _status_text: String) -> String:
+	var location_name: String = str(data.get("location_name", ""))
+	if location_name.strip_edges() == "":
+		var scene_path: String = str(data.get("scene_path", ""))
+		location_name = scene_path.get_file().get_basename() if scene_path != "" else "Неизвестно"
+
+	var gold_amount: int = int(data.get("gold", 0))
+	var saved_time: int = int(data.get("saved_unix_time", 0))
+	var time_text: String = Save_Manager._format_save_time(saved_time)
+
+	# Exactly 3 lines: location, gold, save date.
+	return "%s%s\n%s%d\n%s%s" % [
+		location_prefix, location_name,
+		gold_prefix, gold_amount,
+		time_prefix, time_text
+	]
+
+
+func _prepare_info_label(label: Label) -> void:
+	if label == null:
+		return
+
+	label.position.x += info_margin_left
+	label.position.y += info_margin_top
+
+	var new_size: Vector2 = label.size
+	new_size.x = max(16.0, new_size.x - info_margin_left - info_margin_right)
+	new_size.y = max(16.0, new_size.y - info_margin_top - info_margin_bottom)
+	label.size = new_size
+
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.clip_text = true
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	label.add_theme_constant_override("line_spacing", int(info_extra_line_spacing))
+
+
+func _start_new_game_in_slot(slot: int) -> void:
+	Save_Manager.start_new_game(slot, start_scene_path)
+
+
+func _load_slot(slot: int) -> void:
+	if not Save_Manager.slot_exists(slot):
+		return
+	Save_Manager.load_slot_and_enter_game(slot)
+
+
+
+func _accept_input_event() -> void:
+	var viewport: Viewport = get_viewport()
+	if viewport != null:
+		viewport.set_input_as_handled()
+
+
+func _set_title_visible(show_main_title: bool) -> void:
+	if title_node == null:
+		return
+	if hide_title_in_slot_menus:
+		title_node.visible = show_main_title
+	else:
+		title_node.visible = true
+
+
+func _set_button_text(button: BaseButton, value: String) -> void:
+	if button == null:
+		return
+	if button is Button:
+		var b: Button = button as Button
+		b.text = value

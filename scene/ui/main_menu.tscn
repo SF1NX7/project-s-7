@@ -2,41 +2,47 @@
 
 [ext_resource type="Script" uid="uid://k1602msr8r2j" path="res://script/ui/main_menu.gd" id="1_k75cp"]
 [ext_resource type="FontFile" uid="uid://b44y6g3w8o64t" path="res://font/thin_pixel-7.ttf" id="2_8wb42"]
+[ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="3_8wb42"]
 [ext_resource type="PackedScene" uid="uid://beifm5ixvfjwe" path="res://scene/ui/fade_layer.tscn" id="3_k3dtv"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k75cp"]
+bg_color = Color(0.60038817, 0.60038817, 0.60038817, 0)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k3dtv"]
+bg_color = Color(0.7277406, 0.57115304, 0.326201, 0.28627452)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e5dty"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0rvh3"]
+bg_color = Color(0.7655037, 0.5497381, 0.33361515, 0.39000002)
 
 [node name="MainMenu" type="Control" unique_id=1916273437]
 layout_mode = 3
-anchors_preset = 0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_k75cp")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=905844483]
-layout_mode = 0
-offset_right = 640.0
-offset_bottom = 360.0
+[node name="Background" type="ColorRect" parent="." unique_id=905844483]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 color = Color(0.23137255, 0.18431373, 0.21176471, 1)
 
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=119061660]
-layout_mode = 0
-offset_left = 137.0
-offset_top = 149.0
-offset_right = 426.0
-offset_bottom = 303.0
-theme_override_constants/separation = 34
-
-[node name="Play" type="Button" parent="VBoxContainer" unique_id=1149701933]
-layout_mode = 2
-text = "Play"
-
-[node name="Option" type="Button" parent="VBoxContainer" unique_id=1488046414]
-layout_mode = 2
-text = "Option"
-
 [node name="Title" type="Label" parent="." unique_id=1873588414]
-layout_mode = 0
-offset_left = 111.0
-offset_top = 20.0
-offset_right = 532.0
-offset_bottom = 133.0
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.17300001
+anchor_top = 0.056
+anchor_right = 0.83100003
+anchor_bottom = 0.36900002
+offset_left = 0.27999878
+offset_top = -0.15999985
+offset_right = 0.15997314
+offset_bottom = 0.1599884
 theme_override_colors/font_color = Color(0.9171446, 0.5478107, 0.34269243, 1)
 theme_override_fonts/font = ExtResource("2_8wb42")
 theme_override_font_sizes/font_size = 86
@@ -44,4 +50,244 @@ text = "S7DE QUEST RPG"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="MainButtons" type="Panel" parent="." unique_id=443332034]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.35900003
+anchor_top = 0.59400004
+anchor_right = 0.661
+anchor_bottom = 0.86100006
+offset_left = 0.23999023
+offset_top = 0.1599884
+offset_right = -0.040008545
+offset_bottom = 0.039978027
+theme_override_styles/panel = SubResource("StyleBoxFlat_k75cp")
+
+[node name="StartButton" type="Button" parent="MainButtons" unique_id=1149701933]
+layout_mode = 0
+offset_right = 193.0
+offset_bottom = 31.0
+text = "Start New Game"
+
+[node name="LoadButton" type="Button" parent="MainButtons" unique_id=1488046414]
+layout_mode = 0
+offset_top = 65.0
+offset_right = 193.0
+offset_bottom = 96.0
+text = "Load Game"
+
+[node name="NewGameSlotPanel" type="Panel" parent="." unique_id=348931085]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="NewGameTitle" type="Label" parent="NewGameSlotPanel" unique_id=1465770880]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.012
+anchor_top = 0.022000002
+anchor_right = 0.98700005
+anchor_bottom = 0.23900001
+offset_left = 0.3199997
+offset_top = 0.07999945
+offset_right = -183.68005
+offset_bottom = -22.04
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 38
+text = "New game slot"
+vertical_alignment = 1
+
+[node name="Newslot1" type="Button" parent="NewGameSlotPanel" unique_id=2140174242]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 72.0
+offset_right = 128.0
+offset_bottom = 144.0
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 20
+text = "Slot 1"
+icon_alignment = 1
+
+[node name="Slot1info" type="Label" parent="NewGameSlotPanel" unique_id=1272970328]
+layout_mode = 0
+offset_left = 152.0
+offset_top = 72.0
+offset_right = 448.0
+offset_bottom = 144.0
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_k3dtv")
+theme_override_styles/focus = SubResource("StyleBoxFlat_e5dty")
+text = "Game 1 
+Gold 1000
+Level: castle"
+horizontal_alignment = 1
+
+[node name="Newslot2" type="Button" parent="NewGameSlotPanel" unique_id=191222693]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 152.0
+offset_right = 128.0
+offset_bottom = 224.0
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 20
+text = "Empty"
+icon_alignment = 1
+
+[node name="Slot2info" type="Label" parent="NewGameSlotPanel" unique_id=1823468865]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.38700002
+anchor_bottom = 0.6
+offset_left = 152.0
+offset_top = 152.0
+offset_right = 200.31998
+offset_bottom = 7.9999847
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_0rvh3")
+horizontal_alignment = 1
+
+[node name="Newslot3" type="Button" parent="NewGameSlotPanel" unique_id=990685621]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 232.0
+offset_right = 128.0
+offset_bottom = 304.0
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 20
+text = "Empty"
+icon_alignment = 1
+
+[node name="Slot3info" type="Label" parent="NewGameSlotPanel" unique_id=433798258]
+layout_mode = 0
+offset_left = 152.0
+offset_top = 232.0
+offset_right = 448.0
+offset_bottom = 304.0
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_0rvh3")
+horizontal_alignment = 1
+
+[node name="NewBackButton" type="Button" parent="NewGameSlotPanel" unique_id=1089929049]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 320.0
+offset_right = 128.0
+offset_bottom = 352.0
+theme_override_fonts/font = ExtResource("3_8wb42")
+text = "BACK"
+
+[node name="LoadGameSlotPanel" type="Panel" parent="." unique_id=448841562]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LoadTitle" type="Label" parent="LoadGameSlotPanel" unique_id=959146241]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.012
+anchor_top = 0.022000002
+anchor_right = 0.70000005
+anchor_bottom = 0.178
+offset_left = 8.32
+offset_top = 0.07999945
+offset_right = -3.0517578e-05
+offset_bottom = -0.08000183
+theme_override_colors/font_color = Color(0.5189479, 0.35086948, 0.30943933, 1)
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 38
+text = "Load Game "
+vertical_alignment = 1
+
+[node name="Loadslot1" type="Button" parent="LoadGameSlotPanel" unique_id=186475585]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 72.0
+offset_right = 128.0
+offset_bottom = 144.0
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 20
+text = "Slot 1"
+icon_alignment = 1
+
+[node name="Slot1info" type="Label" parent="LoadGameSlotPanel" unique_id=6726189]
+layout_mode = 0
+offset_left = 152.0
+offset_top = 72.0
+offset_right = 448.0
+offset_bottom = 144.0
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_k3dtv")
+theme_override_styles/focus = SubResource("StyleBoxFlat_e5dty")
+text = "Game 1 
+Gold 1000
+Level: castle"
+horizontal_alignment = 1
+
+[node name="Loadslot2" type="Button" parent="LoadGameSlotPanel" unique_id=1748981294]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 152.0
+offset_right = 128.0
+offset_bottom = 224.0
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 20
+text = "Empty"
+icon_alignment = 1
+
+[node name="Slot2info" type="Label" parent="LoadGameSlotPanel" unique_id=722321448]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.38700002
+anchor_bottom = 0.6
+offset_left = 152.0
+offset_top = 152.0
+offset_right = 200.31998
+offset_bottom = 7.9999847
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_0rvh3")
+horizontal_alignment = 1
+
+[node name="Loadslot3" type="Button" parent="LoadGameSlotPanel" unique_id=1110450611]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 232.0
+offset_right = 128.0
+offset_bottom = 304.0
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 20
+text = "Empty"
+icon_alignment = 1
+
+[node name="Slot3info" type="Label" parent="LoadGameSlotPanel" unique_id=1277936720]
+layout_mode = 0
+offset_left = 152.0
+offset_top = 232.0
+offset_right = 448.0
+offset_bottom = 304.0
+theme_override_fonts/font = ExtResource("3_8wb42")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_0rvh3")
+horizontal_alignment = 1
+
+[node name="LoadBackButton" type="Button" parent="LoadGameSlotPanel" unique_id=230033449]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 320.0
+offset_right = 128.0
+offset_bottom = 352.0
+theme_override_fonts/font = ExtResource("3_8wb42")
+text = "BACK"
+
 [node name="FadeLayer" parent="." unique_id=975937443 instance=ExtResource("3_k3dtv")]
+visible = false

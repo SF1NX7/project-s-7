@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://uuhgor1eg8wy"
-path="res://.godot/imported/Tree_1Big.png-4f40648d2e5a70b7437ca9378b401367.ctex"
+uid="uid://cok7iinragvvv"
+path="res://.godot/imported/inner_walls.png-67e433e041addd9777ae51dc1112d2e7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/Tree_1Big.png"
-dest_files=["res://.godot/imported/Tree_1Big.png-4f40648d2e5a70b7437ca9378b401367.ctex"]
+source_file="res://art/Tiles/inner_walls.png"
+dest_files=["res://.godot/imported/inner_walls.png-67e433e041addd9777ae51dc1112d2e7.ctex"]
 
 [params]
 

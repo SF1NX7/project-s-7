@@ -1,7 +1,11 @@
 extends Node2D
+@export var location_display_name: String = "Деревня у реки"
 
 func _ready() -> void:
-	var player = $Player
+	if typeof(Save_Manager) != TYPE_NIL:
+		Save_Manager.set_location_display_name(location_display_name)
+
+	var player = $YSortObjects/Player
 	var spawn = get_node_or_null("spawn_0")
 
 	if Global.next_spawn_id != "":

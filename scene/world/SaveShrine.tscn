@@ -1,0 +1,60 @@
+[gd_scene format=3 uid="uid://cgbnfh2rqqyjw"]
+
+[ext_resource type="Script" uid="uid://bxg34m6vqodso" path="res://script/system/SaveShrine.gd" id="1_qc6ca"]
+[ext_resource type="Texture2D" uid="uid://djiolq0yqb7ug" path="res://art/anim/shrine_anim/shrine_1.png" id="2_d11p1"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l66o3"]
+atlas = ExtResource("2_d11p1")
+region = Rect2(0, 0, 32, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2cavw"]
+atlas = ExtResource("2_d11p1")
+region = Rect2(32, 0, 32, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3gefj"]
+atlas = ExtResource("2_d11p1")
+region = Rect2(64, 0, 32, 64)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6jv07"]
+atlas = ExtResource("2_d11p1")
+region = Rect2(96, 0, 32, 64)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_w7qto"]
+animations = [{
+"frames": [{
+"duration": 8.0,
+"texture": SubResource("AtlasTexture_l66o3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2cavw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3gefj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6jv07")
+}],
+"loop": true,
+"name": &"Shine",
+"speed": 8.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_d11p1"]
+size = Vector2(32, 32)
+
+[node name="SaveShrine" type="Node2D" unique_id=1153199758]
+script = ExtResource("1_qc6ca")
+before_save_lines = Array[String](["Святыня излучает мягкий свет... Сохранить прогресс?"])
+
+[node name="Sprite2D" type="AnimatedSprite2D" parent="." unique_id=2088748097]
+position = Vector2(0, -10)
+sprite_frames = SubResource("SpriteFrames_w7qto")
+animation = &"Shine"
+autoplay = "Shine"
+frame_progress = 0.66421366
+
+[node name="Area2D" type="Area2D" parent="." unique_id=1539176341]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1469979711]
+visible = false
+shape = SubResource("RectangleShape2D_d11p1")

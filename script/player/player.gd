@@ -11,7 +11,7 @@ var last_direction: Vector2 = Vector2.DOWN
 var reserved_cell_valid: bool = false
 var reserved_cell: Vector2i = Vector2i.ZERO
 
-@onready var blocked_layer = $"../Blocked"
+@onready var blocked_layer = get_node_or_null("../../Blocked")
 @onready var anim = $AnimatedSprite2D
 
 func _ready() -> void:
