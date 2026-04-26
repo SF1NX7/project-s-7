@@ -40,6 +40,7 @@ class_name Chest
 
 
 func _ready() -> void:
+	add_to_group("chests")
 	# If this chest was opened in loaded save, mark it opened immediately.
 	if Save_Manager != null:
 		var id_text: String = _get_state_id()

@@ -1,10 +1,10 @@
 extends Node
 class_name SaveManager
 
-# SaveManager v9
+# SaveManager v12
 # Autoload name recommended: Save_Manager
 #
-# New in v9:
+# New in v12:
 # - You can set a readable location name in Inspector:
 #     current_location_display_name
 # - It is saved into each slot as "location_name"
@@ -15,6 +15,9 @@ class_name SaveManager
 # - Detailed item restore debug: loaded ids, database hits/misses, inventory count.
 # - Fallback scan in res://data/items if Item_Database autoload is missing.
 # - Persistent world object state: opened chests and opened secrets.
+# - Load now fully resets runtime world state before applying save file data.
+# - Gold restore now updates InventoryScreen.gold_amount/set_gold and Inventory_Service.gold.
+# - Party HP/MP save and restore.
 #
 # Example slot text:
 #   Слот 1 — Деревня у реки | Золото: 100 | 20.04.2026 18:45
@@ -233,12 +236,20 @@ func apply_loaded_data(data: Dictionary) -> void:
 	_apply_world_state_from_save(data)
 	_apply_player_position(data)
 	_apply_gold(data)
+	_apply_party_status(data)
 	_apply_inventory_items(data)
 	_apply_game_state(data)
 
 
 
 func _apply_world_state_from_save(data: Dictionary) -> void:
+	# Important:
+	# Runtime state can contain changes made AFTER the last save.
+	# Example: player opens a chest, does NOT save, then loads old save.
+	# Therefore loading must always reset world state first.
+	opened_chests.clear()
+	opened_secrets.clear()
+
 	if data.has("opened_chests"):
 		var chests_value: Variant = data["opened_chests"]
 		if typeof(chests_value) == TYPE_DICTIONARY:
@@ -253,6 +264,8 @@ func _apply_world_state_from_save(data: Dictionary) -> void:
 		print("SaveManager: loaded opened_chests = ", opened_chests.keys())
 		print("SaveManager: loaded opened_secrets = ", opened_secrets.keys())
 
+
+
 func _collect_save_data() -> Dictionary:
 	var data: Dictionary = {}
 	data["version"] = SAVE_VERSION
@@ -260,6 +273,7 @@ func _collect_save_data() -> Dictionary:
 	data["location_name"] = current_location_display_name
 	data["player"] = _collect_player_data()
 	data["gold"] = _collect_gold()
+	data["party_status"] = _collect_party_status()
 	data["inventory_item_ids"] = _collect_inventory_item_ids()
 	data["opened_chests"] = opened_chests.duplicate(true)
 	data["opened_secrets"] = opened_secrets.duplicate(true)
@@ -321,13 +335,23 @@ func _collect_player_data() -> Dictionary:
 
 
 func _collect_gold() -> int:
+	# Prefer the visible inventory/menu value, because your gold is shown as a number,
+	# not as an item slot.
+	var inv: Node = _find_inventory_screen()
+	if inv != null:
+		if "gold_amount" in inv:
+			return int(inv.gold_amount)
+		if "gold" in inv:
+			return int(inv.gold)
+
 	if typeof(Global) != TYPE_NIL:
 		if "gold" in Global:
 			return int(Global.gold)
 
-	if typeof(Inventory_Service) != TYPE_NIL:
-		if "gold" in Inventory_Service:
-			return int(Inventory_Service.gold)
+	var service: Node = _get_inventory_service()
+	if service != null:
+		if "gold" in service:
+			return int(service.gold)
 
 	return 0
 
@@ -376,6 +400,150 @@ func _append_item_ids_from_array(out_ids: Array[String], items: Array) -> void:
 			out_ids.append(id_text)
 
 
+
+func _collect_party_status() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+
+	var p: PartyData = _find_party_data()
+	if p == null:
+		return out
+
+	for i in range(p.heroes.size()):
+		var hero: HeroData = p.heroes[i]
+		if hero == null:
+			continue
+
+		var max_hp: int = _get_hero_max_hp(hero)
+		var max_mp: int = _get_hero_max_mp(hero)
+
+		var hp: int = int(hero.hp_current)
+		var mp: int = int(hero.mp_current)
+
+		# Current project convention:
+		# 0 can mean "not initialized", so save it as full instead of dead/empty.
+		if hp <= 0 and max_hp > 0:
+			hp = max_hp
+		if mp < 0:
+			mp = 0
+		if max_mp > 0 and mp > max_mp:
+			mp = max_mp
+
+		out.append({
+			"index": i,
+			"hero_name": hero.hero_name,
+			"hp_current": clampi(hp, 0, max_hp),
+			"mp_current": clampi(mp, 0, max_mp)
+		})
+
+	if print_save_debug:
+		print("SaveManager: saving party_status = ", out)
+
+	return out
+
+
+func _apply_party_status(data: Dictionary) -> void:
+	if not data.has("party_status"):
+		return
+
+	var p: PartyData = _find_party_data()
+	if p == null:
+		if print_save_debug:
+			print("SaveManager: party_status exists, but PartyData was not found.")
+		return
+
+	var arr: Array = data["party_status"] as Array
+
+	for entry_value in arr:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+
+		var entry: Dictionary = entry_value as Dictionary
+		var index: int = int(entry.get("index", -1))
+		if index < 0 or index >= p.heroes.size():
+			continue
+
+		var hero: HeroData = p.heroes[index]
+		if hero == null:
+			continue
+
+		var max_hp: int = _get_hero_max_hp(hero)
+		var max_mp: int = _get_hero_max_mp(hero)
+
+		hero.hp_current = clampi(int(entry.get("hp_current", hero.hp_current)), 0, max_hp)
+		hero.mp_current = clampi(int(entry.get("mp_current", hero.mp_current)), 0, max_mp)
+
+	_refresh_status_screens()
+
+	if print_save_debug:
+		print("SaveManager: restored party_status = ", arr)
+
+
+func _find_party_data() -> PartyData:
+	var scene: Node = get_tree().current_scene
+	if scene != null:
+		var node: Node = _find_node_with_party(scene)
+		if node != null and "party" in node:
+			var p = node.party
+			if p != null and p is PartyData:
+				return p as PartyData
+
+	return null
+
+
+func _find_node_with_party(root: Node) -> Node:
+	if root == null:
+		return null
+
+	if "party" in root:
+		var p = root.party
+		if p != null and p is PartyData:
+			return root
+
+	for child in root.get_children():
+		var found: Node = _find_node_with_party(child)
+		if found != null:
+			return found
+
+	return null
+
+
+func _get_hero_max_hp(hero: HeroData) -> int:
+	if hero == null:
+		return 0
+	if hero.base_stats == null:
+		return 0
+	return int(hero.base_stats.hp)
+
+
+func _get_hero_max_mp(hero: HeroData) -> int:
+	if hero == null:
+		return 0
+	if hero.base_stats == null:
+		return 0
+	return int(hero.base_stats.mp)
+
+
+func _refresh_status_screens() -> void:
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return
+
+	_refresh_status_recursive(scene)
+
+
+func _refresh_status_recursive(root: Node) -> void:
+	if root == null:
+		return
+
+	if root.has_method("_render"):
+		root.call("_render")
+	elif root.has_method("refresh"):
+		root.call("refresh")
+
+	for child in root.get_children():
+		_refresh_status_recursive(child)
+
+
 func _collect_game_state() -> Dictionary:
 	var out: Dictionary = {}
 	var gs: Node = _find_game_state()
@@ -416,15 +584,35 @@ func _apply_gold(data: Dictionary) -> void:
 
 	var g: int = int(data["gold"])
 
+	# 1) Runtime service value.
+	var service: Node = _get_inventory_service()
+	if service != null:
+		if "gold" in service:
+			service.gold = g
+		if "_queued_gold" in service:
+			service._queued_gold = 0
+		if service.has_signal("gold_changed"):
+			service.emit_signal("gold_changed", g)
+
+	# 2) Global value, if your project uses it.
 	if typeof(Global) != TYPE_NIL:
 		if "gold" in Global:
 			Global.gold = g
-			return
 
-	if typeof(Inventory_Service) != TYPE_NIL:
-		if "gold" in Inventory_Service:
-			Inventory_Service.gold = g
+	# 3) Visible inventory/menu value.
+	var inv: Node = _find_inventory_screen()
+	if inv != null:
+		if inv.has_method("set_gold"):
+			inv.call("set_gold", g)
+		elif "gold_amount" in inv:
+			inv.gold_amount = g
+			if inv.has_method("_update_gold_label"):
+				inv.call("_update_gold_label")
+		elif "gold" in inv:
+			inv.gold = g
 
+	if print_save_debug:
+		print("SaveManager: restored gold = ", g)
 
 
 func _apply_inventory_items(data: Dictionary) -> void:

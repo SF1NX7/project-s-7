@@ -63,6 +63,8 @@ var _pending_player: Node2D = null
 func _ready() -> void:
 	_rng.randomize()
 	add_to_group("npcs")
+	if blocked_layer == null:
+		blocked_layer = _find_blocked_layer()
 
 	# Find animation node
 	if anim_path != NodePath(""):
@@ -84,37 +86,59 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	# Freeze while dialogue is active
+	# While dialogue is active, finish current tile step safely, then stand idle.
+	# Never freeze target_position = global_position in the middle of a tile.
 	if _dialogue_active() or _in_dialogue:
-		moving = false
-		reserved_cell_valid = false
-		target_position = global_position
-		_play_idle()
+		if moving:
+			_advance_current_step(delta)
+		else:
+			_play_idle()
 		return
 
-	# Move towards target
+	# Move towards target.
 	if moving:
-		global_position = global_position.move_toward(target_position, move_speed * delta)
-		if global_position.distance_to(target_position) <= center_epsilon:
-			global_position = target_position
-			moving = false
-			reserved_cell_valid = false
-			_play_idle()
-			if _pending_dialogue:
-				_start_dialogue_now()
-			return
+		_advance_current_step(delta)
+		if not moving and _pending_dialogue:
+			_start_dialogue_now()
+		return
 
-	# If dialogue is pending but we aren't moving (edge case), start it.
-	if _pending_dialogue and not moving and _is_on_tile_center():
+	# If dialogue is pending but we aren't moving, start it only from tile center.
+	if _pending_dialogue and not moving:
+		if not _is_on_tile_center():
+			_snap_to_tile_center()
 		_start_dialogue_now()
 		return
 
-	# Decide next move
+	# Decide next move.
 	_think_t += delta
 	if _think_t >= think_interval:
 		_think_t = 0.0
 		if not moving:
 			_decide_next_action()
+
+
+
+func _advance_current_step(delta: float) -> void:
+	if not moving:
+		return
+
+	global_position = global_position.move_toward(target_position, move_speed * delta)
+
+	if global_position.distance_to(target_position) <= center_epsilon:
+		global_position = target_position
+		moving = false
+		reserved_cell_valid = false
+		_play_idle()
+
+
+func _snap_to_tile_center() -> void:
+	var cell := _world_to_cell(_feet_world_pos())
+	var centered := _cell_to_world_center(cell)
+	global_position = centered
+	target_position = centered
+	moving = false
+	reserved_cell_valid = false
+	_play_idle()
 
 
 # Player calls interact(). Dialogue will start only when centered (queued otherwise).
@@ -315,7 +339,7 @@ func _can_step_to_cell(cell: Vector2i) -> bool:
 	if block_player_cell:
 		var pl := _find_player()
 		if pl != null:
-			var pl_cell := _world_to_cell(pl.global_position)
+			var pl_cell := _world_to_cell(_get_actor_feet_world_pos(pl))
 			if pl_cell == cell:
 				return false
 			if _actor_reserves_cell(pl, cell):
@@ -326,13 +350,79 @@ func _can_step_to_cell(cell: Vector2i) -> bool:
 		if npc == self:
 			continue
 		if npc is Node2D:
-			var npc_cell := _world_to_cell((npc as Node2D).global_position)
+			var npc_cell := _world_to_cell(_get_actor_feet_world_pos(npc as Node2D))
 			if npc_cell == cell:
 				return false
 			if _actor_reserves_cell(npc, cell):
 				return false
 
+	# Static scene objects that are not painted on the Blocked TileMap.
+	# Chests must be in group "chests"; doors in "doors".
+	if _static_blocker_on_cell(cell):
+		return false
+
 	return true
+
+
+func _get_actor_feet_world_pos(actor: Node2D) -> Vector2:
+	if actor == null:
+		return Vector2.ZERO
+
+	var cs = actor.get_node_or_null("CollisionShape2D")
+	if cs != null and cs is CollisionShape2D:
+		return (cs as CollisionShape2D).global_position
+
+	return actor.global_position
+
+
+func _static_blocker_on_cell(cell: Vector2i) -> bool:
+	var groups: Array[String] = [
+		"chests",
+		"doors",
+		"solid_objects",
+		"interact_blockers"
+	]
+
+	for group_name in groups:
+		for obj in get_tree().get_nodes_in_group(group_name):
+			if obj == null:
+				continue
+			if not (obj is Node2D):
+				continue
+
+			var obj_cell := _world_to_cell(_get_static_object_anchor(obj as Node2D))
+			if obj_cell == cell:
+				return true
+
+	return false
+
+
+func _get_static_object_anchor(obj: Node2D) -> Vector2:
+	if obj == null:
+		return Vector2.ZERO
+
+	# Prefer CollisionShape2D if object has one directly.
+	var cs := obj.get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if cs != null:
+		return cs.global_position
+
+	# Some objects keep interaction area/hitbox as a child.
+	var hit := obj.get_node_or_null("HitArea") as Area2D
+	if hit != null:
+		var hit_cs := hit.get_node_or_null("CollisionShape2D") as CollisionShape2D
+		if hit_cs != null:
+			return hit_cs.global_position
+
+	return obj.global_position
+
+
+func _find_blocked_layer() -> TileMapLayer:
+	var scene := get_tree().current_scene
+	if scene != null:
+		var found := scene.find_child("Blocked", true, false)
+		if found != null and found is TileMapLayer:
+			return found as TileMapLayer
+	return null
 
 
 func _random_cardinal_dir() -> Vector2:
@@ -464,9 +554,12 @@ func _find_first_animated_sprite(root: Node) -> AnimatedSprite2D:
 
 func _pick_dialogue_lines() -> Array[String]:
 	# Priority:
-	# 1) npc_dialogue.variants (first match)
-	# 2) npc_dialogue.default_lines
-	# 3) dialogue_lines (legacy)
+	# 1) npc_dialogue.variants (first matching condition)
+	# 2) dialogue_lines from this NPC instance in Inspector
+	# 3) npc_dialogue.default_lines
+	#
+	# This lets you quickly override NPC text directly in the scene Inspector,
+	# while still keeping conditional variants from NPCDialogue.
 	if npc_dialogue == null:
 		return dialogue_lines
 
@@ -474,10 +567,13 @@ func _pick_dialogue_lines() -> Array[String]:
 	if not lines.is_empty():
 		return lines
 
+	if not dialogue_lines.is_empty():
+		return dialogue_lines
+
 	if not npc_dialogue.default_lines.is_empty():
 		return npc_dialogue.default_lines
 
-	return dialogue_lines
+	return []
 
 
 func _pick_from_variants(pack: NPCDialogue) -> Array[String]:

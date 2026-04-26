@@ -5,7 +5,7 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_nsxm4"]
 size = Vector2(28, 28)
 
-[node name="InspectHotspot" type="Area2D" unique_id=1744569819]
+[node name="InspectHotspot" type="Area2D" unique_id=997820090]
 script = ExtResource("1_1fchn")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1408180017]

@@ -51,15 +51,13 @@ grow_vertical = 0
 
 [node name="EquipPanel" type="Panel" parent="UiRoot/MenuRoot" unique_id=1425130105]
 layout_mode = 1
-anchors_preset = 6
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = -48.00006
-offset_top = -24.0
-offset_right = -8.000061
-offset_bottom = 24.0
+anchors_preset = -1
+anchor_left = 0.70000005
+anchor_top = 0.25
+anchor_right = 0.95000005
+anchor_bottom = 0.75000006
+offset_left = -5.340576e-05
+offset_right = -6.1035156e-05
 grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
@@ -88,13 +86,13 @@ vertical_alignment = 1
 
 [node name="MagicPanel" type="Panel" parent="UiRoot/MenuRoot" unique_id=830686586]
 layout_mode = 1
-anchors_preset = 4
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = 8.000061
-offset_top = -24.0
-offset_right = 48.00006
-offset_bottom = 24.0
+anchors_preset = -1
+anchor_left = 0.05
+anchor_top = 0.25
+anchor_right = 0.3
+anchor_bottom = 0.75000006
+offset_left = 5.8174133e-05
+offset_right = 4.196167e-05
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("2_8poee")
@@ -102,9 +100,11 @@ frame_a = ExtResource("6_y8ptk")
 frame_b = ExtResource("7_tgqol")
 
 [node name="Bg" type="TextureRect" parent="UiRoot/MenuRoot/MagicPanel" unique_id=832911127]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 0.97900003
+offset_bottom = 1.0079994
 
 [node name="Label" type="Label" parent="UiRoot/MenuRoot/MagicPanel" unique_id=420514049]
 visible = false
@@ -121,14 +121,13 @@ vertical_alignment = 1
 
 [node name="StatusPanel" type="Panel" parent="UiRoot/MenuRoot" unique_id=1253107604]
 layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
+anchors_preset = -1
+anchor_left = 0.35000002
+anchor_top = 0.583
+anchor_right = 0.65000004
 anchor_bottom = 1.0
-offset_left = -24.0
-offset_top = -40.0
-offset_right = 24.0
+offset_top = 0.03199768
+offset_right = -1.5258789e-05
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
@@ -137,9 +136,11 @@ frame_a = ExtResource("8_vuwoc")
 frame_b = ExtResource("9_8iyg0")
 
 [node name="Bg" type="TextureRect" parent="UiRoot/MenuRoot/StatusPanel" unique_id=432561286]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -3.0517578e-05
 
 [node name="Label" type="Label" parent="UiRoot/MenuRoot/StatusPanel" unique_id=876593800]
 visible = false
@@ -156,13 +157,13 @@ vertical_alignment = 2
 
 [node name="InventoryPanel" type="Panel" parent="UiRoot/MenuRoot" unique_id=1274917682]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -24.0
-offset_top = 8.0
-offset_right = 24.0
-offset_bottom = 48.0
+anchors_preset = -1
+anchor_left = 0.35000002
+anchor_top = 0.083000004
+anchor_right = 0.65000004
+anchor_bottom = 0.5
+offset_top = 0.031999588
+offset_right = -1.5258789e-05
 grow_horizontal = 2
 mouse_filter = 2
 script = ExtResource("2_8poee")
@@ -170,9 +171,11 @@ frame_a = ExtResource("10_5jiwl")
 frame_b = ExtResource("11_cj5sl")
 
 [node name="Bg" type="TextureRect" parent="UiRoot/MenuRoot/InventoryPanel" unique_id=247295175]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -3.0517578e-05
 
 [node name="Label" type="Label" parent="UiRoot/MenuRoot/InventoryPanel" unique_id=2017133810]
 visible = false
@@ -199,6 +202,7 @@ offset_right = 0.3199463
 offset_bottom = 0.11999512
 theme_override_styles/panel = SubResource("StyleBoxTexture_vuwoc")
 script = ExtResource("13_vuwoc")
+names = Array[String](["Inventory", "Magic", "Equip", "Status"])
 
 [node name="NameLabel" type="Label" parent="UiRoot/NameHint" unique_id=1491532943]
 layout_mode = 1

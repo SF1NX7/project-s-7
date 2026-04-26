@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://d22ucplxlxvs"]
+
+[ext_resource type="Script" uid="uid://cdamm0x2ik366" path="res://script/ui/PartyHpHotspot.gd" id="1_xbwrd"]
+[ext_resource type="Resource" uid="uid://bvnm458hqdkrd" path="res://data/items/party_data.tres" id="2_qvys5"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_0selw"]
+size = Vector2(30, 30)
+
+[node name="PartyHpHotspot" type="Area2D" unique_id=1479072593]
+script = ExtResource("1_xbwrd")
+party = ExtResource("2_qvys5")
+affect_all_heroes = true
+one_time = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2035349056]
+shape = SubResource("RectangleShape2D_0selw")
+debug_color = Color(0.7561058, 0.1427435, 0.10238282, 0.41960785)

@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://lsqk3i0booby" path="res://script/player/player.gd" id="1_onrkg"]
 [ext_resource type="Texture2D" uid="uid://btb685252nctf" path="res://art/char/main_character.png" id="2_7ajil"]
+[ext_resource type="Script" uid="uid://8dq8dfdwwrvq" path="res://script/system/interaction_debug_probe.gd" id="3_wq7vr"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_wq7vr"]
 atlas = ExtResource("2_7ajil")
@@ -214,3 +215,6 @@ zoom = Vector2(1.1, 1.1)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea" unique_id=302059315]
 visible = false
 shape = SubResource("RectangleShape2D_onrkg")
+
+[node name="InteractionDebugProbe" type="Node2D" parent="." unique_id=1672264717]
+script = ExtResource("3_wq7vr")
