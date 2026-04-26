@@ -194,6 +194,7 @@ radius = 20.0
 
 [node name="NPC 1" type="CharacterBody2D" unique_id=841262844 groups=["npcs"]]
 script = ExtResource("1_gw7q4")
+dialogue_lines = Array[String]([""])
 
 [node name="Sprite2D" type="AnimatedSprite2D" parent="." unique_id=2139026874]
 position = Vector2(0, -14)

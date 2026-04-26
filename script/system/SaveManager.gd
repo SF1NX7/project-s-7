@@ -1,10 +1,10 @@
 extends Node
 class_name SaveManager
 
-# SaveManager v8
+# SaveManager v9
 # Autoload name recommended: Save_Manager
 #
-# New in v8:
+# New in v9:
 # - You can set a readable location name in Inspector:
 #     current_location_display_name
 # - It is saved into each slot as "location_name"
@@ -14,6 +14,7 @@ class_name SaveManager
 # - Uses deferred inventory restore after scene loading, so UI has time to appear.
 # - Detailed item restore debug: loaded ids, database hits/misses, inventory count.
 # - Fallback scan in res://data/items if Item_Database autoload is missing.
+# - Persistent world object state: opened chests and opened secrets.
 #
 # Example slot text:
 #   Слот 1 — Деревня у реки | Золото: 100 | 20.04.2026 18:45
@@ -42,6 +43,10 @@ signal load_failed(slot: int, reason: String)
 
 const SAVE_VERSION: int = 1
 
+var opened_chests: Dictionary = {}
+var opened_secrets: Dictionary = {}
+
+
 
 func set_current_slot(slot: int) -> void:
 	current_save_slot = int(clamp(slot, 1, max_slots))
@@ -49,6 +54,43 @@ func set_current_slot(slot: int) -> void:
 
 func set_location_display_name(value: String) -> void:
 	current_location_display_name = value
+
+
+func mark_chest_opened(chest_id: String) -> void:
+	var key: String = chest_id.strip_edges()
+	if key == "":
+		return
+	opened_chests[key] = true
+	if print_save_debug:
+		print("SaveManager: chest opened -> ", key)
+
+
+func is_chest_opened(chest_id: String) -> bool:
+	var key: String = chest_id.strip_edges()
+	if key == "":
+		return false
+	return bool(opened_chests.get(key, false))
+
+
+func mark_secret_opened(secret_id: String) -> void:
+	var key: String = secret_id.strip_edges()
+	if key == "":
+		return
+	opened_secrets[key] = true
+	if print_save_debug:
+		print("SaveManager: secret opened -> ", key)
+
+
+func is_secret_opened(secret_id: String) -> bool:
+	var key: String = secret_id.strip_edges()
+	if key == "":
+		return false
+	return bool(opened_secrets.get(key, false))
+
+
+func clear_world_state() -> void:
+	opened_chests.clear()
+	opened_secrets.clear()
 
 
 func get_slot_path(slot: int = -1) -> String:
@@ -141,6 +183,7 @@ func get_slot_summary(slot: int) -> String:
 func start_new_game(slot: int, scene_path: String = "") -> void:
 	var s: int = int(clamp(slot, 1, max_slots))
 	current_save_slot = s
+	clear_world_state()
 	_clear_runtime_inventory_before_new_game()
 
 	var path: String = scene_path
@@ -159,6 +202,9 @@ func load_slot_and_enter_game(slot: int) -> void:
 	var scene_path: String = str(data.get("scene_path", ""))
 	if scene_path.strip_edges() == "":
 		scene_path = default_start_scene_path
+
+	# Apply world state BEFORE changing scene, so chests/secrets can read it in _ready().
+	_apply_world_state_from_save(data)
 
 	var err: Error = get_tree().change_scene_to_file(scene_path)
 	if err != OK:
@@ -184,11 +230,28 @@ func apply_loaded_data(data: Dictionary) -> void:
 	if data.has("location_name"):
 		current_location_display_name = str(data["location_name"])
 
+	_apply_world_state_from_save(data)
 	_apply_player_position(data)
 	_apply_gold(data)
 	_apply_inventory_items(data)
 	_apply_game_state(data)
 
+
+
+func _apply_world_state_from_save(data: Dictionary) -> void:
+	if data.has("opened_chests"):
+		var chests_value: Variant = data["opened_chests"]
+		if typeof(chests_value) == TYPE_DICTIONARY:
+			opened_chests = (chests_value as Dictionary).duplicate(true)
+
+	if data.has("opened_secrets"):
+		var secrets_value: Variant = data["opened_secrets"]
+		if typeof(secrets_value) == TYPE_DICTIONARY:
+			opened_secrets = (secrets_value as Dictionary).duplicate(true)
+
+	if print_save_debug:
+		print("SaveManager: loaded opened_chests = ", opened_chests.keys())
+		print("SaveManager: loaded opened_secrets = ", opened_secrets.keys())
 
 func _collect_save_data() -> Dictionary:
 	var data: Dictionary = {}
@@ -198,6 +261,8 @@ func _collect_save_data() -> Dictionary:
 	data["player"] = _collect_player_data()
 	data["gold"] = _collect_gold()
 	data["inventory_item_ids"] = _collect_inventory_item_ids()
+	data["opened_chests"] = opened_chests.duplicate(true)
+	data["opened_secrets"] = opened_secrets.duplicate(true)
 	data["game_state"] = _collect_game_state()
 	return data
 
