@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scene/battle/BattleCursor.tscn" id="7_3b1ta"]
 [ext_resource type="Script" uid="uid://b1xr4qxrf0dch" path="res://script/battle/battle_camera.gd" id="7_63bfe"]
 [ext_resource type="PackedScene" path="res://scene/battle/Spawns.tscn" id="9_cwsfq"]
+[ext_resource type="Script" uid="uid://n6d0dhqp3tfb" path="res://script/battle/battle_hover.gd" id="10_fbxdf"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_inp5g"]
 texture = ExtResource("1_323eo")
@@ -1373,5 +1374,11 @@ position = Vector2(-528, -142)
 
 [node name="Spawn7" parent="Spawns" index="6"]
 position = Vector2(-528, -112)
+
+[node name="BattleHover" type="Node" parent="." unique_id=716872636]
+script = ExtResource("10_fbxdf")
+highlight_color = Color(0, 0, 0, 1)
+highlight_strength = 0.4
+pulse_speed = 2.3
 
 [editable path="Spawns"]
