@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://b1xr4qxrf0dch" path="res://script/battle/battle_camera.gd" id="7_63bfe"]
 [ext_resource type="PackedScene" path="res://scene/battle/Spawns.tscn" id="9_cwsfq"]
 [ext_resource type="Script" uid="uid://n6d0dhqp3tfb" path="res://script/battle/battle_hover.gd" id="10_fbxdf"]
+[ext_resource type="Script" uid="uid://dvf68nv6dijmd" path="res://script/battle/battle_turn.gd" id="11_mw1ti"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_inp5g"]
 texture = ExtResource("1_323eo")
@@ -1349,8 +1350,9 @@ target = NodePath("../BattleCursor")
 [node name="BattleCursor" parent="." unique_id=1870715921 instance=ExtResource("7_3b1ta")]
 grid_origin = Vector2(-640, -320)
 grid_size = Vector2i(20, 10)
-border_color = Color(0.79706585, 0, 0.27128986, 1)
+border_color = Color(0.99371403, 0.7006106, 0.6113807, 1)
 fill_color = Color(0.9310021, 0.9647047, 0.57266915, 0.26200002)
+border_width = 1.5
 
 [node name="Spawns" parent="." unique_id=2022006090 instance=ExtResource("9_cwsfq")]
 
@@ -1380,5 +1382,8 @@ script = ExtResource("10_fbxdf")
 highlight_color = Color(0, 0, 0, 1)
 highlight_strength = 0.4
 pulse_speed = 2.3
+
+[node name="BattleTurn" type="Node" parent="." unique_id=1089211797]
+script = ExtResource("11_mw1ti")
 
 [editable path="Spawns"]

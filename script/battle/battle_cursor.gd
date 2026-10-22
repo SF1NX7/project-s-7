@@ -13,6 +13,10 @@ extends Node2D
 @export_range(1.0, 8.0, 0.5) var border_width: float = 2.0
 @export var cursor_visible: bool = true
 
+@export_group("Smooth Movement")
+@export var smooth_movement: bool = true
+@export_range(1.0, 40.0, 0.5) var slide_speed: float = 18.0
+
 @export_group("Controls")
 @export var allow_arrow_keys: bool = true
 @export_range(0.05, 1.0, 0.01) var first_repeat_delay: float = 0.25
@@ -23,12 +27,14 @@ signal cell_changed(cell: Vector2i)
 var selected_cell: Vector2i
 var _held_direction: Vector2i = Vector2i.ZERO
 var _repeat_timer: float = 0.0
+var _target_position: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
 	grid_size = Vector2i(maxi(1, grid_size.x), maxi(1, grid_size.y))
 	selected_cell = _clamp_cell(starting_cell)
 	_update_cursor()
+	position = _target_position
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -53,6 +59,14 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	if smooth_movement:
+		var weight: float = 1.0 - exp(-slide_speed * delta)
+		position = position.lerp(_target_position, weight)
+		if position.distance_squared_to(_target_position) < 0.04:
+			position = _target_position
+	else:
+		position = _target_position
+
 	if _held_direction == Vector2i.ZERO:
 		return
 
@@ -107,7 +121,9 @@ func _clamp_cell(cell: Vector2i) -> Vector2i:
 
 
 func _update_cursor() -> void:
-	position = grid_origin + Vector2((selected_cell - first_cell) * cell_size)
+	_target_position = grid_origin + Vector2((selected_cell - first_cell) * cell_size)
+	if not smooth_movement:
+		position = _target_position
 	queue_redraw()
 
 

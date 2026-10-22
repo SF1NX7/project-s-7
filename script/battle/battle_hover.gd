@@ -66,15 +66,22 @@ func _refresh_hover() -> void:
     if not is_instance_valid(_cursor) or not is_instance_valid(_units):
         return
     var cell_size: int = int(_cursor.get("cell_size"))
-    var cell_rect := Rect2(Vector2.ZERO, Vector2.ONE * float(cell_size))
+    var first_cell: Vector2i = _cursor.get("first_cell")
+    var selected_cell: Vector2i = _cursor.get("selected_cell")
+    var grid_origin: Vector2 = _cursor.get("grid_origin")
+
+    # Logical cell position is independent of the cursor's visual sliding.
+    # Grid coordinates are relative to the cursor parent, just like cursor.position.
+    var cell_local: Vector2 = grid_origin + Vector2(selected_cell - first_cell) * float(cell_size)
+    var cell_world: Vector2 = _cursor.get_parent().to_global(cell_local)
+    var cell_rect := Rect2(cell_world, Vector2.ONE * float(cell_size))
     var target: Node2D = null
     for child in _units.get_children():
         var unit := child as Node2D
         if unit == null:
             continue
-        # Unit position represents feet / occupied cell, not sprite top-left.
-        var foot: Vector2 = _cursor.to_local(unit.global_position)
-        if cell_rect.grow(0.01).has_point(foot):
+        # Characters occupy the cell under their feet, regardless of sprite height.
+        if cell_rect.grow(0.01).has_point(unit.global_position):
             target = unit
             break
     if target != _hovered:
