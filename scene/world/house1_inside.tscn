@@ -3,17 +3,18 @@
 [ext_resource type="Script" uid="uid://b38rcuyqblun3" path="res://script/world/world.gd" id="1_udg7s"]
 [ext_resource type="Texture2D" uid="uid://beta7puqxlgck" path="res://art/different_floor_tiles.png" id="2_qtfew"]
 [ext_resource type="Texture2D" uid="uid://cx28vqpn3bpr" path="res://art/Tiles/PropsCollections.png" id="3_334om"]
-[ext_resource type="Texture2D" uid="uid://b4awor2vgmovj" path="res://art/Tileset Spring32.png" id="4_lj28w"]
 [ext_resource type="Texture2D" uid="uid://u2161w2yhy2i" path="res://art/house two doors.png" id="5_dw4d5"]
 [ext_resource type="Texture2D" uid="uid://cok7iinragvvv" path="res://art/Tiles/inner_walls.png" id="5_qtfew"]
 [ext_resource type="Texture2D" uid="uid://bg27biavlcrqg" path="res://art/Tiles/HomePropsCollection.png" id="5_udg7s"]
 [ext_resource type="PackedScene" uid="uid://dqi3adlgday0w" path="res://scene/characters/player.tscn" id="6_qf2io"]
 [ext_resource type="Texture2D" uid="uid://cqb3gbx87r7c1" path="res://art/Tiles/Trees collection.png" id="7_lj28w"]
-[ext_resource type="PackedScene" uid="uid://c4pn5jj6ffbty" path="res://scene/characters/npc.tscn" id="7_pw4cv"]
+[ext_resource type="PackedScene" uid="uid://c4pn5jj6ffbty" path="res://scene/characters/npc_quest.tscn" id="7_pw4cv"]
 [ext_resource type="PackedScene" uid="uid://d5r87lolq6o8" path="res://scene/ui/dialogue_ui.tscn" id="10_45i6h"]
 [ext_resource type="Texture2D" uid="uid://cn7a5vusrxgkn" path="res://art/Portrait/oldman1.png" id="10_dw4d5"]
 [ext_resource type="PackedScene" uid="uid://bsxqpd3pfv3fa" path="res://scene/ui/portal.tscn" id="11_en8mq"]
+[ext_resource type="Script" uid="uid://bmojo4bqyiu5y" path="res://script/dialogue/NPCDialogue.gd" id="11_qf2io"]
 [ext_resource type="PackedScene" uid="uid://beifm5ixvfjwe" path="res://scene/ui/fade_layer.tscn" id="12_2ayqp"]
+[ext_resource type="Script" uid="uid://pwpwjeiayhhk" path="res://script/dialogue/DialogueVariant.gd" id="12_pw4cv"]
 [ext_resource type="PackedScene" uid="uid://d4n0sh34pluna" path="res://scene/ui/InspectHotspot.tscn" id="15_lj28w"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_lj28w"]
@@ -127,8 +128,10 @@ texture_region_size = Vector2i(32, 32)
 3:0/0 = 0
 3:1/0 = 0
 
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_dw4d5"]
+
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fvag4"]
-texture = ExtResource("4_lj28w")
+texture = SubResource("CompressedTexture2D_dw4d5")
 texture_region_size = Vector2i(32, 32)
 0:0/0 = 0
 1:0/0 = 0
@@ -670,6 +673,15 @@ sources/0 = SubResource("TileSetAtlasSource_334om")
 sources/1 = SubResource("TileSetAtlasSource_1rh30")
 sources/2 = SubResource("TileSetAtlasSource_op85r")
 
+[sub_resource type="Resource" id="Resource_1rh30"]
+script = ExtResource("12_pw4cv")
+metadata/_custom_type_script = "uid://pwpwjeiayhhk"
+
+[sub_resource type="Resource" id="Resource_op85r"]
+script = ExtResource("11_qf2io")
+variants = Array[ExtResource("12_pw4cv")]([SubResource("Resource_1rh30")])
+metadata/_custom_type_script = "uid://bmojo4bqyiu5y"
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_334om"]
 size = Vector2(160, 128)
 
@@ -707,6 +719,7 @@ position = Vector2(-112, -80)
 position = Vector2(-128, -96)
 dialogue_lines = Array[String](["Нечего тебе тут делать!!"])
 portrait = ExtResource("10_dw4d5")
+npc_dialogue = SubResource("Resource_op85r")
 move_speed = 30.0
 center_epsilon = 0.1
 think_interval = 0.5

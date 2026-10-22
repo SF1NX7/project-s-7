@@ -4,6 +4,7 @@
 
 [node name="FadeLayer" type="CanvasLayer" unique_id=3859083]
 script = ExtResource("1_bop0i")
+fade_duration = 0.95
 
 [node name="FadeRect" type="ColorRect" parent="." unique_id=1174776346]
 offset_right = 640.0

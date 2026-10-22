@@ -12,6 +12,7 @@ class_name NPC
 @export_group("Dialogue")
 @export var dialogue_lines: Array[String] = []
 @export var portrait: Texture2D
+@export var quest_component_path: NodePath = NodePath("QuestDeliveryComponent")
 
 
 @export var npc_dialogue: NPCDialogue
@@ -58,11 +59,13 @@ var _patrol_index: int = 0
 var _in_dialogue := false
 var _pending_dialogue := false
 var _pending_player: Node2D = null
+var _quest_component: Node = null
 
 
 func _ready() -> void:
 	_rng.randomize()
 	add_to_group("npcs")
+	_quest_component = get_node_or_null(quest_component_path)
 	if blocked_layer == null:
 		blocked_layer = _find_blocked_layer()
 
@@ -154,6 +157,19 @@ func interact(player: Node = null) -> void:
 		pl = _find_player()
 
 	_pending_player = pl
+
+	# Optional quest component hook.
+	# If a child QuestDeliveryComponent exists and is enabled,
+	# it handles the interaction instead of normal NPCDialogue.
+	if _quest_component != null:
+		var can_handle: bool = true
+		if _quest_component.has_method("can_handle_quest_dialogue"):
+			can_handle = bool(_quest_component.call("can_handle_quest_dialogue"))
+
+		if can_handle and _quest_component.has_method("start_quest_interaction"):
+			_quest_component.call("start_quest_interaction", pl)
+			return
+
 	_pending_dialogue = true
 
 	# Only start when centered (keeps grid alignment)

@@ -25,6 +25,7 @@ Global="*uid://dyb1uqu5af7yn"
 Inventory_Service="*uid://dqdp80kyhrvju"
 Save_Manager="*uid://bjxp7ugn5tv34"
 Item_Database="*uid://u2vetwtwhdip"
+Game_State="*uid://0jont2vn8nx2"
 
 [display]
 

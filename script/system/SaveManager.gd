@@ -1,10 +1,10 @@
 extends Node
 class_name SaveManager
 
-# SaveManager v12
+# SaveManager v13
 # Autoload name recommended: Save_Manager
 #
-# New in v12:
+# New in v13:
 # - You can set a readable location name in Inspector:
 #     current_location_display_name
 # - It is saved into each slot as "location_name"
@@ -18,6 +18,7 @@ class_name SaveManager
 # - Load now fully resets runtime world state before applying save file data.
 # - Gold restore now updates InventoryScreen.gold_amount/set_gold and Inventory_Service.gold.
 # - Party HP/MP save and restore.
+# - Equipment save and restore.
 #
 # Example slot text:
 #   Слот 1 — Деревня у реки | Золото: 100 | 20.04.2026 18:45
@@ -224,6 +225,7 @@ func load_slot_and_enter_game(slot: int) -> void:
 
 	# Inventory UI/Menu may be created a bit later, so retry restoring inventory for a short time.
 	_restore_inventory_deferred(data)
+	_restore_equipment_deferred(data)
 
 
 func apply_loaded_data(data: Dictionary) -> void:
@@ -238,6 +240,7 @@ func apply_loaded_data(data: Dictionary) -> void:
 	_apply_gold(data)
 	_apply_party_status(data)
 	_apply_inventory_items(data)
+	_apply_equipment(data)
 	_apply_game_state(data)
 
 
@@ -274,6 +277,7 @@ func _collect_save_data() -> Dictionary:
 	data["player"] = _collect_player_data()
 	data["gold"] = _collect_gold()
 	data["party_status"] = _collect_party_status()
+	data["equipment"] = _collect_equipment()
 	data["inventory_item_ids"] = _collect_inventory_item_ids()
 	data["opened_chests"] = opened_chests.duplicate(true)
 	data["opened_secrets"] = opened_secrets.duplicate(true)
@@ -542,6 +546,169 @@ func _refresh_status_recursive(root: Node) -> void:
 
 	for child in root.get_children():
 		_refresh_status_recursive(child)
+
+
+
+func _collect_equipment() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+
+	var equip: Node = _find_equip_screen()
+	if equip == null:
+		return out
+
+	if not ("_equipped" in equip):
+		return out
+
+	var eq: Dictionary = equip._equipped
+
+	for hero_key in eq.keys():
+		var hero_idx: int = int(hero_key)
+		var slots_value = eq[hero_key]
+		if typeof(slots_value) != TYPE_DICTIONARY:
+			continue
+
+		var slots: Dictionary = slots_value as Dictionary
+		for slot_key in slots.keys():
+			var slot_int: int = int(slot_key)
+			var item: Resource = slots[slot_key] as Resource
+			if item == null:
+				continue
+
+			var id_text: String = _get_item_id_text(item)
+			if id_text == "":
+				continue
+
+			out.append({
+				"hero": hero_idx,
+				"slot": slot_int,
+				"item_id": id_text
+			})
+
+	if print_save_debug:
+		print("SaveManager: saving equipment = ", out)
+
+	return out
+
+
+func _apply_equipment(data: Dictionary) -> void:
+	if not data.has("equipment"):
+		return
+
+	var equip: Node = _find_equip_screen()
+	if equip == null:
+		if print_save_debug:
+			print("SaveManager: equipment exists, but EquipScreen was not found yet.")
+		return
+
+	var arr: Array = data["equipment"] as Array
+
+	_clear_equipment(equip)
+
+	for entry_value in arr:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+
+		var entry: Dictionary = entry_value as Dictionary
+		var hero_idx: int = int(entry.get("hero", -1))
+		var slot_int: int = int(entry.get("slot", 0))
+		var item_id: String = str(entry.get("item_id", "")).strip_edges()
+
+		if hero_idx < 0 or slot_int <= 0 or item_id == "":
+			continue
+
+		var item: Resource = _resolve_item_resource(item_id)
+		if item == null:
+			push_warning("SaveManager: cannot restore equipped item id: %s" % item_id)
+			continue
+
+		if equip.has_method("set_equipped_item"):
+			equip.call("set_equipped_item", hero_idx, slot_int, item)
+		else:
+			if not ("_equipped" in equip):
+				continue
+			var eq: Dictionary = equip._equipped
+			if not eq.has(hero_idx):
+				eq[hero_idx] = {}
+			var slots: Dictionary = eq[hero_idx]
+			slots[slot_int] = item
+			eq[hero_idx] = slots
+			equip._equipped = eq
+
+	if equip.has_method("_refresh_stats_panel"):
+		equip.call("_refresh_stats_panel")
+	elif equip.has_method("_refresh"):
+		equip.call("_refresh")
+
+	_refresh_status_screens()
+
+	if print_save_debug:
+		print("SaveManager: restored equipment = ", arr)
+
+
+func _clear_equipment(equip: Node) -> void:
+	if equip == null:
+		return
+
+	if "_equipped" in equip:
+		var empty: Dictionary = {}
+		equip._equipped = empty
+
+	# Refresh visible slots if method exists.
+	if equip.has_method("set_equipped_item"):
+		for hero_idx in range(0, 8):
+			for slot_int in [1, 2, 3, 4, 5]:
+				equip.call("set_equipped_item", hero_idx, slot_int, null)
+
+
+func _restore_equipment_deferred(data: Dictionary) -> void:
+	call_deferred("_restore_equipment_retry_loop", data, 0)
+
+
+func _restore_equipment_retry_loop(data: Dictionary, attempt: int) -> void:
+	if not data.has("equipment"):
+		return
+
+	if attempt > 90:
+		if print_save_debug:
+			print("SaveManager: equipment restore retry stopped after 90 attempts.")
+		return
+
+	var equip: Node = _find_equip_screen()
+	if equip != null:
+		_apply_equipment(data)
+		return
+
+	await get_tree().process_frame
+	_restore_equipment_retry_loop(data, attempt + 1)
+
+
+func _find_equip_screen() -> Node:
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return null
+
+	var found: Node = scene.find_child("EquipScreen", true, false)
+	if found != null:
+		return found
+
+	return get_tree().root.find_child("EquipScreen", true, false)
+
+
+func _get_item_id_text(item: Resource) -> String:
+	if item == null:
+		return ""
+
+	if "id" in item:
+		var id_text: String = str(item.id).strip_edges()
+		if id_text != "":
+			return id_text
+
+	if "resource_path" in item:
+		var rp: String = str(item.resource_path)
+		if rp != "":
+			return rp.get_file().get_basename()
+
+	return ""
 
 
 func _collect_game_state() -> Dictionary:

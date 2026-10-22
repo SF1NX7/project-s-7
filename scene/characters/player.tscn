@@ -209,6 +209,9 @@ debug_color = Color(0.011764706, 0.7490196, 0.023529412, 0.41960785)
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1265035345]
 zoom = Vector2(1.1, 1.1)
+limit_right = 640
+limit_bottom = 360
+position_smoothing_enabled = true
 
 [node name="InteractionArea" type="Area2D" parent="." unique_id=1693438874]
 
