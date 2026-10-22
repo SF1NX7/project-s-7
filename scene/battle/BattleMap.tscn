@@ -1342,7 +1342,6 @@ tile_set = SubResource("TileSet_l158c")
 position_smoothing_enabled = true
 
 [node name="BattleCursor" parent="." unique_id=1870715921 instance=ExtResource("7_3b1ta")]
-first_cell = Vector2i(-20, -10)
+grid_origin = Vector2(-640, -320)
 grid_size = Vector2i(20, 10)
-starting_cell = Vector2i(-20, -10)
 border_color = Color(0.79706585, 0, 0.27128986, 1)
