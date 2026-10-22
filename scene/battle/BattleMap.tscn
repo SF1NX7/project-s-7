@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://b8lvk3dvn43xm" path="res://art/Tiles/WaterTiles/water_animatiom_1.png" id="5_fbxdf"]
 [ext_resource type="Texture2D" uid="uid://ph1guqkfagb" path="res://art/Grass_and_trails_2 .png" id="6_mw1ti"]
 [ext_resource type="PackedScene" path="res://scene/battle/BattleCursor.tscn" id="7_3b1ta"]
+[ext_resource type="Script" uid="uid://b1xr4qxrf0dch" path="res://script/battle/battle_camera.gd" id="7_63bfe"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_inp5g"]
 texture = ExtResource("1_323eo")
@@ -1338,8 +1339,10 @@ tile_set = SubResource("TileSet_l158c")
 
 [node name="Units" type="Node2D" parent="." unique_id=605848178]
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=902952529]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=902952529 node_paths=PackedStringArray("target")]
 position_smoothing_enabled = true
+script = ExtResource("7_63bfe")
+target = NodePath("../BattleCursor")
 
 [node name="BattleCursor" parent="." unique_id=1870715921 instance=ExtResource("7_3b1ta")]
 grid_origin = Vector2(-640, -320)
