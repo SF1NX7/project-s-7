@@ -16,7 +16,7 @@
 [ext_resource type="Texture2D" uid="uid://cn7a5vusrxgkn" path="res://art/Portrait/oldman1.png" id="12_wd1lr"]
 [ext_resource type="Script" uid="uid://bmojo4bqyiu5y" path="res://script/dialogue/NPCDialogue.gd" id="13_my3u0"]
 [ext_resource type="Script" uid="uid://pwpwjeiayhhk" path="res://script/dialogue/DialogueVariant.gd" id="14_vc5p7"]
-[ext_resource type="PackedScene" path="res://scene/battle/BattleTrigger.tscn" id="17_5tkp4"]
+[ext_resource type="PackedScene" uid="uid://bytoegbb3ende" path="res://scene/battle/BattleTrigger.tscn" id="17_5tkp4"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_k387j"]
 texture = ExtResource("2_7xd1l")
@@ -1921,6 +1921,7 @@ tile_set = SubResource("TileSet_gdht7")
 [node name="DialogueUI" parent="." unique_id=203183458 groups=["dialogue_ui"] instance=ExtResource("9_7xd1l")]
 
 [node name="FadeLayer" parent="." unique_id=3859083 instance=ExtResource("11_fihje")]
+visible = false
 
 [node name="Portal" parent="." unique_id=1250424720 instance=ExtResource("10_rdyk4")]
 position = Vector2(336, 48)
@@ -1934,4 +1935,4 @@ scale = Vector2(0.99999994, 0.99999994)
 gizmo_extents = 16.0
 
 [node name="BattleTrigger" parent="." unique_id=1166232213 instance=ExtResource("17_5tkp4")]
-position = Vector2(-384, 48)
+position = Vector2(240, 16)
