@@ -1,16 +1,17 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://bytoegbb3ende"]
 
-[ext_resource type="Script" path="res://script/battle/battle_trigger.gd" id="1"]
+[ext_resource type="Script" uid="uid://d17hsplvffuax" path="res://script/battle/battle_trigger.gd" id="1"]
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(32, 32)
 
-[node name="BattleTrigger" type="Area2D"]
+[node name="BattleTrigger" type="Area2D" unique_id=1880496170]
 collision_layer = 0
-collision_mask = 1
-monitoring = true
 monitorable = false
 script = ExtResource("1")
+transition_duration = 1.0
+pixel_size = 50.0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1226435007]
 shape = SubResource("RectangleShape2D_1")
 debug_color = Color(1, 0.2, 0.2, 0.35)
