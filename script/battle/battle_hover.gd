@@ -5,6 +5,7 @@ extends Node
 @export_group("Connections")
 @export var cursor_path: NodePath = ^"../BattleCursor"
 @export var units_path: NodePath = ^"../Units"
+@export var movement_path: NodePath = ^"../BattleMove"
 @export var party: PartyData = preload("res://data/items/party_data.tres")
 
 @export_group("Highlight")
@@ -24,10 +25,12 @@ extends Node
 
 var _cursor: Node2D
 var _units: Node2D
+var _movement: Node
 var _hovered: Node2D
 var _hovered_sprite: CanvasItem
 var _original_modulate: Color = Color.WHITE
 var _elapsed: float = 0.0
+var _last_movement_mode: bool = false
 var _hud: PanelContainer
 var _portrait: TextureRect
 var _name: Label
@@ -38,6 +41,7 @@ var _mp: Label
 func _ready() -> void:
     _cursor = get_node_or_null(cursor_path) as Node2D
     _units = get_node_or_null(units_path) as Node2D
+    _movement = get_node_or_null(movement_path)
     if _cursor == null or _units == null:
         push_error("BattleHover: Check Cursor Path and Units Path in Inspector.")
         set_process(false)
@@ -49,6 +53,10 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+    var movement_now: bool = _movement != null and _movement.get("_movement_mode") == true
+    if movement_now != _last_movement_mode:
+        _last_movement_mode = movement_now
+        _refresh_hover()
     if _hovered_sprite == null or not is_instance_valid(_hovered_sprite):
         return
     _elapsed += delta
@@ -76,23 +84,31 @@ func _refresh_hover() -> void:
     var cell_world: Vector2 = _cursor.get_parent().to_global(cell_local)
     var cell_rect := Rect2(cell_world, Vector2.ONE * float(cell_size))
     var target: Node2D = null
-    for child in _units.get_children():
-        var unit := child as Node2D
-        if unit == null:
-            continue
-        # Characters occupy the cell under their feet, regardless of sprite height.
-        if cell_rect.grow(0.01).has_point(unit.global_position):
-            target = unit
-            break
+    var in_movement_mode: bool = _movement != null and _movement.get("_movement_mode") == true
+    if in_movement_mode:
+        var active: Node2D = _movement.get("_unit") as Node2D
+        if is_instance_valid(active):
+            target = active
+    if not in_movement_mode:
+        for child in _units.get_children():
+            var unit := child as Node2D
+            if unit == null:
+                continue
+            # Characters occupy the cell under their feet, regardless of sprite height.
+            if cell_rect.grow(0.01).has_point(unit.global_position):
+                target = unit
+                break
     if target != _hovered:
         _clear_highlight()
         _hovered = target
         if _hovered != null:
-            _hovered_sprite = _hovered.get_node_or_null("Sprite2D") as CanvasItem
+            _hovered_sprite = _hovered.get_node_or_null("AnimatedSprite2D") as CanvasItem
+            if _hovered_sprite == null:
+                _hovered_sprite = _hovered.get_node_or_null("Sprite2D") as CanvasItem
             if _hovered_sprite != null:
                 _original_modulate = _hovered_sprite.modulate
             _elapsed = 0.0
-    _cursor.set("cursor_visible", target == null)
+    _cursor.set("cursor_visible", not in_movement_mode and target == null)
     _cursor.queue_redraw()
     _update_panel()
 

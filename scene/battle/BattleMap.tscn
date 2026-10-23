@@ -1392,5 +1392,7 @@ script = ExtResource("11_mw1ti")
 
 [node name="BattleMove" type="Node2D" parent="." unique_id=1472764406]
 script = ExtResource("13_5a78g")
+movement_radius = 4
+move_duration = 0.17
 
 [editable path="Spawns"]

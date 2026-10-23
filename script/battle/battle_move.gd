@@ -13,8 +13,6 @@ extends Node2D
 @export_range(1, 24, 1) var movement_radius: int = 5
 @export_range(0.03, 0.75, 0.01) var move_duration: float = 0.14
 @export_range(0.03, 0.75, 0.01) var return_step_duration: float = 0.10
-@export_range(0.05, 1.0, 0.01) var first_repeat_delay: float = 0.24
-@export_range(0.03, 0.5, 0.01) var repeat_interval: float = 0.12
 @export var allow_arrow_keys: bool = true
 
 @export_group("Movement Highlight")
@@ -38,7 +36,6 @@ var _reachable: Dictionary = {}
 var _movement_mode: bool = true
 var _animating: bool = false
 var _direction: Vector2i = Vector2i.ZERO
-var _repeat_timer: float = 0.0
 var _tween: Tween
 
 func _ready() -> void:
@@ -89,16 +86,22 @@ func _unhandled_key_input(event: InputEvent) -> void:
         return
     var key_event := event as InputEventKey
     var key: Key = key_event.physical_keycode if key_event.physical_keycode != KEY_NONE else key_event.keycode
+    var input_direction := _input_event_direction(key_event)
+
     if not key_event.pressed:
-        if _direction == _input_event_direction(key_event):
-            _direction = Vector2i.ZERO
+        if input_direction != Vector2i.ZERO and _direction == input_direction:
+            _direction = _held_direction()
+            if not _animating and _direction == Vector2i.ZERO:
+                _play_unit_idle()
         return
+
     if key_event.echo or _menu.get("is_open") == true:
         return
     if key == KEY_TAB:
         if not _animating:
             _movement_mode = not _movement_mode
             _direction = Vector2i.ZERO
+            _play_unit_idle()
             _apply_input_mode()
             if _movement_mode:
                 _sync_cursor()
@@ -112,24 +115,47 @@ func _unhandled_key_input(event: InputEvent) -> void:
             _return_home()
         get_viewport().set_input_as_handled()
         return
-    var direction := _input_event_direction(key_event)
-    if direction != Vector2i.ZERO:
-        _direction = direction
-        _repeat_timer = first_repeat_delay
+    if input_direction != Vector2i.ZERO:
+        _direction = input_direction
         if not _animating:
-            _attempt_step(direction)
+            _attempt_step(_direction)
         get_viewport().set_input_as_handled()
 
-func _process(delta: float) -> void:
+
+func _held_direction() -> Vector2i:
+    # Do not use Godot keyboard repeat timing for walking. Always inspect
+    # the actually held keys, so movement continues immediately each tile.
+    if Input.is_physical_key_pressed(KEY_W) or (allow_arrow_keys and Input.is_physical_key_pressed(KEY_UP)):
+        return Vector2i.UP
+    if Input.is_physical_key_pressed(KEY_A) or (allow_arrow_keys and Input.is_physical_key_pressed(KEY_LEFT)):
+        return Vector2i.LEFT
+    if Input.is_physical_key_pressed(KEY_S) or (allow_arrow_keys and Input.is_physical_key_pressed(KEY_DOWN)):
+        return Vector2i.DOWN
+    if Input.is_physical_key_pressed(KEY_D) or (allow_arrow_keys and Input.is_physical_key_pressed(KEY_RIGHT)):
+        return Vector2i.RIGHT
+    return Vector2i.ZERO
+
+
+func _process(_delta: float) -> void:
     if _cursor == null:
         return
     _apply_input_mode()
-    if _menu.get("is_open") == true or not _movement_mode or _animating or _direction == Vector2i.ZERO:
+    if _menu.get("is_open") == true:
+        _direction = Vector2i.ZERO
+        if not _animating:
+            _play_unit_idle()
         return
-    _repeat_timer -= delta
-    if _repeat_timer <= 0.0:
+    if not _movement_mode:
+        _direction = Vector2i.ZERO
+        return
+    if _animating:
+        return
+    _direction = _held_direction()
+    if _direction != Vector2i.ZERO:
         _attempt_step(_direction)
-        _repeat_timer = repeat_interval
+    else:
+        _play_unit_idle()
+
 
 func _apply_input_mode() -> void:
     if _cursor == null:
@@ -195,6 +221,7 @@ func _build_reachable() -> void:
 func _attempt_step(direction: Vector2i) -> void:
     var destination: Vector2i = _cell + direction
     if not _reachable.has(destination) or not _free(destination):
+        _play_unit_idle()
         return
     _animate_step(destination, move_duration)
 
@@ -205,12 +232,30 @@ func _animate_step(destination: Vector2i, duration: float) -> void:
     var delta: Vector2 = _cell_top_left(destination) - _cell_top_left(old_cell)
     var target_pos: Vector2 = _unit.global_position + delta
     _sync_cursor()
+    _play_unit_walk(destination - old_cell)
     _tween = create_tween()
     _tween.tween_property(_unit, "global_position", target_pos, duration).set_trans(Tween.TRANS_LINEAR)
-    _tween.finished.connect(func() -> void:
-        _animating = false
-        _sync_cursor()
-    )
+    _tween.finished.connect(_on_step_finished)
+
+
+func _on_step_finished() -> void:
+    _animating = false
+    _sync_cursor()
+    if not _movement_mode or _menu.get("is_open") == true:
+        _direction = Vector2i.ZERO
+        _play_unit_idle()
+        return
+
+    # Chain the next tile in the SAME callback: no repeat timer, no idle
+    # between tiles, no resetting AnimatedSprite2D's frame counter.
+    _direction = _held_direction()
+    if _direction != Vector2i.ZERO:
+        var next_cell: Vector2i = _cell + _direction
+        if _reachable.has(next_cell) and _free(next_cell):
+            _animate_step(next_cell, move_duration)
+            return
+    _play_unit_idle()
+
 
 func _sync_cursor() -> void:
     if _cursor == null or _unit == null:
@@ -256,6 +301,8 @@ func _follow_return(path: Array[Vector2i]) -> void:
     var previous_cell: Vector2i = _cell
     var target_position: Vector2 = _unit.global_position
     for step in path:
+        var walking_direction: Vector2i = step - previous_cell
+        tween.tween_callback(_play_unit_walk.bind(walking_direction))
         target_position += _cell_top_left(step) - _cell_top_left(previous_cell)
         tween.tween_property(_unit, "global_position", target_position, return_step_duration).set_trans(Tween.TRANS_LINEAR)
         var reached_cell: Vector2i = step
@@ -267,8 +314,17 @@ func _follow_return(path: Array[Vector2i]) -> void:
     tween.finished.connect(func() -> void:
         _cell = _start_cell
         _animating = false
+        _play_unit_idle()
         _sync_cursor()
     )
+
+func _play_unit_walk(direction: Vector2i) -> void:
+    if _unit != null and _unit.has_method("play_walk"):
+        _unit.call("play_walk", direction)
+
+func _play_unit_idle() -> void:
+    if _unit != null and _unit.has_method("play_idle"):
+        _unit.call("play_idle")
 
 func _draw() -> void:
     if not show_reachable_cells or not _movement_mode or _unit == null:
