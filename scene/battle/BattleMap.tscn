@@ -11,6 +11,8 @@
 [ext_resource type="PackedScene" path="res://scene/battle/Spawns.tscn" id="9_cwsfq"]
 [ext_resource type="Script" uid="uid://n6d0dhqp3tfb" path="res://script/battle/battle_hover.gd" id="10_fbxdf"]
 [ext_resource type="Script" uid="uid://dvf68nv6dijmd" path="res://script/battle/battle_turn.gd" id="11_mw1ti"]
+[ext_resource type="PackedScene" uid="uid://c8c8ufoh7td0w" path="res://scene/battle/BattleMenu.tscn" id="12_inp5g"]
+[ext_resource type="Script" uid="uid://btngamp3en6kb" path="res://script/battle/battle_move.gd" id="13_5a78g"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_inp5g"]
 texture = ExtResource("1_323eo")
@@ -1385,5 +1387,10 @@ pulse_speed = 2.3
 
 [node name="BattleTurn" type="Node" parent="." unique_id=1089211797]
 script = ExtResource("11_mw1ti")
+
+[node name="BattleMenu" parent="." unique_id=1491715639 instance=ExtResource("12_inp5g")]
+
+[node name="BattleMove" type="Node2D" parent="." unique_id=1472764406]
+script = ExtResource("13_5a78g")
 
 [editable path="Spawns"]
