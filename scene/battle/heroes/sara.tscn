@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://8v1nnlvh7x4n"]
+
+[ext_resource type="PackedScene" path="res://scene/battle/BattleUnit.tscn" id="1_g00jr"]
+[ext_resource type="SpriteFrames" uid="uid://b5f2fcnt040yn" path="res://scene/characters/sara_walk.tres" id="2_sxbxo"]
+
+[node name="Sara" unique_id=1058418911 instance=ExtResource("1_g00jr")]
+
+[node name="AnimatedSprite2D" parent="." index="0"]
+sprite_frames = ExtResource("2_sxbxo")
