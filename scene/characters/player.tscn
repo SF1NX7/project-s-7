@@ -198,7 +198,9 @@ script = ExtResource("1_onrkg")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=844094621]
 sprite_frames = SubResource("SpriteFrames_65p5e")
-animation = &"Left"
+animation = &"Down"
+frame = 3
+frame_progress = 0.8429274
 offset = Vector2(0, -16)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=301383383]
