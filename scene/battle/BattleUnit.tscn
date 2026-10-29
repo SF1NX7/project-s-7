@@ -1,0 +1,54 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://script/battle/battle_hero_animation.gd" id="1_anim"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_empty"]
+animations = [{
+"frames": [],
+"loop": true,
+"name": &"Down",
+"speed": 8.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"Idle_down",
+"speed": 1.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"Idle_left",
+"speed": 1.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"Idle_right",
+"speed": 1.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"Idle_up",
+"speed": 1.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"Left",
+"speed": 8.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"Right",
+"speed": 8.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"Up",
+"speed": 8.0
+}]
+
+[node name="BattleUnit" type="Node2D"]
+script = ExtResource("1_anim")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_empty")
+animation = &"Down"
+offset = Vector2(0, -16)
