@@ -10,7 +10,10 @@ extends Node2D
 @export var blocked_path: NodePath = ^"../Blocked"
 
 @export_group("Movement")
-@export_range(1, 24, 1) var movement_radius: int = 5
+@export_range(0, 24, 1) var movement_radius: int = 5
+@export var use_hero_movement: bool = true
+@export_range(0, 24, 1) var movement_minimum: int = 0
+@export_range(0, 24, 1) var movement_maximum: int = 24
 @export_range(0.03, 0.75, 0.01) var move_duration: float = 0.14
 @export_range(0.03, 0.75, 0.01) var return_step_duration: float = 0.10
 @export var allow_arrow_keys: bool = true
@@ -30,6 +33,7 @@ var _menu: Node
 var _units: Node2D
 var _blocked: TileMapLayer
 var _unit: Node2D
+var _current_movement_radius: int = 5
 var _start_cell: Vector2i
 var _cell: Vector2i
 var _reachable: Dictionary = {}
@@ -57,10 +61,16 @@ func _ready() -> void:
 func _initialize_current_unit() -> void:
     _on_active_unit_changed(_turn.get("active_unit") as Node2D, _turn.get("active_hero"))
 
-func _on_active_unit_changed(unit: Node2D, _hero: Resource) -> void:
+func _on_active_unit_changed(unit: Node2D, hero: Resource) -> void:
     if unit == null or not is_instance_valid(unit):
         return
     _unit = unit
+    _current_movement_radius = movement_radius
+    if use_hero_movement and hero != null:
+        if hero is HeroData:
+            var hero_data := hero as HeroData
+            _current_movement_radius = hero_data.base_movement + hero_data.movement_modifier
+    _current_movement_radius = clampi(_current_movement_radius, movement_minimum, maxi(movement_minimum, movement_maximum))
     _start_cell = _world_to_cell(unit.global_position)
     _cell = _start_cell
     _movement_mode = start_in_movement_mode
@@ -209,7 +219,7 @@ func _build_reachable() -> void:
         var from: Vector2i = frontier[head]
         head += 1
         var depth: int = int(_reachable[from])
-        if depth >= movement_radius:
+        if depth >= _current_movement_radius:
             continue
         for step in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
             var candidate: Vector2i = from + step

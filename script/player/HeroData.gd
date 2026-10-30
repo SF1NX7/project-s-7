@@ -13,6 +13,10 @@ var allowed_profs_mask: int = 0
 @export_group("Base Stats")
 @export var base_stats: StatsBonus = StatsBonus.new()
 
+@export_group("Tactical Movement")
+@export_range(0, 24, 1) var base_movement: int = 5
+@export_range(-24, 24, 1) var movement_modifier: int = 0
+
 @export_group("Progress")
 @export var level: int = 1
 @export var xp: int = 0

@@ -46,6 +46,7 @@ profession_name = "Маг"
 portrait = ExtResource("4_h7okd")
 allowed_profs_mask = 80
 base_stats = SubResource("Resource_wsnol")
+base_movement = 3
 hp_current = 8
 mp_current = 10
 talent_name = "Всплеск маны"

@@ -6,6 +6,7 @@ extends Node
 @export var units_path: NodePath = ^"../Units"
 @export var cursor_path: NodePath = ^"../BattleCursor"
 @export var party: PartyData = preload("res://data/items/party_data.tres")
+@export var menu_path: NodePath = ^"../BattleMenu"
 
 @export_group("Turn Rules")
 @export var focus_cursor_on_active_unit: bool = true
@@ -19,6 +20,7 @@ extends Node
 @export var indicator_text_color: Color = Color.WHITE
 
 signal active_unit_changed(unit: Node2D, hero: HeroData)
+signal turn_completed(unit: Node2D, hero: HeroData)
 
 var active_unit: Node2D
 var active_hero: HeroData
@@ -26,6 +28,10 @@ var _units: Node2D
 var _cursor: Node2D
 var _label: Label
 var _panel: PanelContainer
+var _roster: Array[Dictionary] = []
+var _turn_index: int = -1
+var _menu: Node
+var _is_switching: bool = false
 
 func _ready() -> void:
     _units = get_node_or_null(units_path) as Node2D
@@ -33,6 +39,11 @@ func _ready() -> void:
     if _units == null or _cursor == null:
         push_error("BattleTurn: Check Units Path and Cursor Path.")
         return
+    _menu = get_node_or_null(menu_path)
+    if _menu != null and _menu.has_signal("command_selected"):
+        _menu.connect("command_selected", Callable(self, "_on_command_selected"))
+    else:
+        push_warning("BattleTurn: BattleMenu command signal not found. Check Menu Path.")
     _create_indicator()
     call_deferred("_start_first_turn")
 
@@ -62,13 +73,50 @@ func _start_first_turn() -> void:
             return a["speed"] > b["speed"]
         return a["speed"] < b["speed"]
     )
-    # Prototype only: don't rotate turns until combat actions exist.
-    active_unit = roster[0]["unit"]
-    active_hero = roster[0]["hero"]
+    _roster = roster
+    _turn_index = 0
+    _activate_current_turn()
+
+func _on_command_selected(command: String) -> void:
+    if command != "defend" or _is_switching or active_unit == null:
+        return
+    if _menu != null and _menu.get("is_open") != true:
+        return
+    _is_switching = true
+    if _menu != null and _menu.has_method("close_menu"):
+        _menu.call("close_menu")
+    turn_completed.emit(active_unit, active_hero)
+    call_deferred("_next_turn")
+
+
+func _next_turn() -> void:
+    if _roster.is_empty():
+        _is_switching = false
+        return
+    # Skip removed / defeated units without changing the order of survivors.
+    for i in range(_roster.size()):
+        _turn_index = (_turn_index + 1) % _roster.size()
+        var candidate := _roster[_turn_index]["unit"] as Node2D
+        if is_instance_valid(candidate) and candidate.is_inside_tree():
+            _activate_current_turn()
+            _is_switching = false
+            return
+    active_unit = null
+    active_hero = null
+    _update_indicator()
+    _is_switching = false
+
+
+func _activate_current_turn() -> void:
+    if _turn_index < 0 or _turn_index >= _roster.size():
+        return
+    active_unit = _roster[_turn_index]["unit"] as Node2D
+    active_hero = _roster[_turn_index]["hero"] as HeroData
     _update_indicator()
     if focus_cursor_on_active_unit:
         _focus_cursor()
     active_unit_changed.emit(active_unit, active_hero)
+
 
 func _party_index(hero: HeroData) -> int:
     if party == null:
