@@ -10,10 +10,16 @@ extends Node2D
 @export var blocked_path: NodePath = ^"../Blocked"
 
 @export_group("Movement")
+## Запасной радиус в клетках. Применяется только если выключен Use Hero Movement или не удалось найти HeroData.
 @export_range(0, 24, 1) var movement_radius: int = 5
+## Использовать индивидуальный MOV из PartyData вместо общего радиуса.
 @export var use_hero_movement: bool = true
+## Минимально допустимый радиус движения после учёта бонусов и штрафов.
 @export_range(0, 24, 1) var movement_minimum: int = 0
+## Максимально допустимый радиус движения после учёта бонусов и штрафов.
 @export_range(0, 24, 1) var movement_maximum: int = 24
+## Выводить в Output имя персонажа и расчёт MOV при начале его хода.
+@export var debug_movement_source: bool = true
 @export_range(0.03, 0.75, 0.01) var move_duration: float = 0.14
 @export_range(0.03, 0.75, 0.01) var return_step_duration: float = 0.10
 @export var allow_arrow_keys: bool = true
@@ -74,10 +80,25 @@ func _on_active_unit_changed(unit: Node2D, hero: Resource) -> void:
         return
     _unit = unit
     _current_movement_radius = movement_radius
-    if use_hero_movement and hero != null:
-        if hero is HeroData:
-            var hero_data := hero as HeroData
+    if use_hero_movement:
+        var hero_data: HeroData = null
+        # Приоритет — запись в BattleTurn.party, которую пользователь видит в Inspector.
+        var party_data: PartyData = _turn.get("party") as PartyData
+        if party_data != null:
+            for candidate in party_data.heroes:
+                if candidate is HeroData and (candidate as HeroData).hero_name == unit.name:
+                    hero_data = candidate as HeroData
+                    break
+        # Резервный источник — данные, переданные сигналом очередности.
+        if hero_data == null and hero is HeroData:
+            hero_data = hero as HeroData
+        if hero_data != null:
             _current_movement_radius = hero_data.base_movement + hero_data.movement_modifier
+            if debug_movement_source:
+                var origin: String = "BattleTurn.party" if party_data != null and party_data.heroes.has(hero_data) else "signal"
+                print("BattleMove MOV: %s = %d + %d [%s]" % [hero_data.hero_name, hero_data.base_movement, hero_data.movement_modifier, origin])
+        else:
+            push_warning("BattleMove: отсутствует HeroData для '%s'. Используется радиус %d." % [unit.name, movement_radius])
     _current_movement_radius = clampi(_current_movement_radius, movement_minimum, maxi(movement_minimum, movement_maximum))
     _start_cell = _world_to_cell(unit.global_position)
     _cell = _start_cell

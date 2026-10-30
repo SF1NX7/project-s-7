@@ -1,9 +1,13 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://coar6en53ay78"]
 
-[ext_resource type="Script" path="res://script/battle/battle_test.gd" id="1"]
-[ext_resource type="PackedScene" path="res://scene/battle/BattleMap.tscn" id="2"]
+[ext_resource type="Script" uid="uid://beva7t134bg5" path="res://script/battle/battle_test.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://b6x5ltqoep7lx" path="res://scene/battle/BattleMap.tscn" id="2"]
 
-[node name="BattleTest" type="Node2D"]
+[node name="BattleTest" type="Node2D" unique_id=465864157]
 script = ExtResource("1")
 
-[node name="BattleMap" parent="." instance=ExtResource("2")]
+[node name="BattleMap" parent="." unique_id=1554181893 instance=ExtResource("2")]
+
+[editable path="BattleMap"]
+[editable path="BattleMap/Spawns"]
+[editable path="BattleMap/EnemySpawns"]
