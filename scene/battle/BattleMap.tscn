@@ -14,6 +14,7 @@
 [ext_resource type="Script" uid="uid://dvf68nv6dijmd" path="res://script/battle/battle_turn.gd" id="11_mw1ti"]
 [ext_resource type="PackedScene" uid="uid://c8c8ufoh7td0w" path="res://scene/battle/BattleMenu.tscn" id="12_inp5g"]
 [ext_resource type="Script" uid="uid://btngamp3en6kb" path="res://script/battle/battle_move.gd" id="13_5a78g"]
+[ext_resource type="PackedScene" path="res://scene/battle/EnemySpawns.tscn" id="15_poc25"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_inp5g"]
 texture = ExtResource("1_323eo")
@@ -1398,4 +1399,10 @@ script = ExtResource("13_5a78g")
 movement_radius = 4
 move_duration = 0.17
 
+[node name="EnemySpawns" parent="." unique_id=595819906 instance=ExtResource("15_poc25")]
+
+[node name="EnemySpawn1" parent="EnemySpawns" index="0"]
+position = Vector2(-80, -80)
+
 [editable path="Spawns"]
+[editable path="EnemySpawns"]
