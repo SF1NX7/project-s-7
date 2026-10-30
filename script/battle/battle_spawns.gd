@@ -7,6 +7,10 @@ extends Node2D
 @export var units_path: NodePath = ^"../Units"
 @export var leader_scene: PackedScene = preload("res://scene/battle/BattleHero.tscn")
 @export var spawn_leader: bool = true
+
+@export_group("Sara Deployment")
+@export var sara_scene: PackedScene
+@export var spawn_sara: bool = true
 @export_range(1, 128, 1) var cell_size: int = 32
 
 @export_group("Debug")
@@ -38,23 +42,36 @@ func _ready() -> void:
         else:
             seen[cell] = index + 1
 
-    if not spawn_leader or leader_scene == null:
+    if spawn_leader and leader_scene != null:
+        _spawn_named_unit(units, points[0], leader_scene, "Max", 1)
+
+    if spawn_sara and sara_scene != null:
+        _spawn_named_unit(units, points[1], sara_scene, "Sara", 2)
+
+
+func _spawn_named_unit(units: Node2D, point: Marker2D, unit_scene: PackedScene, unit_name: String, spawn_index: int) -> void:
+    if units.get_node_or_null(NodePath(unit_name)) != null:
+        push_warning("BattleSpawns: %s already exists in Units." % unit_name)
         return
 
-    var leader_point: Marker2D = points[0]
-    var leader_cell := _cell_for_world_position(leader_point.global_position)
-    if occupied_cells.has(leader_cell):
-        push_warning("BattleSpawns: Spawn1 is occupied.")
+    var cell := _cell_for_world_position(point.global_position)
+    if occupied_cells.has(cell):
+        push_warning("BattleSpawns: Spawn%d is occupied." % spawn_index)
         return
 
-    var leader := leader_scene.instantiate() as Node2D
-    if leader == null:
-        push_error("BattleSpawns: Leader Scene must have a Node2D root.")
+    # The shared tactical controllers expect a Node2D root.
+    var instance := unit_scene.instantiate()
+    var unit := instance as Node2D
+    if unit == null:
+        push_error("BattleSpawns: scene for %s must have a Node2D root." % unit_name)
+        if instance != null:
+            instance.free()
         return
-    units.add_child(leader)
-    leader.global_position = leader_point.global_position
-    leader.name = "Max"
-    occupied_cells[leader_cell] = leader
+
+    unit.name = unit_name
+    units.add_child(unit)
+    unit.global_position = point.global_position
+    occupied_cells[cell] = unit
 
 
 func _cell_for_world_position(world_pos: Vector2) -> Vector2i:

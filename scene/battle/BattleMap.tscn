@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://b1xr4qxrf0dch" path="res://script/battle/battle_camera.gd" id="7_63bfe"]
 [ext_resource type="PackedScene" path="res://scene/battle/Spawns.tscn" id="9_cwsfq"]
 [ext_resource type="Script" uid="uid://n6d0dhqp3tfb" path="res://script/battle/battle_hover.gd" id="10_fbxdf"]
+[ext_resource type="PackedScene" uid="uid://8v1nnlvh7x4n" path="res://scene/battle/heroes/sara.tscn" id="10_walb1"]
 [ext_resource type="Script" uid="uid://dvf68nv6dijmd" path="res://script/battle/battle_turn.gd" id="11_mw1ti"]
 [ext_resource type="PackedScene" uid="uid://c8c8ufoh7td0w" path="res://scene/battle/BattleMenu.tscn" id="12_inp5g"]
 [ext_resource type="Script" uid="uid://btngamp3en6kb" path="res://script/battle/battle_move.gd" id="13_5a78g"]
@@ -1343,6 +1344,7 @@ tile_map_data = PackedByteArray("AAD2//r/AAAAAAAAAADz//3/AAAFAAAAAAA=")
 tile_set = SubResource("TileSet_l158c")
 
 [node name="Units" type="Node2D" parent="." unique_id=605848178]
+y_sort_enabled = true
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=902952529 node_paths=PackedStringArray("target")]
 position_smoothing_enabled = true
@@ -1357,6 +1359,7 @@ fill_color = Color(0.9310021, 0.9647047, 0.57266915, 0.26200002)
 border_width = 1.5
 
 [node name="Spawns" parent="." unique_id=2022006090 instance=ExtResource("9_cwsfq")]
+sara_scene = ExtResource("10_walb1")
 
 [node name="Spawn1" parent="Spawns" index="0"]
 position = Vector2(-528, -176)
