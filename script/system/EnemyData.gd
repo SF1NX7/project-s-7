@@ -27,6 +27,7 @@ enum AIStyle { AGGRESSIVE, DEFENSIVE, PASSIVE, RANGED, SUPPORT }
 
 @export_group("Artificial Intelligence")
 @export var ai_style: AIStyle = AIStyle.AGGRESSIVE
+@export var ai_profile: EnemyAIProfile
 @export_range(0, 30, 1) var detection_range: int = 8
 @export_range(1, 20, 1) var attack_range: int = 1
 @export_range(0, 30, 1) var leash_range: int = 8

@@ -21,9 +21,11 @@ extends Node
 
 signal active_unit_changed(unit: Node2D, hero: HeroData)
 signal turn_completed(unit: Node2D, hero: HeroData)
+signal enemy_turn_started(unit: Node2D, enemy_data: Resource)
 
 var active_unit: Node2D
 var active_hero: HeroData
+var active_enemy_data: Resource
 var _units: Node2D
 var _cursor: Node2D
 var _label: Label
@@ -61,8 +63,15 @@ func _start_first_turn() -> void:
                 var speed: int = 0
                 if hero.base_stats != null:
                     speed = hero.base_stats.speed
-                roster.append({"unit": unit, "hero": hero, "speed": speed})
+                roster.append({"unit": unit, "hero": hero, "enemy": null, "speed": speed})
                 break
+    for child in _units.get_children():
+        var enemy_unit := child as Node2D
+        if enemy_unit == null or not enemy_unit.is_in_group(&"battle_enemies"):
+            continue
+        var enemy_entry: Resource = enemy_unit.get_meta("enemy_data", null) as Resource
+        var enemy_speed: int = _enemy_int(enemy_entry, ["speed"], 1)
+        roster.append({"unit": enemy_unit, "hero": null, "enemy": enemy_entry, "speed": enemy_speed})
     if roster.is_empty():
         push_warning("BattleTurn: No deployed heroes found in Units.")
         return
@@ -78,7 +87,7 @@ func _start_first_turn() -> void:
     _activate_current_turn()
 
 func _on_command_selected(command: String) -> void:
-    if command != "defend" or _is_switching or active_unit == null:
+    if command != "defend" or _is_switching or active_unit == null or active_enemy_data != null:
         return
     if _menu != null and _menu.get("is_open") != true:
         return
@@ -103,8 +112,17 @@ func _next_turn() -> void:
             return
     active_unit = null
     active_hero = null
+    active_enemy_data = null
     _update_indicator()
     _is_switching = false
+
+
+func finish_enemy_turn() -> void:
+    if _is_switching or active_unit == null or active_enemy_data == null:
+        return
+    _is_switching = true
+    turn_completed.emit(active_unit, null)
+    call_deferred("_next_turn")
 
 
 func _activate_current_turn() -> void:
@@ -112,10 +130,13 @@ func _activate_current_turn() -> void:
         return
     active_unit = _roster[_turn_index]["unit"] as Node2D
     active_hero = _roster[_turn_index]["hero"] as HeroData
+    active_enemy_data = _roster[_turn_index]["enemy"] as Resource
     _update_indicator()
     if focus_cursor_on_active_unit:
         _focus_cursor()
     active_unit_changed.emit(active_unit, active_hero)
+    if active_enemy_data != null:
+        enemy_turn_started.emit(active_unit, active_enemy_data)
 
 
 func _party_index(hero: HeroData) -> int:
@@ -175,8 +196,31 @@ func _update_indicator() -> void:
     if _panel == null or _label == null:
         return
     _panel.visible = show_turn_indicator
-    if active_hero == null:
+    if active_enemy_data != null:
+        _label.text = "Ход врага: %s" % active_unit.name
+    elif active_hero == null:
         _label.text = "Ожидание хода"
     else:
         var speed: int = active_hero.base_stats.speed if active_hero.base_stats != null else 0
         _label.text = "Ход: %s  |  Speed: %d" % [active_hero.hero_name, speed]
+
+func _enemy_int(entry: Resource, keys: Array[String], fallback: int) -> int:
+    if entry == null:
+        return fallback
+    for key in keys:
+        for property in entry.get_property_list():
+            if String(property["name"]) == key:
+                var value: Variant = entry.get(key)
+                if value is int or value is float:
+                    return int(value)
+    var stats: Variant = null
+    for property in entry.get_property_list():
+        if String(property["name"]) == "base_stats":
+            stats = entry.get("base_stats")
+            break
+    if stats is Resource:
+        for key in keys:
+            for property in (stats as Resource).get_property_list():
+                if String(property["name"]) == key:
+                    return int((stats as Resource).get(key))
+    return fallback

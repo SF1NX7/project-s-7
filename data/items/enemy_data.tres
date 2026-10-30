@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://cnd5iq3tkbbuc" path="res://script/system/EnemyCatalog.gd" id="1_catalog"]
 [ext_resource type="Texture2D" uid="uid://cn7a5vusrxgkn" path="res://art/Portrait/oldman1.png" id="2_18fki"]
 [ext_resource type="Script" uid="uid://casjtwqr2hmuv" path="res://script/system/EnemyData.gd" id="2_enemy"]
-[ext_resource type="PackedScene" path="res://scene/battle/enemies/Goblin.tscn" id="3_scene"]
+[ext_resource type="PackedScene" uid="uid://d2ftdwv0ucmem" path="res://scene/battle/enemies/Goblin.tscn" id="3_scene"]
 
 [sub_resource type="Resource" id="EnemyData_goblin"]
 script = ExtResource("2_enemy")

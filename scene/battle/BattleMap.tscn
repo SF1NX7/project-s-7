@@ -15,6 +15,8 @@
 [ext_resource type="PackedScene" uid="uid://c8c8ufoh7td0w" path="res://scene/battle/BattleMenu.tscn" id="12_inp5g"]
 [ext_resource type="Script" uid="uid://btngamp3en6kb" path="res://script/battle/battle_move.gd" id="13_5a78g"]
 [ext_resource type="PackedScene" path="res://scene/battle/EnemySpawns.tscn" id="15_poc25"]
+[ext_resource type="Script" uid="uid://onftq43m0rbs" path="res://script/battle/battle_enemy_ai.gd" id="16_enemy_ai"]
+[ext_resource type="Script" uid="uid://ckka4abhi62jf" path="res://script/battle/EnemyAIProfile.gd" id="17_jf776"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_inp5g"]
 texture = ExtResource("1_323eo")
@@ -1330,6 +1332,11 @@ sources/0 = SubResource("TileSetAtlasSource_fyjl5")
 sources/1 = SubResource("TileSetAtlasSource_c6cyd")
 sources/2 = SubResource("TileSetAtlasSource_do26m")
 
+[sub_resource type="Resource" id="Resource_he8ac"]
+script = ExtResource("17_jf776")
+behavior = 0
+metadata/_custom_type_script = "uid://ckka4abhi62jf"
+
 [node name="BattleMap" type="Node2D" unique_id=493176808]
 
 [node name="Ground" type="TileMapLayer" parent="." unique_id=221117507]
@@ -1403,6 +1410,10 @@ move_duration = 0.17
 
 [node name="EnemySpawn1" parent="EnemySpawns" index="0"]
 position = Vector2(-80, -80)
+
+[node name="BattleEnemyAI" type="Node" parent="." unique_id=287329850]
+script = ExtResource("16_enemy_ai")
+fallback_profile = SubResource("Resource_he8ac")
 
 [editable path="Spawns"]
 [editable path="EnemySpawns"]

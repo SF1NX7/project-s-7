@@ -62,7 +62,15 @@ func _initialize_current_unit() -> void:
     _on_active_unit_changed(_turn.get("active_unit") as Node2D, _turn.get("active_hero"))
 
 func _on_active_unit_changed(unit: Node2D, hero: Resource) -> void:
-    if unit == null or not is_instance_valid(unit):
+    if _animating and _tween != null and _tween.is_running():
+        _tween.kill()
+        _animating = false
+    _direction = Vector2i.ZERO
+    if hero == null or unit == null or not is_instance_valid(unit):
+        _unit = null
+        _reachable.clear()
+        _movement_mode = false
+        queue_redraw()
         return
     _unit = unit
     _current_movement_radius = movement_radius
@@ -150,6 +158,8 @@ func _process(_delta: float) -> void:
     if _cursor == null:
         return
     _apply_input_mode()
+    if _unit == null:
+        return
     if _menu.get("is_open") == true:
         _direction = Vector2i.ZERO
         if not _animating:
@@ -170,7 +180,7 @@ func _process(_delta: float) -> void:
 func _apply_input_mode() -> void:
     if _cursor == null:
         return
-    var cursor_controls: bool = not _movement_mode and not _animating and _menu.get("is_open") != true
+    var cursor_controls: bool = _unit != null and not _movement_mode and not _animating and _menu.get("is_open") != true
     if _cursor.is_processing_unhandled_key_input() != cursor_controls:
         _cursor.set_process_unhandled_key_input(cursor_controls)
         if not cursor_controls:
