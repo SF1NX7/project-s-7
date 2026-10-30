@@ -7,6 +7,7 @@ extends Node
 @export var units_path: NodePath = ^"../Units"
 @export var cursor_path: NodePath = ^"../BattleCursor"
 @export var blocked_path: NodePath = ^"../Blocked"
+@export var combat_path: NodePath = ^"../BattleCombat"
 
 @export_group("AI")
 @export var enable_ai: bool = true
@@ -30,6 +31,7 @@ var _turn: Node
 var _units: Node2D
 var _cursor: Node2D
 var _blocked: TileMapLayer
+var _combat: Node
 var _busy: bool = false
 var _directions: Array[Vector2i] = [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]
 # instance_id -> {"post": Vector2i, "target": WeakRef, "turns": int}
@@ -42,6 +44,7 @@ func _ready() -> void:
 	_units = get_node_or_null(units_path) as Node2D
 	_cursor = get_node_or_null(cursor_path) as Node2D
 	_blocked = get_node_or_null(blocked_path) as TileMapLayer
+	_combat = get_node_or_null(combat_path)
 	if _turn == null or _units == null or _cursor == null or _blocked == null:
 		push_error("BattleEnemyAI: invalid reference paths.")
 		return
@@ -102,7 +105,8 @@ func _run_enemy_turn(unit: Node2D, data: Resource) -> void:
 	for child in _units.get_children():
 		var candidate := child as Node2D
 		if candidate != null and candidate != unit and not candidate.is_in_group(&"battle_enemies") and _is_hero(candidate):
-			heroes.append(candidate)
+			if _combat == null or not _combat.has_method("get_current_hp") or int(_combat.call("get_current_hp", candidate)) > 0:
+				heroes.append(candidate)
 
 	if debug_provoke_on_first_turn and not bool(state.get("debugged", false)):
 		for hero in heroes:
@@ -183,8 +187,12 @@ func _run_enemy_turn(unit: Node2D, data: Resource) -> void:
 		if target != null and is_instance_valid(target) and _manhattan(_cell(unit.global_position), _cell(target.global_position)) <= attack_range:
 			# Only the acting unit faces its target.
 			_face_acting_unit(unit, target)
-			if debug_attack_in_output:
-				print("[BattleEnemyAI] %s attacks %s (DEBUG ONLY; no damage yet)" % [unit.name, target.name])
+			if _combat != null and _combat.has_method("physical_attack"):
+				var hit: Dictionary = _combat.call("physical_attack", unit, target)
+				if not bool(hit.get("ok", false)):
+					push_warning("BattleEnemyAI: attack rejected: %s" % str(hit.get("reason", "unknown")))
+			elif debug_attack_in_output:
+				print("[BattleEnemyAI] %s attacks %s (DEBUG ONLY; BattleCombat not connected)" % [unit.name, target.name])
 		if profile != null and profile.print_decisions:
 			print("[BattleEnemyAI] %s mode=%d intelligence=%d target=%s moved=%s" % [unit.name, behavior, intelligence, target.name if is_instance_valid(target) else "none", str(destination != start)])
 	if int(state.get("turns", 0)) > 0:

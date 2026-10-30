@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CombatRules" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://script/battle/CombatRules.gd" id="1_rules"]
+
+[resource]
+script = ExtResource("1_rules")
+minimum_damage = 1
+physical_multiplier = 1.0
+damage_variation_percent = 0.0
+clamp_damage_to_remaining_hp = true
+print_damage_to_output = true

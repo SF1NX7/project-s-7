@@ -7,6 +7,7 @@ extends Node
 @export var units_path: NodePath = ^"../Units"
 @export var movement_path: NodePath = ^"../BattleMove"
 @export var turn_path: NodePath = ^"../BattleTurn"
+@export var combat_path: NodePath = ^"../BattleCombat"
 @export var party: PartyData = preload("res://data/items/party_data.tres")
 
 @export_group("Highlight")
@@ -45,6 +46,11 @@ func _ready() -> void:
     _units = get_node_or_null(units_path) as Node2D
     _movement = get_node_or_null(movement_path)
     _turn = get_node_or_null(turn_path)
+    var combat: Node = get_node_or_null(combat_path)
+    if combat != null and combat.has_signal("combat_resolved"):
+        combat.connect("combat_resolved", Callable(self, "_on_combat_resolved"))
+    if combat != null and combat.has_signal("unit_defeated"):
+        combat.connect("unit_defeated", Callable(self, "_on_unit_defeated"))
     if _turn != null and _turn.has_signal("active_unit_changed"):
         _turn.connect("active_unit_changed", Callable(self, "_on_active_turn_unit_changed"))
     if _cursor == null or _units == null:
@@ -245,3 +251,11 @@ func _build_hud() -> void:
 
 func _exit_tree() -> void:
     _clear_highlight()
+
+
+func _on_combat_resolved(_attacker: Node2D, _target: Node2D, _result: Dictionary) -> void:
+    if _hud != null:
+        _update_panel()
+
+func _on_unit_defeated(_unit: Node2D, _is_enemy: bool) -> void:
+    call_deferred("_refresh_hover")

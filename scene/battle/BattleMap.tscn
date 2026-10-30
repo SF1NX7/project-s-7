@@ -17,6 +17,8 @@
 [ext_resource type="PackedScene" path="res://scene/battle/EnemySpawns.tscn" id="15_poc25"]
 [ext_resource type="Script" uid="uid://onftq43m0rbs" path="res://script/battle/battle_enemy_ai.gd" id="16_enemy_ai"]
 [ext_resource type="Script" uid="uid://ckka4abhi62jf" path="res://script/battle/EnemyAIProfile.gd" id="17_jf776"]
+[ext_resource type="Script" uid="uid://tvlhjpn80om3" path="res://script/battle/BattleCombat.gd" id="18_8l6eh"]
+[ext_resource type="Script" uid="uid://bjfcbyspncr7a" path="res://script/battle/CombatRules.gd" id="19_ry66a"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_inp5g"]
 texture = ExtResource("1_323eo")
@@ -1337,6 +1339,9 @@ script = ExtResource("17_jf776")
 behavior = 0
 metadata/_custom_type_script = "uid://ckka4abhi62jf"
 
+[sub_resource type="Resource" id="Resource_sh5ts"]
+script = ExtResource("19_ry66a")
+
 [node name="BattleMap" type="Node2D" unique_id=493176808]
 
 [node name="Ground" type="TileMapLayer" parent="." unique_id=221117507]
@@ -1414,6 +1419,10 @@ position = Vector2(-80, -80)
 [node name="BattleEnemyAI" type="Node" parent="." unique_id=287329850]
 script = ExtResource("16_enemy_ai")
 fallback_profile = SubResource("Resource_he8ac")
+
+[node name="BattleCombat" type="Node2D" parent="." unique_id=1542915884]
+script = ExtResource("18_8l6eh")
+rules = SubResource("Resource_sh5ts")
 
 [editable path="Spawns"]
 [editable path="EnemySpawns"]
