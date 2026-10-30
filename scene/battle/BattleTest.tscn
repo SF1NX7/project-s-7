@@ -8,6 +8,16 @@ script = ExtResource("1")
 
 [node name="BattleMap" parent="." unique_id=1554181893 instance=ExtResource("2")]
 
+[node name="BattleCursor" parent="BattleMap" index="5" unique_id=1870715921]
+grid_origin = Vector2(0, 0)
+grid_size = Vector2i(20, 15)
+border_color = Color(1, 0.95, 0.35, 1)
+fill_color = Color(1, 0.95, 0.35, 0.18)
+border_width = 2.0
+attack_cursor_color = Color(1, 0.11774104, 0.16007765, 0.762)
+attack_cursor_line_width = 2.0
+attack_corner_cut = 2.0
+
 [editable path="BattleMap"]
 [editable path="BattleMap/Spawns"]
 [editable path="BattleMap/EnemySpawns"]

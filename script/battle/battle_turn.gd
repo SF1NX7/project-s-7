@@ -12,6 +12,14 @@ extends Node
 @export var focus_cursor_on_active_unit: bool = true
 @export var higher_speed_acts_first: bool = true
 
+@export_group("Attack Targeting")
+## Дальность обычной атаки в клетках (по горизонтали и вертикали).
+@export_range(1, 12, 1) var hero_attack_range: int = 1
+## Текст подсказки, если рядом с героем нет подходящей цели.
+@export var no_targets_message: String = "Некого атаковать"
+## Сколько секунд показывать сообщение об отсутствии целей.
+@export_range(0.5, 5.0, 0.1) var no_targets_duration: float = 1.5
+
 @export_group("Turn Indicator")
 @export var show_turn_indicator: bool = true
 @export var indicator_position: Vector2 = Vector2(8, 8)
@@ -37,6 +45,8 @@ var _is_switching: bool = false
 var _battle_stopped: bool = false
 var _death_presentation_active: bool = false
 var _enemy_turn_end_pending: bool = false
+var _attack_targeting_active: bool = false
+var _attack_message_serial: int = 0
 
 func _ready() -> void:
 	_units = get_node_or_null(units_path) as Node2D
@@ -51,6 +61,11 @@ func _ready() -> void:
 		push_warning("BattleTurn: BattleMenu command signal not found. Check Menu Path.")
 	_create_indicator()
 	call_deferred("_start_first_turn")
+
+func _process(_delta: float) -> void:
+	if _attack_targeting_active and _cursor != null and not bool(_cursor.get("cursor_visible")):
+		_cursor.set("cursor_visible", true)
+		_cursor.queue_redraw()
 
 func _start_first_turn() -> void:
 	var roster: Array[Dictionary] = []
@@ -90,18 +105,119 @@ func _start_first_turn() -> void:
 	_activate_current_turn()
 
 func _on_command_selected(command: String) -> void:
-	if _battle_stopped or _death_presentation_active or command != "defend" or _is_switching or active_unit == null or active_enemy_data != null:
+	if _battle_stopped or _death_presentation_active or _is_switching or not is_instance_valid(active_unit) or active_enemy_data != null:
 		return
-	if _menu != null and _menu.get("is_open") != true:
+	if _menu == null or _menu.get("is_open") != true:
+		return
+	if command == "attack":
+		_start_attack_targeting()
+		return
+	if command != "defend":
 		return
 	_is_switching = true
-	if _menu != null and _menu.has_method("close_menu"):
+	if _menu.has_method("close_menu"):
 		_menu.call("close_menu")
 	turn_completed.emit(active_unit, active_hero)
 	call_deferred("_next_turn")
 
 
+
+## Начинает выбор цели, не перемещая героя.
+func _start_attack_targeting() -> void:
+	if not is_instance_valid(active_unit) or _cursor == null or _units == null:
+		return
+	var hero_cell: Vector2i = _attack_world_to_cell(active_unit.global_position)
+	var targets: Array[Node2D] = []
+	for child in _units.get_children():
+		var enemy: Node2D = child as Node2D
+		if not is_instance_valid(enemy):
+			continue
+		if not enemy.is_in_group(&"battle_enemies") or bool(enemy.get_meta("battle_defeated", false)):
+			continue
+		if int(enemy.get_meta("hp_current", 1)) <= 0:
+			continue
+		var enemy_cell: Vector2i = _attack_world_to_cell(enemy.global_position)
+		var distance: int = absi(hero_cell.x - enemy_cell.x) + absi(hero_cell.y - enemy_cell.y)
+		if distance <= hero_attack_range:
+			targets.append(enemy)
+	if targets.is_empty():
+		_show_attack_notice(no_targets_message)
+		return
+	targets.sort_custom(func(a: Node2D, b: Node2D) -> bool:
+		var ca: Vector2i = _attack_world_to_cell(a.global_position)
+		var cb: Vector2i = _attack_world_to_cell(b.global_position)
+		var da: int = absi(hero_cell.x - ca.x) + absi(hero_cell.y - ca.y)
+		var db: int = absi(hero_cell.x - cb.x) + absi(hero_cell.y - cb.y)
+		if da == db:
+			return a.get_instance_id() < b.get_instance_id()
+		return da < db
+	)
+	_attack_targeting_active = true
+	if _menu != null and _menu.has_method("close_menu"):
+		_menu.call("close_menu")
+	var movement: Node = get_node_or_null(^"../BattleMove")
+	if movement != null:
+		movement.set("_movement_mode", false)
+		movement.set("_direction", Vector2i.ZERO)
+		if movement.has_method("_apply_input_mode"):
+			movement.call("_apply_input_mode")
+	_cursor.set("attack_targeting", true)
+	_cursor.set("cursor_visible", true)
+	_cursor.set("_held_direction", Vector2i.ZERO)
+	_cursor.set("selected_cell", _attack_world_to_cell(targets[0].global_position))
+	if _cursor.has_method("_update_cursor"):
+		_cursor.call("_update_cursor")
+	if _cursor.has_signal("cell_changed"):
+		_cursor.emit_signal("cell_changed", _cursor.get("selected_cell"))
+	_cursor.set_process_unhandled_key_input(true)
+	_cursor.queue_redraw()
+	print("S7 ATTACK: цель выбрана курсором: ", targets[0].name)
+
+
+## Переводит мировую позицию персонажа в координаты клетки боевого курсора.
+func _attack_world_to_cell(world_position: Vector2) -> Vector2i:
+	var cell_size: int = maxi(1, int(_cursor.get("cell_size")))
+	var grid_origin: Vector2 = _cursor.get("grid_origin")
+	var first_cell: Vector2i = _cursor.get("first_cell")
+	var origin_world: Vector2 = _cursor.get_parent().to_global(grid_origin)
+	var delta: Vector2 = world_position - origin_world
+	return first_cell + Vector2i(floori(delta.x / float(cell_size)), floori(delta.y / float(cell_size)))
+
+
+## Краткое уведомление в существующем индикаторе хода.
+func _show_attack_notice(message: String) -> void:
+	_attack_message_serial += 1
+	var serial: int = _attack_message_serial
+	if _label != null:
+		_label.text = message
+	print("S7 ATTACK: ", message)
+	get_tree().create_timer(no_targets_duration).timeout.connect(func() -> void:
+		if is_inside_tree() and serial == _attack_message_serial and not _attack_targeting_active:
+			_update_indicator()
+	)
+
+
+## На этапе выбора цели Q или Esc возвращают обычный курсор.
+func _input(event: InputEvent) -> void:
+	if not _attack_targeting_active or not (event is InputEventKey):
+		return
+	var key_event: InputEventKey = event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	var key: Key = key_event.physical_keycode if key_event.physical_keycode != KEY_NONE else key_event.keycode
+	if key == KEY_Q or key == KEY_ESCAPE:
+		_end_attack_targeting()
+		get_viewport().set_input_as_handled()
+
+
+func _end_attack_targeting() -> void:
+	_attack_targeting_active = false
+	if _cursor != null:
+		_cursor.set("attack_targeting", false)
+		_cursor.queue_redraw()
+
 func _next_turn() -> void:
+	_end_attack_targeting()
 	if _battle_stopped or _death_presentation_active or _roster.is_empty():
 		_is_switching = false
 		return

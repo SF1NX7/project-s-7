@@ -13,6 +13,23 @@ extends Node2D
 @export_range(1.0, 8.0, 0.5) var border_width: float = 2.0
 @export var cursor_visible: bool = true
 
+@export_group("Attack Targeting")
+## Включает красный диагональный прицел. На этом этапе переключается вручную через Inspector.
+@export var attack_targeting: bool = false:
+	set(value):
+		attack_targeting = value
+		queue_redraw()
+## Цвет диагонального прицела при выборе цели.
+@export var attack_cursor_color: Color = Color(1.0, 0.12, 0.16, 1.0)
+## Толщина красных диагональных линий.
+@export_range(1.0, 6.0, 0.5) var attack_cursor_line_width: float = 3.0
+## Размер срезанных диагональных углов красной рамки, в пикселях.
+@export_range(0.0, 12.0, 1.0) var attack_corner_cut: float = 7.0
+## Дополнительное смещение красной рамки внутри клетки. (0, 0) совпадает с обычным курсором.
+@export var attack_frame_offset: Vector2 = Vector2.ZERO
+## Полупрозрачная заливка клетки в режиме выбора цели.
+@export var attack_fill_color: Color = Color(1.0, 0.05, 0.10, 0.08)
+
 @export_group("Smooth Movement")
 @export var smooth_movement: bool = true
 @export_range(1.0, 40.0, 0.5) var slide_speed: float = 18.0
@@ -131,5 +148,24 @@ func _draw() -> void:
 	if not cursor_visible:
 		return
 	var rect: Rect2 = Rect2(Vector2.ZERO, Vector2.ONE * float(cell_size))
+	if attack_targeting:
+		# Полная клетка: размер и начало совпадают с обычным курсором.
+		var size_px: float = float(cell_size)
+		var cut: float = clampf(attack_corner_cut, 0.0, size_px * 0.35)
+		var o: Vector2 = attack_frame_offset
+		var p: PackedVector2Array = PackedVector2Array([
+			o + Vector2(cut, 0.0),
+			o + Vector2(size_px - cut, 0.0),
+			o + Vector2(size_px, cut),
+			o + Vector2(size_px, size_px - cut),
+			o + Vector2(size_px - cut, size_px),
+			o + Vector2(cut, size_px),
+			o + Vector2(0.0, size_px - cut),
+			o + Vector2(0.0, cut),
+			o + Vector2(cut, 0.0),
+		])
+		draw_rect(Rect2(o, Vector2.ONE * size_px), attack_fill_color, true)
+		draw_polyline(p, attack_cursor_color, attack_cursor_line_width, true)
+		return
 	draw_rect(rect, fill_color, true)
 	draw_rect(rect, border_color, false, border_width)

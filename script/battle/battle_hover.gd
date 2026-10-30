@@ -6,8 +6,6 @@ extends Node
 @export var cursor_path: NodePath = ^"../BattleCursor"
 @export var units_path: NodePath = ^"../Units"
 @export var movement_path: NodePath = ^"../BattleMove"
-@export var turn_path: NodePath = ^"../BattleTurn"
-@export var combat_path: NodePath = ^"../BattleCombat"
 @export var party: PartyData = preload("res://data/items/party_data.tres")
 
 @export_group("Highlight")
@@ -28,7 +26,6 @@ extends Node
 var _cursor: Node2D
 var _units: Node2D
 var _movement: Node
-var _turn: Node
 var _hovered: Node2D
 var _hovered_sprite: CanvasItem
 var _original_modulate: Color = Color.WHITE
@@ -45,14 +42,6 @@ func _ready() -> void:
     _cursor = get_node_or_null(cursor_path) as Node2D
     _units = get_node_or_null(units_path) as Node2D
     _movement = get_node_or_null(movement_path)
-    _turn = get_node_or_null(turn_path)
-    var combat: Node = get_node_or_null(combat_path)
-    if combat != null and combat.has_signal("combat_resolved"):
-        combat.connect("combat_resolved", Callable(self, "_on_combat_resolved"))
-    if combat != null and combat.has_signal("unit_defeated"):
-        combat.connect("unit_defeated", Callable(self, "_on_unit_defeated"))
-    if _turn != null and _turn.has_signal("active_unit_changed"):
-        _turn.connect("active_unit_changed", Callable(self, "_on_active_turn_unit_changed"))
     if _cursor == null or _units == null:
         push_error("BattleHover: Check Cursor Path and Units Path in Inspector.")
         set_process(false)
@@ -81,10 +70,6 @@ func _on_cell_changed(_cell: Vector2i) -> void:
     _refresh_hover()
 
 
-func _on_active_turn_unit_changed(_unit: Node2D, _hero: HeroData) -> void:
-    _refresh_hover()
-
-
 func _refresh_hover() -> void:
     if not is_instance_valid(_cursor) or not is_instance_valid(_units):
         return
@@ -100,15 +85,11 @@ func _refresh_hover() -> void:
     var cell_rect := Rect2(cell_world, Vector2.ONE * float(cell_size))
     var target: Node2D = null
     var in_movement_mode: bool = _movement != null and _movement.get("_movement_mode") == true
-    if _turn != null and _turn.get("active_enemy_data") != null:
-        var enemy_active := _turn.get("active_unit") as Node2D
-        if is_instance_valid(enemy_active):
-            target = enemy_active
-    elif in_movement_mode:
+    if in_movement_mode:
         var active: Node2D = _movement.get("_unit") as Node2D
         if is_instance_valid(active):
             target = active
-    if not in_movement_mode and target == null:
+    if not in_movement_mode:
         for child in _units.get_children():
             var unit := child as Node2D
             if unit == null:
@@ -143,24 +124,6 @@ func _update_panel() -> void:
     if _hovered == null:
         return
 
-    if _hovered.is_in_group(&"battle_enemies"):
-        var enemy_data: Resource = _hovered.get_meta("enemy_data", null) as Resource
-        if enemy_data != null:
-            _portrait.texture = _enemy_property(enemy_data, &"portrait", null) as Texture2D
-            _name.text = str(_enemy_property(enemy_data, &"display_name", _hovered.name))
-            var max_hp: int = int(_enemy_property(enemy_data, &"max_hp", 0))
-            var max_mp: int = int(_enemy_property(enemy_data, &"max_mp", 0))
-            var current_hp: int = int(_hovered.get_meta("hp_current", max_hp))
-            var current_mp: int = int(_hovered.get_meta("mp_current", max_mp))
-            _hp.text = "HP: %d / %d" % [current_hp, max_hp]
-            _mp.text = "MP: %d / %d" % [current_mp, max_mp]
-        else:
-            _portrait.texture = null
-            _name.text = _hovered.name
-            _hp.text = ""
-            _mp.text = ""
-        return
-
     # Current prototype: Max is the only battle unit spawned.
     # Other units will need their own HeroData / EnemyData connection later.
     var hero: HeroData = null
@@ -184,13 +147,6 @@ func _update_panel() -> void:
         max_mp = hero.base_stats.mp
     _hp.text = "HP: %d / %d" % [hero.hp_current, max_hp]
     _mp.text = "MP: %d / %d" % [hero.mp_current, max_mp]
-
-
-func _enemy_property(enemy_data: Resource, property_name: StringName, default_value: Variant) -> Variant:
-    for property in enemy_data.get_property_list():
-        if StringName(property["name"]) == property_name:
-            return enemy_data.get(property_name)
-    return default_value
 
 
 func _build_hud() -> void:
@@ -251,11 +207,3 @@ func _build_hud() -> void:
 
 func _exit_tree() -> void:
     _clear_highlight()
-
-
-func _on_combat_resolved(_attacker: Node2D, _target: Node2D, _result: Dictionary) -> void:
-    if _hud != null:
-        _update_panel()
-
-func _on_unit_defeated(_unit: Node2D, _is_enemy: bool) -> void:
-    call_deferred("_refresh_hover")
