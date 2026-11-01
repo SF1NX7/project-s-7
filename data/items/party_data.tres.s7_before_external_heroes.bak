@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="PartyData" format=3 uid="uid://bvnm458hqdkrd"]
+
+[ext_resource type="Script" uid="uid://drif5nqii2jwo" path="res://script/player/HeroData.gd" id="1_0c3kw"]
+[ext_resource type="Script" uid="uid://b66sdjwiqfrg2" path="res://script/player/PartyData.gd" id="2_cyode"]
+[ext_resource type="Script" uid="uid://crdx2krqtdpx" path="res://script/system/stats_bonus.gd" id="2_h7okd"]
+[ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="2_tkf0n"]
+[ext_resource type="Texture2D" uid="uid://co5jpflwu0cw6" path="res://art/Portrait/sara1.jpeg" id="4_h7okd"]
+[ext_resource type="Resource" uid="uid://cahp85q1vhurl" path="res://data/items/Magic data/sara_magic_tree.tres" id="4_wsnol"]
+
+[sub_resource type="Resource" id="Resource_tkf0n"]
+script = ExtResource("2_h7okd")
+hp = 10
+attack = 4
+defense = 3
+speed = 2
+luck = 1
+metadata/_custom_type_script = "uid://crdx2krqtdpx"
+
+[sub_resource type="Resource" id="Resource_0c3kw"]
+script = ExtResource("1_0c3kw")
+hero_name = "Max"
+profession_name = "Мечник"
+portrait = ExtResource("2_tkf0n")
+allowed_profs_mask = 385
+base_stats = SubResource("Resource_tkf0n")
+base_movement = 6
+hp_current = 10
+talent_name = "Аннигиляция"
+talent_desc = "Уничтожает всё вокруг"
+metadata/_custom_type_script = "uid://drif5nqii2jwo"
+
+[sub_resource type="Resource" id="Resource_wsnol"]
+script = ExtResource("2_h7okd")
+hp = 8
+mp = 10
+attack = 1
+magic = 4
+defense = 1
+resistance = 1
+speed = 1
+metadata/_custom_type_script = "uid://crdx2krqtdpx"
+
+[sub_resource type="Resource" id="Resource_0pmno"]
+script = ExtResource("1_0c3kw")
+hero_name = "Sara"
+profession_name = "Маг"
+portrait = ExtResource("4_h7okd")
+allowed_profs_mask = 80
+base_stats = SubResource("Resource_wsnol")
+base_movement = 6
+hp_current = 8
+mp_current = 10
+talent_name = "Всплеск маны"
+talent_desc = "Перезагружает всё"
+magic_tree = ExtResource("4_wsnol")
+metadata/_custom_type_script = "uid://drif5nqii2jwo"
+
+[resource]
+script = ExtResource("2_cyode")
+heroes = Array[ExtResource("1_0c3kw")]([SubResource("Resource_0c3kw"), SubResource("Resource_0pmno")])

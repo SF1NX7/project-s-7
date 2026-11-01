@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="HeroData" format=3 uid="uid://cfspmqlral7bh"]
+
+[ext_resource type="Script" uid="uid://crdx2krqtdpx" path="res://script/system/stats_bonus.gd" id="1_wh0gk"]
+[ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="2_khhwp"]
+[ext_resource type="Script" uid="uid://drif5nqii2jwo" path="res://script/player/HeroData.gd" id="3_8dbka"]
+
+[sub_resource type="Resource" id="Resource_tkf0n"]
+script = ExtResource("1_wh0gk")
+hp = 10
+attack = 4
+defense = 3
+speed = 2
+luck = 1
+metadata/_custom_type_script = "uid://crdx2krqtdpx"
+
+[resource]
+script = ExtResource("3_8dbka")
+hero_name = "Max"
+profession_name = "Мечник"
+portrait = ExtResource("2_khhwp")
+allowed_profs_mask = 385
+base_stats = SubResource("Resource_tkf0n")
+base_movement = 3
+hp_current = 10
+talent_name = "Аннигиляция"
+talent_desc = "Уничтожает всё вокруг"
+metadata/_custom_type_script = "uid://drif5nqii2jwo"
