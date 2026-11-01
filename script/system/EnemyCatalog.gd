@@ -6,7 +6,7 @@ class_name EnemyCatalog
 
 
 func find_enemy(enemy_id: StringName) -> EnemyData:
-    for entry in enemies:
-        if entry != null and entry.enemy_id == enemy_id:
-            return entry
-    return null
+	for entry in enemies:
+		if entry != null and entry.enemy_id == enemy_id:
+			return entry
+	return null

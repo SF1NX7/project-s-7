@@ -12,7 +12,7 @@ portrait = ExtResource("2_18fki")
 max_hp = 5
 attack = 5
 base_movement = 3
-ai_style = 3
+ai_style = 1
 detection_range = 6
 
 [resource]

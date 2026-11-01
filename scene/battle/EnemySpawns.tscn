@@ -1,9 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://ck76gkdl8h12t"]
 
-[ext_resource type="Script" path="res://script/battle/battle_enemy_spawns.gd" id="1_enemy_spawns"]
+[ext_resource type="Script" uid="uid://bmdwvgujiscce" path="res://script/battle/battle_enemy_spawns.gd" id="1_enemy_spawns"]
 
-[node name="EnemySpawns" type="Node2D"]
+[node name="EnemySpawns" type="Node2D" unique_id=242179112]
 script = ExtResource("1_enemy_spawns")
 
-[node name="EnemySpawn1" type="Marker2D" parent="."]
-position = Vector2(0, 0)
+[node name="EnemySpawn1" type="Marker2D" parent="." unique_id=208487325]

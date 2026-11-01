@@ -42,4 +42,4 @@ enum AIStyle { AGGRESSIVE, DEFENSIVE, PASSIVE, RANGED, SUPPORT }
 
 
 func get_movement() -> int:
-    return maxi(0, base_movement + movement_modifier)
+	return maxi(0, base_movement + movement_modifier)
