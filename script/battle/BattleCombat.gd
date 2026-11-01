@@ -60,6 +60,16 @@ signal battle_ended(victory: bool, reason: String)
 ## Текст подсказки для ещё не подключённой системы загрузки.
 @export_multiline var load_save_hint: String = "Загрузка последнего сохранения пока не подключена."
 
+@export_group("Возврат после победы")
+## Сцена глобальной карты. Укажи фактический World_1.tscn из своего проекта.
+@export_file("*.tscn") var victory_world_scene: String = ""
+## Автоматически вернуться на глобальную карту после показа победы.
+@export var return_after_victory: bool = true
+## Сколько секунд держать надпись ПОБЕДА перед возвратом на карту.
+@export_range(0.5, 15.0, 0.1, "suffix:s") var victory_panel_duration: float = 3.0
+## Кнопка возврата на карту в окне победы.
+@export var show_return_button: bool = true
+
 
 var _turn: Node
 var _units: Node2D
@@ -333,6 +343,10 @@ func _finish_battle_presentation(victory: bool, message: String) -> void:
     battle_ended.emit(victory, message)
     if show_result_panel:
         _show_battle_result(victory, message)
+    if victory and return_after_victory and not victory_world_scene.is_empty():
+        _auto_return_to_world()
+    elif victory and victory_world_scene.is_empty():
+        push_warning("BattleCombat: укажи Victory World Scene в Inspector для возврата после победы.")
 
 
 func _show_battle_result(victory: bool, message: String) -> void:
@@ -364,6 +378,12 @@ func _show_battle_result(victory: bool, message: String) -> void:
     reason.text = message
     reason.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     column.add_child(reason)
+    if victory and show_return_button:
+        var return_button := Button.new()
+        return_button.text = "Вернуться на карту"
+        return_button.disabled = victory_world_scene.is_empty()
+        return_button.pressed.connect(_return_to_world)
+        column.add_child(return_button)
     if allow_retry:
         var retry := Button.new()
         retry.text = "Повторить битву"
@@ -380,3 +400,21 @@ func _show_battle_result(victory: bool, message: String) -> void:
 func _retry_battle() -> void:
     _restore_initial_hero_hp()
     get_tree().reload_current_scene()
+
+
+## Автоматический переход после того, как игрок увидит окно победы.
+func _auto_return_to_world() -> void:
+    await get_tree().create_timer(victory_panel_duration).timeout
+    if is_inside_tree() and _battle_finished and _battle_result:
+        _return_to_world()
+
+
+## Переход на глобальную карту без изменений базовых характеристик героев.
+func _return_to_world() -> void:
+    if victory_world_scene.is_empty():
+        push_warning("BattleCombat: не назначена Victory World Scene.")
+        return
+    if not ResourceLoader.exists(victory_world_scene):
+        push_error("BattleCombat: сцена глобальной карты не найдена: " + victory_world_scene)
+        return
+    get_tree().change_scene_to_file(victory_world_scene)

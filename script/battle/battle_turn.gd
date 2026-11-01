@@ -7,6 +7,8 @@ extends Node
 @export var cursor_path: NodePath = ^"../BattleCursor"
 @export var party: PartyData = preload("res://data/items/party_data.tres")
 @export var menu_path: NodePath = ^"../BattleMenu"
+## Путь к уже существующему контроллеру физического урона.
+@export var combat_path: NodePath = ^"../BattleCombat"
 
 @export_group("Turn Rules")
 @export var focus_cursor_on_active_unit: bool = true
@@ -41,6 +43,7 @@ var _panel: PanelContainer
 var _roster: Array[Dictionary] = []
 var _turn_index: int = -1
 var _menu: Node
+var _combat: Node
 var _is_switching: bool = false
 var _battle_stopped: bool = false
 var _death_presentation_active: bool = false
@@ -55,6 +58,9 @@ func _ready() -> void:
 		push_error("BattleTurn: Check Units Path and Cursor Path.")
 		return
 	_menu = get_node_or_null(menu_path)
+	_combat = get_node_or_null(combat_path)
+	if _combat == null:
+		push_warning("BattleTurn: BattleCombat не найден; атака героев будет недоступна.")
 	if _menu != null and _menu.has_signal("command_selected"):
 		_menu.connect("command_selected", Callable(self, "_on_command_selected"))
 	else:
@@ -207,7 +213,11 @@ func _input(event: InputEvent) -> void:
 	var key: Key = key_event.physical_keycode if key_event.physical_keycode != KEY_NONE else key_event.keycode
 	if key == KEY_Q or key == KEY_ESCAPE:
 		_end_attack_targeting()
+		_restore_after_attack_cancel()
 		get_viewport().set_input_as_handled()
+	elif key == KEY_E or key == KEY_ENTER or key == KEY_KP_ENTER:
+		get_viewport().set_input_as_handled()
+		_confirm_hero_attack()
 
 
 func _end_attack_targeting() -> void:
@@ -215,6 +225,91 @@ func _end_attack_targeting() -> void:
 	if _cursor != null:
 		_cursor.set("attack_targeting", false)
 		_cursor.queue_redraw()
+
+## Возвращает обычный режим после отмены прицеливания.
+func _restore_after_attack_cancel() -> void:
+	if _menu != null and _menu.has_method("open_menu"):
+		_menu.call_deferred("open_menu")
+	elif _cursor != null:
+		var movement: Node = get_node_or_null(^"../BattleMove")
+		if movement != null:
+			movement.set("_movement_mode", true)
+			if movement.has_method("_apply_input_mode"):
+				movement.call("_apply_input_mode")
+
+
+## Находит живого врага под красной рамкой.
+func _attack_enemy_at_cursor() -> Node2D:
+	if _units == null or _cursor == null:
+		return null
+	var current_cell: Vector2i = _cursor.get("selected_cell")
+	for child in _units.get_children():
+		var candidate: Node2D = child as Node2D
+		if not is_instance_valid(candidate):
+			continue
+		if not candidate.is_in_group(&"battle_enemies") or bool(candidate.get_meta("battle_defeated", false)):
+			continue
+		if int(candidate.get_meta("hp_current", 1)) <= 0:
+			continue
+		if _attack_world_to_cell(candidate.global_position) == current_cell:
+			return candidate
+	return null
+
+
+## Применяет урон ровно один раз к выбранному врагу и завершает ход.
+func _confirm_hero_attack() -> void:
+	if not _attack_targeting_active or _is_switching or _battle_stopped:
+		return
+	if not is_instance_valid(active_unit) or active_hero == null:
+		return
+	var target: Node2D = _attack_enemy_at_cursor()
+	if target == null:
+		_show_attack_notice("Выбери врага красной рамкой")
+		return
+	var start_cell: Vector2i = _attack_world_to_cell(active_unit.global_position)
+	var target_cell: Vector2i = _attack_world_to_cell(target.global_position)
+	var distance: int = absi(start_cell.x - target_cell.x) + absi(start_cell.y - target_cell.y)
+	if distance > hero_attack_range:
+		_show_attack_notice("Цель слишком далеко")
+		return
+	if _combat == null or not _combat.has_method("physical_attack"):
+		push_warning("BattleTurn: метод BattleCombat.physical_attack не найден.")
+		return
+
+	var attacking_unit: Node2D = active_unit
+	var attacking_hero: HeroData = active_hero
+	_is_switching = true
+	# Цель не поворачиваем. Только атакующий смотрит на неё.
+	var delta: Vector2i = target_cell - start_cell
+	var direction: Vector2i = Vector2i.RIGHT if delta.x >= 0 else Vector2i.LEFT
+	if absi(delta.y) > absi(delta.x):
+		direction = Vector2i.DOWN if delta.y >= 0 else Vector2i.UP
+	if attacking_unit.has_method("play_walk"):
+		attacking_unit.call("play_walk", direction)
+	if attacking_unit.has_method("play_idle"):
+		attacking_unit.call("play_idle")
+
+	var result: Dictionary = _combat.call("physical_attack", attacking_unit, target)
+	if not bool(result.get("ok", false)):
+		_is_switching = false
+		_show_attack_notice("Атака не удалась: " + str(result.get("reason", "")))
+		return
+	_end_attack_targeting()
+	print("S7 ATTACK: урон ", int(result.get("damage", 0)), " по ", target.name)
+	if _combat.has_method("is_battle_finished") and bool(_combat.call("is_battle_finished")):
+		return
+	turn_completed.emit(attacking_unit, attacking_hero)
+	_complete_hero_attack_after_presentation()
+
+
+## Не переключает ход во время анимации исчезновения врага.
+func _complete_hero_attack_after_presentation() -> void:
+	while _death_presentation_active and not _battle_stopped and is_inside_tree():
+		await get_tree().process_frame
+	if _battle_stopped or not is_inside_tree():
+		return
+	call_deferred("_next_turn")
+
 
 func _next_turn() -> void:
 	_end_attack_targeting()
