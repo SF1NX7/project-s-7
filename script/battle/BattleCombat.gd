@@ -9,6 +9,8 @@ signal combat_resolved(attacker: Node2D, target: Node2D, result: Dictionary)
 signal unit_defeated(unit: Node2D, is_enemy: bool)
 signal battle_ended(victory: bool, reason: String)
 
+const RETURN_PIXEL_TRANSITION: PackedScene = preload("res://scene/battle/PixelTransition.tscn")
+
 ## Общие правила смерти и завершения боя находятся в этом же скрипте.
 ## Отдельные BattleOutcome и BattleDeathEffect не нужны.
 @export_group("References")
@@ -70,6 +72,16 @@ signal battle_ended(victory: bool, reason: String)
 ## Кнопка возврата на карту в окне победы.
 @export var show_return_button: bool = true
 
+@export_group("Пиксельный переход после боя")
+## Включить пиксельное затемнение при выходе с экрана победы.
+@export var pixel_return_enabled: bool = true
+## Время закрытия и открытия экрана в секундах (каждая фаза).
+@export_range(0.1, 3.0, 0.05, "suffix:s") var pixel_return_duration: float = 0.5
+## Размер блоков пиксельного эффекта.
+@export_range(2.0, 64.0, 1.0, "suffix:px") var pixel_return_size: float = 8.0
+## Цвет пиксельного затемнения.
+@export var pixel_return_color: Color = Color.BLACK
+
 
 var _turn: Node
 var _units: Node2D
@@ -79,342 +91,499 @@ var _battle_finished: bool = false
 var _battle_result: bool = false
 var _initial_hero_hp: Dictionary = {}
 var _result_layer: CanvasLayer
+var _result_buttons: Array[Button] = []
+var _result_selected_index: int = 0
+var _result_previous_pause: bool = false
+var _result_previous_process_mode: ProcessMode = Node.PROCESS_MODE_INHERIT
+var _return_transition_started: bool = false
+
 
 
 func _ready() -> void:
-    _turn = get_node_or_null(turn_path)
-    _units = get_node_or_null(units_path) as Node2D
-    _enemy_ai = get_node_or_null(enemy_ai_path)
-    _rng.randomize()
-    if rules == null:
-        rules = CombatRules.new()
-    if _turn == null or _units == null:
-        push_warning("BattleCombat: set Turn Path and Units Path in Inspector.")
-    _capture_initial_hero_hp()
+	_turn = get_node_or_null(turn_path)
+	_units = get_node_or_null(units_path) as Node2D
+	_enemy_ai = get_node_or_null(enemy_ai_path)
+	_rng.randomize()
+	if rules == null:
+		rules = CombatRules.new()
+	if _turn == null or _units == null:
+		push_warning("BattleCombat: set Turn Path and Units Path in Inspector.")
+	_capture_initial_hero_hp()
 
 
 ## Returns a result Dictionary: ok, reason, damage, hp_before, hp_after, defeated.
 ## Does not move actors or advance turns.
 func physical_attack(attacker: Node2D, target: Node2D) -> Dictionary:
-    var result: Dictionary = {"ok": false, "reason": "", "damage": 0, "hp_before": 0, "hp_after": 0, "defeated": false}
-    if _battle_finished:
-        result["reason"] = "Битва уже завершена."
-        return result
-    if not enable_physical_attacks:
-        result["reason"] = "Physical attacks disabled."
-        return result
-    if not is_instance_valid(attacker) or not is_instance_valid(target) or attacker == target:
-        result["reason"] = "Invalid participants."
-        return result
-    if not attacker.is_inside_tree() or not target.is_inside_tree():
-        result["reason"] = "Unit is not on the battle map."
-        return result
-    if _units == null or attacker.get_parent() != _units or target.get_parent() != _units:
-        result["reason"] = "Units must be children of Units."
-        return result
-    if _is_enemy(attacker) == _is_enemy(target):
-        result["reason"] = "Friendly fire disabled."
-        return result
-    var before: int = get_current_hp(target)
-    if before <= 0 or get_current_hp(attacker) <= 0:
-        result["reason"] = "Dead participant."
-        return result
+	var result: Dictionary = {"ok": false, "reason": "", "damage": 0, "hp_before": 0, "hp_after": 0, "defeated": false}
+	if _battle_finished:
+		result["reason"] = "Битва уже завершена."
+		return result
+	if not enable_physical_attacks:
+		result["reason"] = "Physical attacks disabled."
+		return result
+	if not is_instance_valid(attacker) or not is_instance_valid(target) or attacker == target:
+		result["reason"] = "Invalid participants."
+		return result
+	if not attacker.is_inside_tree() or not target.is_inside_tree():
+		result["reason"] = "Unit is not on the battle map."
+		return result
+	if _units == null or attacker.get_parent() != _units or target.get_parent() != _units:
+		result["reason"] = "Units must be children of Units."
+		return result
+	if _is_enemy(attacker) == _is_enemy(target):
+		result["reason"] = "Friendly fire disabled."
+		return result
+	var before: int = get_current_hp(target)
+	if before <= 0 or get_current_hp(attacker) <= 0:
+		result["reason"] = "Dead participant."
+		return result
 
-    var attack_value: int = _stat(attacker, "attack")
-    var defense_value: int = _stat(target, "defense")
-    var damage: int = maxi(rules.minimum_damage, roundi(float(attack_value - defense_value) * rules.physical_multiplier))
-    if rules.damage_variation_percent > 0.0:
-        var delta: float = rules.damage_variation_percent / 100.0
-        damage = maxi(0, roundi(float(damage) * _rng.randf_range(1.0 - delta, 1.0 + delta)))
-    if rules.clamp_damage_to_remaining_hp:
-        damage = mini(damage, before)
-    var after: int = maxi(0, before - damage)
-    _set_current_hp(target, after)
-    var defeated: bool = after == 0
-    result = {"ok": true, "reason": "", "damage": damage, "hp_before": before, "hp_after": after, "defeated": defeated}
-    combat_resolved.emit(attacker, target, result)
-    if _is_enemy(target) and _enemy_ai != null and _enemy_ai.has_method("notify_enemy_attacked"):
-        _enemy_ai.call("notify_enemy_attacked", target, attacker)
-    if rules.print_damage_to_output:
-        print("[BattleCombat] %s -> %s: -%d HP (%d/%d)" % [attacker.name, target.name, damage, after, get_max_hp(target)])
-    if defeated:
-        _handle_defeat(target)
-    return result
+	var attack_value: int = _stat(attacker, "attack")
+	var defense_value: int = _stat(target, "defense")
+	var damage: int = maxi(rules.minimum_damage, roundi(float(attack_value - defense_value) * rules.physical_multiplier))
+	if rules.damage_variation_percent > 0.0:
+		var delta: float = rules.damage_variation_percent / 100.0
+		damage = maxi(0, roundi(float(damage) * _rng.randf_range(1.0 - delta, 1.0 + delta)))
+	if rules.clamp_damage_to_remaining_hp:
+		damage = mini(damage, before)
+	var after: int = maxi(0, before - damage)
+	_set_current_hp(target, after)
+	var defeated: bool = after == 0
+	result = {"ok": true, "reason": "", "damage": damage, "hp_before": before, "hp_after": after, "defeated": defeated}
+	combat_resolved.emit(attacker, target, result)
+	if _is_enemy(target) and _enemy_ai != null and _enemy_ai.has_method("notify_enemy_attacked"):
+		_enemy_ai.call("notify_enemy_attacked", target, attacker)
+	if rules.print_damage_to_output:
+		print("[BattleCombat] %s -> %s: -%d HP (%d/%d)" % [attacker.name, target.name, damage, after, get_max_hp(target)])
+	if defeated:
+		_handle_defeat(target)
+	return result
 
 func get_current_hp(unit: Node2D) -> int:
-    if not is_instance_valid(unit):
-        return 0
-    if _is_enemy(unit):
-        return maxi(0, int(unit.get_meta("hp_current", get_max_hp(unit))))
-    var hero: Resource = _hero_data(unit)
-    if hero != null:
-        return maxi(0, int(hero.get("hp_current")))
-    return 0
+	if not is_instance_valid(unit):
+		return 0
+	if _is_enemy(unit):
+		return maxi(0, int(unit.get_meta("hp_current", get_max_hp(unit))))
+	var hero: Resource = _hero_data(unit)
+	if hero != null:
+		return maxi(0, int(hero.get("hp_current")))
+	return 0
 
 func get_max_hp(unit: Node2D) -> int:
-    if not is_instance_valid(unit):
-        return 0
-    if _is_enemy(unit):
-        var data: Resource = unit.get_meta("enemy_data", null) as Resource
-        return maxi(0, _resource_int(data, "max_hp"))
-    var hero: Resource = _hero_data(unit)
-    if hero != null:
-        var stats: Resource = hero.get("base_stats") as Resource
-        return maxi(0, _resource_int(stats, "hp"))
-    return 0
+	if not is_instance_valid(unit):
+		return 0
+	if _is_enemy(unit):
+		var data: Resource = unit.get_meta("enemy_data", null) as Resource
+		return maxi(0, _resource_int(data, "max_hp"))
+	var hero: Resource = _hero_data(unit)
+	if hero != null:
+		var stats: Resource = hero.get("base_stats") as Resource
+		return maxi(0, _resource_int(stats, "hp"))
+	return 0
 
 func _set_current_hp(unit: Node2D, value: int) -> void:
-    var new_value: int = clampi(value, 0, get_max_hp(unit))
-    if _is_enemy(unit):
-        unit.set_meta("hp_current", new_value)
-    else:
-        var hero: Resource = _hero_data(unit)
-        if hero != null:
-            hero.set("hp_current", new_value)
+	var new_value: int = clampi(value, 0, get_max_hp(unit))
+	if _is_enemy(unit):
+		unit.set_meta("hp_current", new_value)
+	else:
+		var hero: Resource = _hero_data(unit)
+		if hero != null:
+			hero.set("hp_current", new_value)
 
 func _stat(unit: Node2D, key: String) -> int:
-    if _is_enemy(unit):
-        return _resource_int(unit.get_meta("enemy_data", null) as Resource, key)
-    var hero: Resource = _hero_data(unit)
-    if hero == null:
-        return 0
-    return _resource_int(hero.get("base_stats") as Resource, key)
+	if _is_enemy(unit):
+		return _resource_int(unit.get_meta("enemy_data", null) as Resource, key)
+	var hero: Resource = _hero_data(unit)
+	if hero == null:
+		return 0
+	return _resource_int(hero.get("base_stats") as Resource, key)
 
 func _hero_data(unit: Node2D) -> Resource:
-    if _turn == null:
-        return null
-    var party: Resource = _turn.get("party") as Resource
-    if party == null:
-        return null
-    var heroes: Array = party.get("heroes")
-    for hero in heroes:
-        if hero is Resource and str(hero.get("hero_name")) == unit.name:
-            return hero
-    return null
+	if _turn == null:
+		return null
+	var party: Resource = _turn.get("party") as Resource
+	if party == null:
+		return null
+	var heroes: Array = party.get("heroes")
+	for hero in heroes:
+		if hero is Resource and str(hero.get("hero_name")) == unit.name:
+			return hero
+	return null
 
 func _resource_int(resource: Resource, key: String) -> int:
-    if resource == null:
-        return 0
-    for property in resource.get_property_list():
-        if String(property.get("name", "")) == key:
-            return int(resource.get(key))
-    return 0
+	if resource == null:
+		return 0
+	for property in resource.get_property_list():
+		if String(property.get("name", "")) == key:
+			return int(resource.get(key))
+	return 0
 
 func _is_enemy(unit: Node2D) -> bool:
-    return unit.is_in_group(&"battle_enemies")
+	return unit.is_in_group(&"battle_enemies")
 
 ## Возвращает true, если бой завершён.
 func is_battle_finished() -> bool:
-    return _battle_finished
+	return _battle_finished
 
 
 func _capture_initial_hero_hp() -> void:
-    if _turn == null:
-        return
-    var party: Resource = _turn.get("party") as Resource
-    if party == null:
-        return
-    for hero in party.get("heroes"):
-        if hero is Resource:
-            _initial_hero_hp[hero.get_instance_id()] = {"resource": hero, "hp": int(hero.get("hp_current"))}
+	if _turn == null:
+		return
+	var party: Resource = _turn.get("party") as Resource
+	if party == null:
+		return
+	for hero in party.get("heroes"):
+		if hero is Resource:
+			_initial_hero_hp[hero.get_instance_id()] = {"resource": hero, "hp": int(hero.get("hp_current"))}
 
 
 func _restore_initial_hero_hp() -> void:
-    # При повторном запуске восстанавливаем HP перед стартом тестового боя.
-    for entry in _initial_hero_hp.values():
-        var hero: Resource = entry["resource"] as Resource
-        if is_instance_valid(hero):
-            hero.set("hp_current", int(entry["hp"]))
+	# При повторном запуске восстанавливаем HP перед стартом тестового боя.
+	for entry in _initial_hero_hp.values():
+		var hero: Resource = entry["resource"] as Resource
+		if is_instance_valid(hero):
+			hero.set("hp_current", int(entry["hp"]))
 
 
 func _handle_defeat(unit: Node2D) -> void:
-    if not is_instance_valid(unit) or unit.has_meta("battle_defeated"):
-        return
-    unit.set_meta("battle_defeated", true)
-    var enemy: bool = _is_enemy(unit)
-    var leader: bool = not enemy and StringName(unit.name) == party_leader_name
-    var enemy_leader: bool = enemy and _is_enemy_leader(unit)
-    unit_defeated.emit(unit, enemy)
+	if not is_instance_valid(unit) or unit.has_meta("battle_defeated"):
+		return
+	unit.set_meta("battle_defeated", true)
+	var enemy: bool = _is_enemy(unit)
+	var leader: bool = not enemy and StringName(unit.name) == party_leader_name
+	var enemy_leader: bool = enemy and _is_enemy_leader(unit)
+	unit_defeated.emit(unit, enemy)
 
-    var terminal: bool = false
-    var victory: bool = false
-    var message: String = ""
-    if leader and defeat_on_party_leader_death:
-        terminal = true
-        message = "Лидер отряда погиб."
-    elif enemy_leader and victory_on_enemy_leader_death:
-        terminal = true
-        victory = true
-        message = "Командир врагов повержен."
-    elif enemy and victory_on_all_enemies_defeated and not _has_living_enemies():
-        terminal = true
-        victory = true
-        message = "Все противники повержены."
-    elif not enemy and not _has_living_heroes():
-        terminal = true
-        message = "Отряд потерпел поражение."
+	var terminal: bool = false
+	var victory: bool = false
+	var message: String = ""
+	if leader and defeat_on_party_leader_death:
+		terminal = true
+		message = "Лидер отряда погиб."
+	elif enemy_leader and victory_on_enemy_leader_death:
+		terminal = true
+		victory = true
+		message = "Командир врагов повержен."
+	elif enemy and victory_on_all_enemies_defeated and not _has_living_enemies():
+		terminal = true
+		victory = true
+		message = "Все противники повержены."
+	elif not enemy and not _has_living_heroes():
+		terminal = true
+		message = "Отряд потерпел поражение."
 
-    if terminal:
-        _battle_finished = true
-        _battle_result = victory
-        if stop_turns_on_battle_end and _turn != null and _turn.has_method("stop_battle"):
-            _turn.call("stop_battle")
-    _animate_death_and_remove(unit, terminal, victory, message)
+	if terminal:
+		_battle_finished = true
+		_battle_result = victory
+		if stop_turns_on_battle_end and _turn != null and _turn.has_method("stop_battle"):
+			_turn.call("stop_battle")
+	_animate_death_and_remove(unit, terminal, victory, message)
 
 
 func _is_enemy_leader(unit: Node2D) -> bool:
-    if bool(unit.get_meta("is_battle_leader", false)):
-        return true
-    var entry: Resource = unit.get_meta("enemy_data", null) as Resource
-    if entry == null:
-        return false
-    var enemy_id: String = str(unit.get_meta("enemy_id", ""))
-    if enemy_leader_ids.has(enemy_id):
-        return true
-    for property in entry.get_property_list():
-        if str(property.get("name", "")) == "is_battle_leader":
-            return bool(entry.get("is_battle_leader"))
-    return false
+	if bool(unit.get_meta("is_battle_leader", false)):
+		return true
+	var entry: Resource = unit.get_meta("enemy_data", null) as Resource
+	if entry == null:
+		return false
+	var enemy_id: String = str(unit.get_meta("enemy_id", ""))
+	if enemy_leader_ids.has(enemy_id):
+		return true
+	for property in entry.get_property_list():
+		if str(property.get("name", "")) == "is_battle_leader":
+			return bool(entry.get("is_battle_leader"))
+	return false
 
 
 func _has_living_enemies() -> bool:
-    if _units == null:
-        return false
-    for child in _units.get_children():
-        var unit := child as Node2D
-        if unit != null and unit.is_in_group(&"battle_enemies") and get_current_hp(unit) > 0:
-            return true
-    return false
+	if _units == null:
+		return false
+	for child in _units.get_children():
+		var unit := child as Node2D
+		if unit != null and unit.is_in_group(&"battle_enemies") and get_current_hp(unit) > 0:
+			return true
+	return false
 
 
 func _has_living_heroes() -> bool:
-    if _units == null:
-        return false
-    for child in _units.get_children():
-        var unit := child as Node2D
-        if unit != null and not _is_enemy(unit) and _hero_data(unit) != null and get_current_hp(unit) > 0:
-            return true
-    return false
+	if _units == null:
+		return false
+	for child in _units.get_children():
+		var unit := child as Node2D
+		if unit != null and not _is_enemy(unit) and _hero_data(unit) != null and get_current_hp(unit) > 0:
+			return true
+	return false
 
 
 func _animate_death_and_remove(unit: Node2D, terminal: bool, victory: bool, message: String) -> void:
-    # Камера фиксируется на погибающем до начала растворения.
-    # BattleTurn откладывает переключение, если враг завершил ход в это время.
-    if not is_instance_valid(unit):
-        if terminal:
-            _finish_battle_presentation(victory, message)
-        return
-    if _turn != null and _turn.has_method("begin_death_presentation"):
-        _turn.call("begin_death_presentation", unit)
+	# Камера фиксируется на погибающем до начала растворения.
+	# BattleTurn откладывает переключение, если враг завершил ход в это время.
+	if not is_instance_valid(unit):
+		if terminal:
+			_finish_battle_presentation(victory, message)
+		return
+	if _turn != null and _turn.has_method("begin_death_presentation"):
+		_turn.call("begin_death_presentation", unit)
 
-    if death_camera_arrival_delay > 0.0:
-        await get_tree().create_timer(death_camera_arrival_delay).timeout
-    if not is_instance_valid(unit):
-        if _turn != null and _turn.has_method("end_death_presentation"):
-            _turn.call("end_death_presentation")
-        if terminal:
-            _finish_battle_presentation(victory, message)
-        return
+	if death_camera_arrival_delay > 0.0:
+		await get_tree().create_timer(death_camera_arrival_delay).timeout
+	if not is_instance_valid(unit):
+		if _turn != null and _turn.has_method("end_death_presentation"):
+			_turn.call("end_death_presentation")
+		if terminal:
+			_finish_battle_presentation(victory, message)
+		return
 
-    var sprite := unit.get_node_or_null("AnimatedSprite2D") as CanvasItem
-    var visual: CanvasItem = sprite if sprite != null else unit as CanvasItem
-    if visual != null:
-        var tween := create_tween()
-        tween.tween_property(visual, "modulate:a", 0.0, death_fade_duration)
-        if shrink_on_death and sprite is Node2D:
-            tween.parallel().tween_property(sprite, "scale", Vector2.ZERO, death_fade_duration)
-        await tween.finished
+	var sprite := unit.get_node_or_null("AnimatedSprite2D") as CanvasItem
+	var visual: CanvasItem = sprite if sprite != null else unit as CanvasItem
+	if visual != null:
+		var tween := create_tween()
+		tween.tween_property(visual, "modulate:a", 0.0, death_fade_duration)
+		if shrink_on_death and sprite is Node2D:
+			tween.parallel().tween_property(sprite, "scale", Vector2.ZERO, death_fade_duration)
+		await tween.finished
 
-    if is_instance_valid(unit):
-        unit.queue_free()
+	if is_instance_valid(unit):
+		unit.queue_free()
 
-    # Внимание: задержка после удаления держит камеру на последней клетке.
-    if death_camera_hold_delay > 0.0:
-        await get_tree().create_timer(death_camera_hold_delay).timeout
-    if _turn != null and is_instance_valid(_turn) and _turn.has_method("end_death_presentation"):
-        _turn.call("end_death_presentation")
-    if terminal:
-        _finish_battle_presentation(victory, message)
+	# Внимание: задержка после удаления держит камеру на последней клетке.
+	if death_camera_hold_delay > 0.0:
+		await get_tree().create_timer(death_camera_hold_delay).timeout
+	if _turn != null and is_instance_valid(_turn) and _turn.has_method("end_death_presentation"):
+		_turn.call("end_death_presentation")
+	if terminal:
+		_finish_battle_presentation(victory, message)
 
 
 func _finish_battle_presentation(victory: bool, message: String) -> void:
-    if end_battle_delay > 0.0:
-        await get_tree().create_timer(end_battle_delay).timeout
-    battle_ended.emit(victory, message)
-    if show_result_panel:
-        _show_battle_result(victory, message)
-    if victory and return_after_victory and not victory_world_scene.is_empty():
-        _auto_return_to_world()
-    elif victory and victory_world_scene.is_empty():
-        push_warning("BattleCombat: укажи Victory World Scene в Inspector для возврата после победы.")
+	if end_battle_delay > 0.0:
+		await get_tree().create_timer(end_battle_delay).timeout
+	# Отмечаем одноразовую встречу только после победы (не при поражении).
+	if victory:
+		var return_context: Node = get_node_or_null("/root/BattleReturnContext")
+		if return_context != null and return_context.has_method("mark_current_encounter_victorious"):
+			return_context.call("mark_current_encounter_victorious")
+	battle_ended.emit(victory, message)
+	if show_result_panel:
+		_show_battle_result(victory, message)
+	if victory and return_after_victory:
+		if _has_return_destination():
+			_auto_return_to_world()
+		else:
+			push_warning("BattleCombat: нет сохранённого места встречи и не назначена запасная сцена.")
 
 
 func _show_battle_result(victory: bool, message: String) -> void:
-    if _result_layer != null:
-        return
-    _result_layer = CanvasLayer.new()
-    _result_layer.name = "BattleResultUI"
-    _result_layer.layer = 100
-    add_child(_result_layer)
-    var overlay := ColorRect.new()
-    overlay.color = Color(0.02, 0.03, 0.06, 0.83)
-    overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-    _result_layer.add_child(overlay)
-    var center := CenterContainer.new()
-    center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    overlay.add_child(center)
-    var panel := PanelContainer.new()
-    panel.custom_minimum_size = Vector2(350, 180)
-    center.add_child(panel)
-    var column := VBoxContainer.new()
-    column.add_theme_constant_override("separation", 12)
-    panel.add_child(column)
-    var title := Label.new()
-    title.text = "ПОБЕДА" if victory else "ПОРАЖЕНИЕ"
-    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    column.add_child(title)
-    var reason := Label.new()
-    reason.text = message
-    reason.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    column.add_child(reason)
-    if victory and show_return_button:
-        var return_button := Button.new()
-        return_button.text = "Вернуться на карту"
-        return_button.disabled = victory_world_scene.is_empty()
-        return_button.pressed.connect(_return_to_world)
-        column.add_child(return_button)
-    if allow_retry:
-        var retry := Button.new()
-        retry.text = "Повторить битву"
-        retry.pressed.connect(_retry_battle)
-        column.add_child(retry)
-    if not victory:
-        var load_button := Button.new()
-        load_button.text = "Загрузить сохранение (пока недоступно)"
-        load_button.disabled = true
-        load_button.tooltip_text = load_save_hint
-        column.add_child(load_button)
+	if _result_layer != null:
+		return
+	_result_layer = CanvasLayer.new()
+	_result_layer.name = "BattleResultUI"
+	_result_layer.layer = 100
+	# Окно остаётся активным даже при остановке остальных боевых нод.
+	_result_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	_result_buttons.clear()
+	_result_selected_index = 0
+	add_child(_result_layer)
+	var overlay := ColorRect.new()
+	overlay.color = Color(0.02, 0.03, 0.06, 0.83)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_result_layer.add_child(overlay)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(350, 180)
+	center.add_child(panel)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	panel.add_child(column)
+	var title := Label.new()
+	title.text = "ПОБЕДА" if victory else "ПОРАЖЕНИЕ"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(title)
+	var reason := Label.new()
+	reason.text = message
+	reason.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(reason)
+	if victory and show_return_button:
+		var return_button := Button.new()
+		return_button.text = "Вернуться на карту"
+		return_button.disabled = not _has_return_destination()
+		return_button.pressed.connect(_return_to_world)
+		column.add_child(return_button)
+		_result_buttons.append(return_button)
+	if allow_retry:
+		var retry := Button.new()
+		retry.text = "Повторить битву"
+		retry.pressed.connect(_retry_battle)
+		column.add_child(retry)
+		_result_buttons.append(retry)
+	if not victory:
+		var load_button := Button.new()
+		load_button.text = "Загрузить сохранение (пока недоступно)"
+		load_button.disabled = true
+		load_button.tooltip_text = load_save_hint
+		column.add_child(load_button)
+		_result_buttons.append(load_button)
+	# Блокируем курсор, BattleMove, BattleHover и остальные игровые обработчики ввода.
+	# Обрабатываем клавиатуру только в окне результата.
+	_result_previous_pause = get_tree().paused
+	_result_previous_process_mode = process_mode
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	get_tree().paused = true
+	_focus_result_button(0)
+
+
+## W/A и S/D переключают пункт результата; E/Enter подтверждают выбор.
+func _input(event: InputEvent) -> void:
+	if _result_layer == null or not (event is InputEventKey):
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	var key: Key = key_event.physical_keycode if key_event.physical_keycode != KEY_NONE else key_event.keycode
+	match key:
+		KEY_W, KEY_A, KEY_UP, KEY_LEFT:
+			get_viewport().set_input_as_handled()
+			_focus_result_button(_result_selected_index - 1)
+		KEY_S, KEY_D, KEY_DOWN, KEY_RIGHT:
+			get_viewport().set_input_as_handled()
+			_focus_result_button(_result_selected_index + 1)
+		KEY_E, KEY_ENTER, KEY_KP_ENTER:
+			get_viewport().set_input_as_handled()
+			if _result_selected_index >= 0 and _result_selected_index < _result_buttons.size():
+				var selected_button: Button = _result_buttons[_result_selected_index]
+				if is_instance_valid(selected_button) and not selected_button.disabled:
+					selected_button.pressed.emit()
+
+
+func _focus_result_button(requested_index: int) -> void:
+	if _result_buttons.is_empty():
+		return
+	var count: int = _result_buttons.size()
+	for step in range(count):
+		var index: int = posmod(requested_index + step, count)
+		var button: Button = _result_buttons[index]
+		if is_instance_valid(button) and not button.disabled and button.visible:
+			_result_selected_index = index
+			button.grab_focus()
+			return
+
+
+func _resume_game_after_result() -> void:
+	get_tree().paused = _result_previous_pause
+	process_mode = _result_previous_process_mode
+
+
 
 
 func _retry_battle() -> void:
-    _restore_initial_hero_hp()
-    get_tree().reload_current_scene()
+	_resume_game_after_result()
+	_restore_initial_hero_hp()
+	get_tree().reload_current_scene()
 
 
 ## Автоматический переход после того, как игрок увидит окно победы.
 func _auto_return_to_world() -> void:
-    await get_tree().create_timer(victory_panel_duration).timeout
-    if is_inside_tree() and _battle_finished and _battle_result:
-        _return_to_world()
+	await get_tree().create_timer(victory_panel_duration).timeout
+	if is_inside_tree() and _battle_finished and _battle_result:
+		_return_to_world()
 
 
-## Переход на глобальную карту без изменений базовых характеристик героев.
+## Сначала возвращаемся в сохранённую точку встречи, иначе используем запасную сцену.
+func _has_return_destination() -> bool:
+	var context: Node = get_node_or_null("/root/BattleReturnContext")
+	if context != null and bool(context.call("has_context")):
+		return true
+	return not victory_world_scene.is_empty()
+
+## Переход после выбора пункта в окне победы: затемнение -> восстановление -> открытие.
+## Пиксельный эффект создаётся в корне, чтобы не исчезнуть при смене карты.
 func _return_to_world() -> void:
-    if victory_world_scene.is_empty():
-        push_warning("BattleCombat: не назначена Victory World Scene.")
-        return
-    if not ResourceLoader.exists(victory_world_scene):
-        push_error("BattleCombat: сцена глобальной карты не найдена: " + victory_world_scene)
-        return
-    get_tree().change_scene_to_file(victory_world_scene)
+	if _return_transition_started:
+		return
+	if not _has_return_destination():
+		push_warning("BattleCombat: не сохранена точка встречи и не назначена запасная сцена.")
+		return
+	_return_transition_started = true
+	_perform_return_transition()
+
+
+func _perform_return_transition() -> void:
+	if not pixel_return_enabled:
+		_resume_game_after_result()
+		_change_to_saved_world()
+		return
+
+	var tree: SceneTree = get_tree()
+	var transition: CanvasLayer = RETURN_PIXEL_TRANSITION.instantiate() as CanvasLayer
+	if transition == null:
+		push_error("BattleCombat: невозможно создать PixelTransition.")
+		_return_transition_started = false
+		return
+
+	transition.layer = 120
+	transition.process_mode = Node.PROCESS_MODE_ALWAYS
+	tree.root.add_child(transition)
+	var cover: ColorRect = transition.get_node_or_null("Cover") as ColorRect
+	if cover == null or not (cover.material is ShaderMaterial):
+		push_error("BattleCombat: у PixelTransition нет Cover с ShaderMaterial.")
+		transition.queue_free()
+		_return_transition_started = false
+		return
+
+	var material: ShaderMaterial = cover.material.duplicate() as ShaderMaterial
+	cover.material = material
+	material.set_shader_parameter("pixel_size", pixel_return_size)
+	material.set_shader_parameter("dissolve_color", pixel_return_color)
+	material.set_shader_parameter("progress", 0.0)
+	cover.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	# Единственный Tween принадлежит SceneTree, а не удаляемой BattleCombat.
+	# Он продолжит работать после change_scene_to_file().
+	var duration: float = maxf(pixel_return_duration, 0.05)
+	var sequence: Tween = tree.create_tween()
+	sequence.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	sequence.tween_method(
+		func(value: float) -> void: material.set_shader_parameter("progress", value),
+		0.0, 1.0, duration
+	)
+	# ЭТОТ callback выполняется ДО удаления BattleCombat.
+	sequence.tween_callback(_switch_world_under_pixel_cover)
+	# После переключения сцены не обращаемся к self, get_tree() или _set_transition_progress.
+	# CanvasLayer добавлен к root и переживает смену текущей сцены.
+	sequence.tween_interval(0.12)
+	sequence.tween_method(
+		func(value: float) -> void: material.set_shader_parameter("progress", value),
+		1.0, 0.0, duration
+	)
+	sequence.tween_callback(func() -> void: transition.queue_free())
+
+
+## Вызывается один раз на закрытом экране, пока BattleCombat ещё существует.
+func _switch_world_under_pixel_cover() -> void:
+	_resume_game_after_result()
+	var error: Error = _change_to_saved_world()
+	if error != OK:
+		push_error("BattleCombat: ошибка перехода на карту: %s" % str(error))
+		_return_transition_started = false
+
+
+## Меняет сцену ровно тем же способом, что и раньше, без потери точки встречи.
+func _change_to_saved_world() -> Error:
+	var context: Node = get_node_or_null("/root/BattleReturnContext")
+	if context != null and context.has_method("has_context") and bool(context.call("has_context")):
+		var result: Error = context.call("return_to_saved_world")
+		return result
+	if victory_world_scene.is_empty():
+		push_warning("BattleCombat: не сохранена точка встречи и не назначена запасная сцена.")
+		return ERR_DOES_NOT_EXIST
+	if not ResourceLoader.exists(victory_world_scene):
+		push_error("BattleCombat: сцена глобальной карты не найдена: " + victory_world_scene)
+		return ERR_FILE_NOT_FOUND
+	return get_tree().change_scene_to_file(victory_world_scene)
+
+
+func _set_transition_progress(value: float, material: ShaderMaterial) -> void:
+	material.set_shader_parameter("progress", value)

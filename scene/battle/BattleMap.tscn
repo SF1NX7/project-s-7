@@ -14,7 +14,7 @@
 [ext_resource type="Script" uid="uid://dvf68nv6dijmd" path="res://script/battle/battle_turn.gd" id="11_mw1ti"]
 [ext_resource type="PackedScene" uid="uid://c8c8ufoh7td0w" path="res://scene/battle/BattleMenu.tscn" id="12_inp5g"]
 [ext_resource type="Script" uid="uid://btngamp3en6kb" path="res://script/battle/battle_move.gd" id="13_5a78g"]
-[ext_resource type="PackedScene" path="res://scene/battle/EnemySpawns.tscn" id="15_poc25"]
+[ext_resource type="PackedScene" uid="uid://ck76gkdl8h12t" path="res://scene/battle/EnemySpawns.tscn" id="15_poc25"]
 [ext_resource type="Script" uid="uid://onftq43m0rbs" path="res://script/battle/battle_enemy_ai.gd" id="16_enemy_ai"]
 [ext_resource type="Script" uid="uid://ckka4abhi62jf" path="res://script/battle/EnemyAIProfile.gd" id="17_jf776"]
 [ext_resource type="Script" uid="uid://tvlhjpn80om3" path="res://script/battle/BattleCombat.gd" id="18_8l6eh"]
@@ -1412,7 +1412,7 @@ move_duration = 0.17
 
 [node name="EnemySpawns" parent="." unique_id=595819906 instance=ExtResource("15_poc25")]
 
-[node name="EnemySpawn1" parent="EnemySpawns" index="0"]
+[node name="EnemySpawn1" parent="EnemySpawns" index="0" unique_id=208487325]
 position = Vector2(-80, -80)
 
 [node name="BattleEnemyAI" type="Node" parent="." unique_id=287329850]
@@ -1422,6 +1422,7 @@ fallback_profile = SubResource("Resource_he8ac")
 [node name="BattleCombat" type="Node2D" parent="." unique_id=1542915884]
 script = ExtResource("18_8l6eh")
 rules = SubResource("Resource_sh5ts")
+return_after_victory = false
 
 [editable path="Spawns"]
 [editable path="EnemySpawns"]
