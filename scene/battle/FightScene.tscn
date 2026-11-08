@@ -1,0 +1,103 @@
+[gd_scene format=3 uid="uid://pjswu02o7iw5"]
+
+[ext_resource type="Texture2D" uid="uid://qt4kngfvy2nn" path="res://art/BG/bg1.jpg" id="1_m4pho"]
+[ext_resource type="Texture2D" uid="uid://bc64ccahe1w4r" path="res://art/anim/fight_anim/Heroes/Max/MaxAttack1.png" id="2_a6216"]
+[ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="3_ynsy3"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ynsy3"]
+atlas = ExtResource("2_a6216")
+region = Rect2(0, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_slxud"]
+atlas = ExtResource("2_a6216")
+region = Rect2(160, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tknds"]
+atlas = ExtResource("2_a6216")
+region = Rect2(320, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_28x6u"]
+atlas = ExtResource("2_a6216")
+region = Rect2(480, 0, 160, 160)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_deokp"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ynsy3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_slxud")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tknds")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_28x6u")
+}],
+"loop": true,
+"name": &"attack",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ynsy3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m4pho"]
+bg_color = Color(0.14733289, 0.21209751, 0.4222509, 0.85300004)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.8156863, 0.58431375, 0.3254902, 1)
+corner_detail = 1
+
+[node name="FightScene" type="Node2D" unique_id=806865229]
+
+[node name="Background" type="Sprite2D" parent="." unique_id=359386276]
+texture = ExtResource("1_m4pho")
+centered = false
+
+[node name="HeroAnchor" type="Marker2D" parent="." unique_id=1875160137]
+position = Vector2(150, 288)
+gizmo_extents = 22.8
+
+[node name="HeroVisual" type="Node2D" parent="HeroAnchor" unique_id=766585431]
+
+[node name="Body" type="AnimatedSprite2D" parent="HeroAnchor/HeroVisual" unique_id=172231236]
+position = Vector2(0, -42)
+sprite_frames = SubResource("SpriteFrames_deokp")
+animation = &"attack"
+offset = Vector2(0, -32)
+
+[node name="Weapon" type="AnimatedSprite2D" parent="HeroAnchor/HeroVisual" unique_id=511487589]
+z_index = 1
+position = Vector2(0, -42)
+sprite_frames = SubResource("SpriteFrames_ynsy3")
+offset = Vector2(0, -32)
+
+[node name="EnemyAnchor" type="Marker2D" parent="." unique_id=1841786966]
+position = Vector2(490, 288)
+
+[node name="EnemyVisual" type="Node2D" parent="EnemyAnchor" unique_id=1591260500]
+
+[node name="Body" type="AnimatedSprite2D" parent="EnemyAnchor/EnemyVisual" unique_id=1103517852]
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1593888051]
+
+[node name="DialoguePanel" type="PanelContainer" parent="HUD" unique_id=962373078]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 300.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_m4pho")
+
+[node name="BattleText" type="RichTextLabel" parent="HUD/DialoguePanel" unique_id=1065123855]
+layout_mode = 2
+theme_override_colors/default_color = Color(0.9753826, 0.9751132, 0.9763277, 1)
+theme_override_fonts/normal_font = ExtResource("3_ynsy3")
+theme_override_font_sizes/normal_font_size = 18
+text = "Макс атакует !!
+Нанесено 33 ед. урона"
+horizontal_alignment = 1

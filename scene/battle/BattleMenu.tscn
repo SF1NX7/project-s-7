@@ -4,6 +4,10 @@
 [ext_resource type="Script" uid="uid://clxyxdig3m7pj" path="res://script/ui/CrossMenuBlink.gd" id="2_blink"]
 [ext_resource type="Script" uid="uid://ctmwo0ltvf4a3" path="res://script/ui/CrossMenuNameHint.gd" id="3_hint"]
 [ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="4_font"]
+[ext_resource type="Texture2D" uid="uid://cbr6csofxw5qf" path="res://art/anim/battle_anim/defend_anim1.png" id="4_hqf2m"]
+[ext_resource type="Texture2D" uid="uid://cgsg2b6yf6p76" path="res://art/anim/battle_anim/defend_anim2.png" id="5_7nify"]
+[ext_resource type="Texture2D" uid="uid://c1dyy7b38li2b" path="res://art/anim/battle_anim/attack_anim1.png" id="6_x55x6"]
+[ext_resource type="Texture2D" uid="uid://j45s1rus8u2h" path="res://art/anim/battle_anim/attack_anim2.png" id="7_t4uqf"]
 
 [sub_resource type="StyleBoxFlat" id="HintStyle"]
 bg_color = Color(0.18, 0.18, 0.22, 0.96)
@@ -117,6 +121,8 @@ grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 script = ExtResource("2_blink")
+frame_a = ExtResource("4_hqf2m")
+frame_b = ExtResource("5_7nify")
 
 [node name="Bg" type="TextureRect" parent="UiRoot/MenuRoot/DefendPanel" unique_id=432561286]
 layout_mode = 1
@@ -152,6 +158,8 @@ offset_right = -1.5258789e-05
 grow_horizontal = 2
 mouse_filter = 2
 script = ExtResource("2_blink")
+frame_a = ExtResource("6_x55x6")
+frame_b = ExtResource("7_t4uqf")
 
 [node name="Bg" type="TextureRect" parent="UiRoot/MenuRoot/AttackPanel" unique_id=247295175]
 layout_mode = 1
