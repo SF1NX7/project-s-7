@@ -19,6 +19,7 @@
 [ext_resource type="Script" uid="uid://ckka4abhi62jf" path="res://script/battle/EnemyAIProfile.gd" id="17_jf776"]
 [ext_resource type="Script" uid="uid://tvlhjpn80om3" path="res://script/battle/BattleCombat.gd" id="18_8l6eh"]
 [ext_resource type="Script" uid="uid://bjfcbyspncr7a" path="res://script/battle/CombatRules.gd" id="19_ry66a"]
+[ext_resource type="Script" uid="uid://g2j1a07bpb1w" path="res://script/battle/FightPreviewBridge.gd" id="20_ry66a"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_inp5g"]
 texture = ExtResource("1_323eo")
@@ -1423,6 +1424,9 @@ fallback_profile = SubResource("Resource_he8ac")
 script = ExtResource("18_8l6eh")
 rules = SubResource("Resource_sh5ts")
 return_after_victory = false
+
+[node name="FightPreviewBridge" type="Node2D" parent="." unique_id=1601772689]
+script = ExtResource("20_ry66a")
 
 [editable path="Spawns"]
 [editable path="EnemySpawns"]
