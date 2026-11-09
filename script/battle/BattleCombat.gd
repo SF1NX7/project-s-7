@@ -6,6 +6,7 @@ extends Node
 ## Hero current HP is stored in its HeroData resource.
 
 signal combat_resolved(attacker: Node2D, target: Node2D, result: Dictionary)
+signal exchange_planned(exchange: Dictionary)
 signal unit_defeated(unit: Node2D, is_enemy: bool)
 signal battle_ended(victory: bool, reason: String)
 
@@ -22,6 +23,20 @@ const RETURN_PIXEL_TRANSITION: PackedScene = preload("res://scene/battle/PixelTr
 @export var enemy_ai_path: NodePath = ^"../BattleEnemyAI"
 ## Общий ресурс с формулой физического урона.
 @export var rules: CombatRules
+
+@export_group("Предрасчёт столкновения")
+## При подключённом FightPreviewBridge откладывать применение HP до конца анимаций.
+@export var staged_exchanges_enabled: bool = true
+## Шанс уворота цели (проценты). 0 — отключено.
+@export_range(0.0, 100.0, 0.5, "suffix:%") var dodge_chance: float = 0.0
+## Шанс критического удара (проценты). 0 — отключено.
+@export_range(0.0, 100.0, 0.5, "suffix:%") var critical_chance: float = 0.0
+## Множитель урона критического удара.
+@export_range(1.0, 4.0, 0.1) var critical_multiplier: float = 1.5
+## Шанс одного контрудара живой цели.
+@export_range(0.0, 100.0, 0.5, "suffix:%") var counter_chance: float = 0.0
+## Шанс одного дополнительного удара первого атакующего.
+@export_range(0.0, 100.0, 0.5, "suffix:%") var extra_attack_chance: float = 0.0
 
 @export_group("Combat")
 ## Разрешает физические атаки в бою.
@@ -96,6 +111,7 @@ var _result_selected_index: int = 0
 var _result_previous_pause: bool = false
 var _result_previous_process_mode: ProcessMode = Node.PROCESS_MODE_INHERIT
 var _return_transition_started: bool = false
+var _pending_exchange: Dictionary = {}
 
 
 
@@ -113,13 +129,15 @@ func _ready() -> void:
 
 ## Returns a result Dictionary: ok, reason, damage, hp_before, hp_after, defeated.
 ## Does not move actors or advance turns.
+## Вызывается после подтверждения Attack. Все броски RNG выполняются здесь.
+## При активном мосте HP и смерть применяются после визуального воспроизведения.
 func physical_attack(attacker: Node2D, target: Node2D) -> Dictionary:
 	var result: Dictionary = {"ok": false, "reason": "", "damage": 0, "hp_before": 0, "hp_after": 0, "defeated": false}
-	if _battle_finished:
-		result["reason"] = "Битва уже завершена."
+	if _battle_finished or not enable_physical_attacks:
+		result["reason"] = "Битва завершена или атаки отключены."
 		return result
-	if not enable_physical_attacks:
-		result["reason"] = "Physical attacks disabled."
+	if not _pending_exchange.is_empty():
+		result["reason"] = "Предыдущее столкновение ещё воспроизводится."
 		return result
 	if not is_instance_valid(attacker) or not is_instance_valid(target) or attacker == target:
 		result["reason"] = "Invalid participants."
@@ -133,31 +151,117 @@ func physical_attack(attacker: Node2D, target: Node2D) -> Dictionary:
 	if _is_enemy(attacker) == _is_enemy(target):
 		result["reason"] = "Friendly fire disabled."
 		return result
-	var before: int = get_current_hp(target)
-	if before <= 0 or get_current_hp(attacker) <= 0:
+	var first_hp: int = get_current_hp(attacker)
+	var second_hp: int = get_current_hp(target)
+	if first_hp <= 0 or second_hp <= 0:
 		result["reason"] = "Dead participant."
 		return result
 
-	var attack_value: int = _stat(attacker, "attack")
-	var defense_value: int = _stat(target, "defense")
-	var damage: int = maxi(rules.minimum_damage, roundi(float(attack_value - defense_value) * rules.physical_multiplier))
-	if rules.damage_variation_percent > 0.0:
-		var delta: float = rules.damage_variation_percent / 100.0
-		damage = maxi(0, roundi(float(damage) * _rng.randf_range(1.0 - delta, 1.0 + delta)))
-	if rules.clamp_damage_to_remaining_hp:
-		damage = mini(damage, before)
+	var actions: Array[Dictionary] = []
+	var virtual_hp: Dictionary = {attacker.get_instance_id(): first_hp, target.get_instance_id(): second_hp}
+	_plan_strike(attacker, target, "attack", virtual_hp, actions)
+	# Ни контратака, ни дополнительный удар не допускаются после гибели участника.
+	if _still_fighting(attacker, target, virtual_hp) and _roll_percent(counter_chance):
+		_plan_strike(target, attacker, "counter", virtual_hp, actions)
+	if _still_fighting(attacker, target, virtual_hp) and _roll_percent(extra_attack_chance):
+		_plan_strike(attacker, target, "extra", virtual_hp, actions)
+
+	var after_first: int = int(virtual_hp[attacker.get_instance_id()])
+	var after_second: int = int(virtual_hp[target.get_instance_id()])
+	var primary_damage: int = int(actions[0].get("damage", 0))
+	result = {
+		"ok": true,
+		"reason": "",
+		"damage": primary_damage,
+		"hp_before": second_hp,
+		"hp_after": after_second,
+		"defeated": after_second == 0,
+		"actions": actions,
+		"attacker_hp_after": after_first,
+		"staged": true
+	}
+	_pending_exchange = {"attacker": attacker, "target": target, "result": result}
+	# Если мост ещё не установлен — сохраняем старое безопасное поведение.
+	if staged_exchanges_enabled and not exchange_planned.get_connections().is_empty():
+		exchange_planned.emit(_pending_exchange.duplicate(true))
+	else:
+		commit_pending_exchange()
+	return result
+
+
+func _roll_percent(chance: float) -> bool:
+	return chance > 0.0 and _rng.randf() * 100.0 < chance
+
+
+func _still_fighting(a: Node2D, b: Node2D, virtual_hp: Dictionary) -> bool:
+	return int(virtual_hp.get(a.get_instance_id(), 0)) > 0 and int(virtual_hp.get(b.get_instance_id(), 0)) > 0
+
+
+func _plan_strike(source: Node2D, victim: Node2D, kind: String, virtual_hp: Dictionary, actions: Array[Dictionary]) -> void:
+	var victim_id: int = victim.get_instance_id()
+	var before: int = int(virtual_hp.get(victim_id, 0))
+	if before <= 0:
+		return
+	var missed: bool = _roll_percent(dodge_chance)
+	var critical: bool = not missed and _roll_percent(critical_chance)
+	var damage: int = 0
+	if not missed:
+		var attack_value: int = _stat(source, "attack")
+		var defense_value: int = _stat(victim, "defense")
+		damage = maxi(rules.minimum_damage, roundi(float(attack_value - defense_value) * rules.physical_multiplier))
+		if rules.damage_variation_percent > 0.0:
+			var delta: float = rules.damage_variation_percent / 100.0
+			damage = maxi(0, roundi(float(damage) * _rng.randf_range(1.0 - delta, 1.0 + delta)))
+		if critical:
+			damage = roundi(float(damage) * critical_multiplier)
+		if rules.clamp_damage_to_remaining_hp:
+			damage = mini(damage, before)
 	var after: int = maxi(0, before - damage)
-	_set_current_hp(target, after)
-	var defeated: bool = after == 0
-	result = {"ok": true, "reason": "", "damage": damage, "hp_before": before, "hp_after": after, "defeated": defeated}
+	virtual_hp[victim_id] = after
+	actions.append({
+		"kind": kind, "source_is_enemy": _is_enemy(source),
+		"source_name": _unit_name(source), "target_name": _unit_name(victim),
+		"damage": damage, "dodged": missed, "critical": critical,
+		"hp_before": before, "hp_after": after, "defeated": after == 0
+	})
+
+
+func _unit_name(unit: Node2D) -> String:
+	if _is_enemy(unit):
+		var data: Resource = unit.get_meta("enemy_data", null) as Resource
+		if data != null:
+			var label: Variant = data.get("display_name")
+			if label != null and str(label) != "":
+				return str(label)
+	return str(unit.name)
+
+
+## Применяется ровно один раз после завершения FightScene.
+## Умирающие ноды не удаляются до этого момента.
+func commit_pending_exchange() -> void:
+	if _pending_exchange.is_empty():
+		return
+	var exchange: Dictionary = _pending_exchange
+	_pending_exchange = {}
+	var attacker: Node2D = exchange.get("attacker") as Node2D
+	var target: Node2D = exchange.get("target") as Node2D
+	if not is_instance_valid(attacker) or not is_instance_valid(target):
+		push_warning("BattleCombat: невозможно применить результат: юнит уже удалён.")
+		return
+	var result: Dictionary = exchange.get("result", {})
+	_set_current_hp(attacker, int(result.get("attacker_hp_after", get_current_hp(attacker))))
+	_set_current_hp(target, int(result.get("hp_after", get_current_hp(target))))
+	# Совместимый сигнал — после применения итогового состояния.
 	combat_resolved.emit(attacker, target, result)
 	if _is_enemy(target) and _enemy_ai != null and _enemy_ai.has_method("notify_enemy_attacked"):
 		_enemy_ai.call("notify_enemy_attacked", target, attacker)
 	if rules.print_damage_to_output:
-		print("[BattleCombat] %s -> %s: -%d HP (%d/%d)" % [attacker.name, target.name, damage, after, get_max_hp(target)])
-	if defeated:
+		print("[BattleCombat] exchange complete: ", attacker.name, " -> ", target.name)
+	if get_current_hp(target) <= 0:
 		_handle_defeat(target)
-	return result
+	if get_current_hp(attacker) <= 0 and not _battle_finished:
+		_handle_defeat(attacker)
+
 
 func get_current_hp(unit: Node2D) -> int:
 	if not is_instance_valid(unit):

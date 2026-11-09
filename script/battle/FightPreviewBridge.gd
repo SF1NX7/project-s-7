@@ -1,5 +1,5 @@
 extends Node
-## Показывает FightScene поверх тактической карты после физической атаки.
+## Проигрывает заранее рассчитанные события BattleCombat без повторного RNG.
 ## Первый этап интеграции: не рассчитывает и не изменяет HP.
 ## Добавить как Node с именем FightPreviewBridge непосредственно в BattleMap.
 
@@ -58,8 +58,10 @@ var _fade_rect: ColorRect
 var _waiting_for_advance: bool = false
 var _typing_message: bool = false
 var _skip_typing: bool = false
+var _pause_before_exchange: bool = false
 
 signal advance_requested
+signal preview_finished
 
 
 func _ready() -> void:
@@ -69,10 +71,10 @@ func _ready() -> void:
 	if _combat == null:
 		push_error("FightPreviewBridge: BattleCombat не найден. Проверь Combat Path.")
 		return
-	if not _combat.has_signal("combat_resolved"):
-		push_error("FightPreviewBridge: сигнал combat_resolved отсутствует.")
+	if not _combat.has_signal("exchange_planned"):
+		push_error("FightPreviewBridge: нужен новый BattleCombat со сигналом exchange_planned.")
 		return
-	_combat.connect("combat_resolved", Callable(self, "_on_combat_resolved"))
+	_combat.connect("exchange_planned", Callable(self, "_on_exchange_planned"))
 
 
 func _input(event: InputEvent) -> void:
@@ -130,20 +132,20 @@ func _wait_for_message(tree: SceneTree, automatic_seconds: float) -> void:
 	await advance_requested
 
 
-func _on_combat_resolved(attacker: Node2D, target: Node2D, result: Dictionary) -> void:
-	if not preview_enabled or not bool(result.get("ok", false)):
+func _on_exchange_planned(exchange: Dictionary) -> void:
+	if not preview_enabled or fight_scene == null:
+		if fight_scene == null:
+			push_warning("FightPreviewBridge: Fight Scene не назначена — применяем результат без показа.")
+		if _combat != null and _combat.has_method("commit_pending_exchange"):
+			_combat.call_deferred("commit_pending_exchange")
 		return
-	# Запоминаем данные, а не живые ссылки: юнит может погибнуть и удалиться.
-	var entry: Dictionary = {
-		"attacker_is_enemy": attacker.is_in_group("battle_enemies"),
-		"attacker_name": _unit_display_name(attacker),
-		"target_name": _unit_display_name(target),
-		"damage": int(result.get("damage", 0)),
-		"defeated": bool(result.get("defeated", false))
-	}
-	_queue.append(entry)
+	_queue.append(exchange)
 	if not _showing:
 		_showing = true
+		# Синхронно блокируем карту до выхода из physical_attack().
+		_pause_before_exchange = get_tree().paused
+		if freeze_battle_during_preview:
+			get_tree().paused = true
 		call_deferred("_drain_preview_queue")
 
 
@@ -173,7 +175,7 @@ func _show_one_preview(entry: Dictionary) -> void:
 	var tree: SceneTree = get_tree()
 	if tree == null:
 		return
-	var was_paused: bool = tree.paused
+	var was_paused: bool = _pause_before_exchange
 	# Сначала блокируем боевую карту, чтобы курсор не двигался при переходе.
 	if freeze_battle_during_preview:
 		tree.paused = true
@@ -207,27 +209,45 @@ func _show_one_preview(entry: Dictionary) -> void:
 	if hero == null or enemy == null:
 		push_warning("FightPreviewBridge: в FightScene отсутствует Body героя или врага.")
 		_cleanup_preview()
+		if _combat != null and _combat.has_method("commit_pending_exchange"):
+			_combat.call("commit_pending_exchange")
 		tree.paused = was_paused
+		preview_finished.emit()
 		return
 
-	var attacking_enemy: bool = bool(entry["attacker_is_enemy"])
-	var attacker_sprite: AnimatedSprite2D = enemy if attacking_enemy else hero
-	var target_sprite: AnimatedSprite2D = hero if attacking_enemy else enemy
-	var actor_name: String = str(entry["attacker_name"])
-	var victim_name: String = str(entry["target_name"])
+	var result: Dictionary = entry.get("result", {})
+	var actions: Array = result.get("actions", [])
 	if output != null:
 		output.text = ""
 
-	# Сперва открываем сцену, потом печатаем объявление об атаке.
 	if fade_enabled:
 		await _fade_to(0.0, fade_in_seconds, tree)
-	await _show_message(output, "%s атакует!" % actor_name, tree, announcement_seconds)
-	await _play_attack(attacker_sprite, tree)
-	await _play_hit(target_sprite, tree)
-	# Не скрываем результат, пока игрок не подтвердит (или не пройдёт таймер).
-	await _show_message(output, "%s получает %d ед. урона." % [victim_name, int(entry["damage"])], tree, result_hold_seconds)
-	if bool(entry["defeated"]):
-		await _show_message(output, "%s повержен!" % victim_name, tree, result_hold_seconds)
+	for action_value in actions:
+		var action: Dictionary = action_value as Dictionary
+		var attacking_enemy: bool = bool(action.get("source_is_enemy", false))
+		var attacker_sprite: AnimatedSprite2D = enemy if attacking_enemy else hero
+		var target_sprite: AnimatedSprite2D = hero if attacking_enemy else enemy
+		var actor_name: String = str(action.get("source_name", "Атакующий"))
+		var victim_name: String = str(action.get("target_name", "Цель"))
+		var kind: String = str(action.get("kind", "attack"))
+		var announcement: String = "%s атакует!" % actor_name
+		if kind == "counter":
+			announcement = "%s контратакует!" % actor_name
+		elif kind == "extra":
+			announcement = "%s атакует повторно!" % actor_name
+		await _show_message(output, announcement, tree, announcement_seconds)
+		await _play_attack(attacker_sprite, tree)
+		if bool(action.get("dodged", false)):
+			await _play_dodge(target_sprite, tree)
+			await _show_message(output, "%s уклоняется!" % victim_name, tree, result_hold_seconds)
+		else:
+			_play_hit(target_sprite, tree)
+			var message: String = "%s получает %d ед. урона." % [victim_name, int(action.get("damage", 0))]
+			if bool(action.get("critical", false)):
+				message = "Критический удар! " + message
+			await _show_message(output, message, tree, result_hold_seconds)
+		if bool(action.get("defeated", false)):
+			await _show_message(output, "%s повержен!" % victim_name, tree, result_hold_seconds)
 
 	# Сначала закрываем FightScene затемнением, потом убираем её из дерева.
 	if fade_enabled:
@@ -235,13 +255,17 @@ func _show_one_preview(entry: Dictionary) -> void:
 	if is_instance_valid(_overlay):
 		_overlay.queue_free()
 	_overlay = null
+	# HP, смерть и исход боя применяются только после всех показанных событий.
+	if _combat != null and is_instance_valid(_combat) and _combat.has_method("commit_pending_exchange"):
+		_combat.call("commit_pending_exchange")
 	# Прозрачная поверхность открывает прежнюю тактическую карту.
 	if fade_enabled:
 		await _fade_to(0.0, fade_in_seconds, tree)
 	_cleanup_fade()
 	tree.paused = was_paused
+	preview_finished.emit()
 	if debug_preview:
-		print("S7 FIGHT PREVIEW: показ завершён — ", actor_name, " → ", victim_name)
+		print("S7 FIGHT PREVIEW: последовательность событий завершена")
 
 
 func _create_fade_overlay(tree: SceneTree) -> void:
@@ -294,6 +318,16 @@ func _play_attack(sprite: AnimatedSprite2D, tree: SceneTree) -> void:
 	var duration: float = clampf(float(frames) / maxf(fps, 0.01), 0.1, 3.0)
 	await tree.create_timer(duration, true).timeout
 	if is_instance_valid(sprite) and sprite.sprite_frames.has_animation(&"idle"):
+		sprite.play(&"idle")
+
+
+func _play_dodge(sprite: AnimatedSprite2D, tree: SceneTree) -> void:
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(&"evasion"):
+		sprite.play(&"evasion")
+		sprite.stop()
+		sprite.frame = 0
+	await tree.create_timer(0.4, true).timeout
+	if is_instance_valid(sprite) and sprite.sprite_frames != null and sprite.sprite_frames.has_animation(&"idle"):
 		sprite.play(&"idle")
 
 

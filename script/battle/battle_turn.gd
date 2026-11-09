@@ -32,6 +32,7 @@ extends Node
 signal active_unit_changed(unit: Node2D, hero: HeroData)
 signal turn_completed(unit: Node2D, hero: HeroData)
 signal enemy_turn_started(unit: Node2D, enemy_data: Resource)
+signal attack_preview_finished
 
 var active_unit: Node2D
 var active_hero: HeroData
@@ -298,17 +299,29 @@ func _confirm_hero_attack() -> void:
 	print("S7 ATTACK: урон ", int(result.get("damage", 0)), " по ", target.name)
 	if _combat.has_method("is_battle_finished") and bool(_combat.call("is_battle_finished")):
 		return
-	turn_completed.emit(attacking_unit, attacking_hero)
-	_complete_hero_attack_after_presentation()
+	# Завершение хода ждёт конца FightScene, а не только расчёта удара.
+	_complete_hero_attack_after_presentation(attacking_unit, attacking_hero)
 
 
-## Не переключает ход во время анимации исчезновения врага.
-func _complete_hero_attack_after_presentation() -> void:
+## Дожидается возврата с FightScene, прежде чем активировать следующего юнита.
+## Это не позволяет запускать ход врага, пока тактическая карта на паузе.
+func _complete_hero_attack_after_presentation(attacking_unit: Node2D, attacking_hero: HeroData) -> void:
+	var preview_bridge: Node = get_node_or_null(^"../FightPreviewBridge")
+	if preview_bridge != null and preview_bridge.has_signal("preview_finished") and bool(preview_bridge.get("_showing")):
+		# Подписываемся после physical_attack(): показ уже поставлен в очередь.
+		preview_bridge.connect("preview_finished", Callable(self, "_on_attack_preview_finished"), CONNECT_ONE_SHOT)
+		await attack_preview_finished
 	while _death_presentation_active and not _battle_stopped and is_inside_tree():
 		await get_tree().process_frame
 	if _battle_stopped or not is_inside_tree():
 		return
+	turn_completed.emit(attacking_unit, attacking_hero)
 	call_deferred("_next_turn")
+
+
+## Локальный сигнал для безопасного ожидания сигнала от узла-моста.
+func _on_attack_preview_finished() -> void:
+	attack_preview_finished.emit()
 
 
 func _next_turn() -> void:
@@ -356,12 +369,31 @@ func _activate_current_turn() -> void:
 	active_unit = candidate as Node2D
 	active_hero = _roster[_turn_index]["hero"] as HeroData
 	active_enemy_data = _roster[_turn_index]["enemy"] as Resource
+	_set_player_controls_for_turn(active_hero != null and active_enemy_data == null)
 	_update_indicator()
 	if focus_cursor_on_active_unit:
 		_focus_cursor()
 	active_unit_changed.emit(active_unit, active_hero)
 	if active_enemy_data != null:
 		enemy_turn_started.emit(active_unit, active_enemy_data)
+
+
+
+## Блокирует весь ввод игрока во время хода врага.
+## BattleMove отдельно сбрасывает выбранного героя через active_unit_changed.
+func _set_player_controls_for_turn(player_turn: bool) -> void:
+	if _menu != null:
+		# Закрываем открытое меню до отключения _input.
+		if not player_turn and bool(_menu.get("is_open")) and _menu.has_method("close_menu"):
+			_menu.call("close_menu")
+		_menu.set_process_input(player_turn)
+	if _cursor != null:
+		_cursor.set("_held_direction", Vector2i.ZERO)
+		if not player_turn:
+			_cursor.set_process_unhandled_key_input(false)
+	var movement: Node = get_node_or_null(^"../BattleMove")
+	if movement != null:
+		movement.set("_direction", Vector2i.ZERO)
 
 
 

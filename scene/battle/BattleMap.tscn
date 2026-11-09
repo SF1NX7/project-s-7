@@ -1423,6 +1423,9 @@ fallback_profile = SubResource("Resource_he8ac")
 [node name="BattleCombat" type="Node2D" parent="." unique_id=1542915884]
 script = ExtResource("18_8l6eh")
 rules = SubResource("Resource_sh5ts")
+dodge_chance = 20.5
+counter_chance = 9.5
+extra_attack_chance = 8.0
 return_after_victory = false
 
 [node name="FightPreviewBridge" type="Node2D" parent="." unique_id=1601772689]

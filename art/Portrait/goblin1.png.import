@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://3le7nbdrvj4"
-path="res://.godot/imported/mops128 .png-5699a491a3bf116c4a5f80205fb4e96b.ctex"
+uid="uid://hsame3218pdn"
+path="res://.godot/imported/goblin1.png-e4a57a8791f960e3238ee37d5ffb4c64.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/Portrait/mops128 .png"
-dest_files=["res://.godot/imported/mops128 .png-5699a491a3bf116c4a5f80205fb4e96b.ctex"]
+source_file="res://art/Portrait/goblin1.png"
+dest_files=["res://.godot/imported/goblin1.png-e4a57a8791f960e3238ee37d5ffb4c64.ctex"]
 
 [params]
 

@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="EnemyCatalog" format=3 uid="uid://7msnxqhswn3r"]
 
 [ext_resource type="Script" uid="uid://cnd5iq3tkbbuc" path="res://script/system/EnemyCatalog.gd" id="1_catalog"]
-[ext_resource type="Texture2D" uid="uid://cn7a5vusrxgkn" path="res://art/Portrait/oldman1.png" id="2_18fki"]
+[ext_resource type="Texture2D" uid="uid://hsame3218pdn" path="res://art/Portrait/goblin1.png" id="2_18fki"]
 [ext_resource type="Script" uid="uid://casjtwqr2hmuv" path="res://script/system/EnemyData.gd" id="2_enemy"]
 [ext_resource type="PackedScene" uid="uid://d2ftdwv0ucmem" path="res://scene/battle/enemies/Goblin.tscn" id="3_scene"]
 
@@ -9,8 +9,7 @@
 script = ExtResource("2_enemy")
 scene = ExtResource("3_scene")
 portrait = ExtResource("2_18fki")
-max_hp = 5
-attack = 5
+max_hp = 10
 base_movement = 3
 ai_style = 1
 detection_range = 6
