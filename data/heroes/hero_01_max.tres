@@ -10,7 +10,7 @@ hp = 10
 attack = 4
 defense = 3
 speed = 2
-luck = 1
+luck = 8
 metadata/_custom_type_script = "uid://crdx2krqtdpx"
 
 [resource]

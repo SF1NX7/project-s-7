@@ -33,6 +33,12 @@ extends Node
 @export var panel_background: Color = Color(0.09, 0.14, 0.25, 0.94)
 @export var text_color: Color = Color.WHITE
 
+@export_group("Шрифт карточек")
+## Шрифт для имени, HP и MP обеих карточек. Если не назначен, используется шрифт темы Godot.
+@export var card_font: Font
+## Размер текста имени, HP и MP в пикселях.
+@export_range(8, 48, 1) var card_font_size: int = 16
+
 @export_group("Card Slide Animation")
 ## Включить выезд и уход карточек справа за пределы экрана.
 @export var slide_enabled: bool = true
@@ -328,6 +334,14 @@ func _hide_panel(panel: PanelContainer, slot: String) -> void:
 	)
 
 
+func _apply_card_font(label: Label) -> void:
+	# Цвет настраивается через Info Panel -> Text Color.
+	label.add_theme_color_override("font_color", text_color)
+	label.add_theme_font_size_override("font_size", card_font_size)
+	if card_font != null:
+		label.add_theme_font_override("font", card_font)
+
+
 func _build_hud() -> void:
 	var layer := CanvasLayer.new()
 	layer.name = "HoverUI"
@@ -374,7 +388,7 @@ func _build_hud() -> void:
 	content.add_child(column)
 	for field in ["name", "hp", "mp"]:
 		var label := Label.new()
-		label.add_theme_color_override("font_color", text_color)
+		_apply_card_font(label)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		column.add_child(label)
 		match field:
@@ -418,7 +432,7 @@ func _build_target_hud(root: Control) -> void:
 	content.add_child(column)
 	for field in ["name", "hp", "mp"]:
 		var label := Label.new()
-		label.add_theme_color_override("font_color", text_color)
+		_apply_card_font(label)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		column.add_child(label)
 		match field:

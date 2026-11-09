@@ -38,6 +38,20 @@ const RETURN_PIXEL_TRANSITION: PackedScene = preload("res://scene/battle/PixelTr
 ## Шанс одного дополнительного удара первого атакующего.
 @export_range(0.0, 100.0, 0.5, "suffix:%") var extra_attack_chance: float = 0.0
 
+
+@export_group("Удача и вероятности")
+## Включает личный бонус LUCK поверх базовых шансов из раздела «Предрасчёт столкновения».
+## Если выключено, используются только базовые шансы, как в прежней версии.
+@export var use_luck_for_chances: bool = true
+## Дополнительный шанс уклонения за 1 LUCK защищающегося, в процентных пунктах.
+@export_range(0.0, 5.0, 0.05, "suffix:%") var dodge_per_luck: float = 0.15
+## Дополнительный шанс критического удара за 1 LUCK атакующего.
+@export_range(0.0, 5.0, 0.05, "suffix:%") var critical_per_luck: float = 0.10
+## Дополнительный шанс контратаки за 1 LUCK защищающегося.
+@export_range(0.0, 5.0, 0.05, "suffix:%") var counter_per_luck: float = 0.15
+## Дополнительный шанс повторной атаки за 1 LUCK первоначального атакующего.
+@export_range(0.0, 5.0, 0.05, "suffix:%") var extra_attack_per_luck: float = 0.10
+
 @export_group("Combat")
 ## Разрешает физические атаки в бою.
 @export var enable_physical_attacks: bool = true
@@ -161,9 +175,9 @@ func physical_attack(attacker: Node2D, target: Node2D) -> Dictionary:
 	var virtual_hp: Dictionary = {attacker.get_instance_id(): first_hp, target.get_instance_id(): second_hp}
 	_plan_strike(attacker, target, "attack", virtual_hp, actions)
 	# Ни контратака, ни дополнительный удар не допускаются после гибели участника.
-	if _still_fighting(attacker, target, virtual_hp) and _roll_percent(counter_chance):
+	if _still_fighting(attacker, target, virtual_hp) and _roll_percent(_effective_chance(counter_chance, target, counter_per_luck)):
 		_plan_strike(target, attacker, "counter", virtual_hp, actions)
-	if _still_fighting(attacker, target, virtual_hp) and _roll_percent(extra_attack_chance):
+	if _still_fighting(attacker, target, virtual_hp) and _roll_percent(_effective_chance(extra_attack_chance, attacker, extra_attack_per_luck)):
 		_plan_strike(attacker, target, "extra", virtual_hp, actions)
 
 	var after_first: int = int(virtual_hp[attacker.get_instance_id()])
@@ -189,6 +203,15 @@ func physical_attack(attacker: Node2D, target: Node2D) -> Dictionary:
 	return result
 
 
+## Базовый шанс задаётся в Inspector; LUCK персонажа добавляет небольшой бонус.
+## Если у StatsBonus пока нет свойства luck, бонус героя будет равен нулю.
+func _effective_chance(base_chance: float, unit: Node2D, bonus_per_luck: float) -> float:
+	if not use_luck_for_chances:
+		return clampf(base_chance, 0.0, 100.0)
+	var luck: int = maxi(0, _stat(unit, "luck"))
+	return clampf(base_chance + float(luck) * bonus_per_luck, 0.0, 100.0)
+
+
 func _roll_percent(chance: float) -> bool:
 	return chance > 0.0 and _rng.randf() * 100.0 < chance
 
@@ -202,8 +225,8 @@ func _plan_strike(source: Node2D, victim: Node2D, kind: String, virtual_hp: Dict
 	var before: int = int(virtual_hp.get(victim_id, 0))
 	if before <= 0:
 		return
-	var missed: bool = _roll_percent(dodge_chance)
-	var critical: bool = not missed and _roll_percent(critical_chance)
+	var missed: bool = _roll_percent(_effective_chance(dodge_chance, victim, dodge_per_luck))
+	var critical: bool = not missed and _roll_percent(_effective_chance(critical_chance, source, critical_per_luck))
 	var damage: int = 0
 	if not missed:
 		var attack_value: int = _stat(source, "attack")

@@ -49,12 +49,44 @@ extends Node
 ## Цвет затемнения; обычно чёрный.
 @export var fade_color: Color = Color.BLACK
 
+@export_group("Критический удар — вспышки")
+## Включить две вспышки при заранее рассчитанном критическом попадании.
+@export var critical_flash_enabled: bool = true
+## Цвет обеих вспышек. По умолчанию ярко-красный.
+@export var critical_flash_color: Color = Color(1.0, 0.08, 0.08, 1.0)
+## Максимальная непрозрачность первой короткой вспышки (0–1).
+@export_range(0.0, 1.0, 0.05) var critical_flash_one_alpha: float = 0.8
+## Скорость появления первой вспышки.
+@export_range(0.01, 0.5, 0.01, "suffix:s") var critical_flash_one_in: float = 0.04
+## Длительность затухания первой вспышки.
+@export_range(0.01, 1.0, 0.01, "suffix:s") var critical_flash_one_out: float = 0.07
+## Пауза между двумя вспышками.
+@export_range(0.0, 0.5, 0.01, "suffix:s") var critical_flash_gap: float = 0.06
+## Максимальная непрозрачность второй, более долгой вспышки (0–1).
+@export_range(0.0, 1.0, 0.05) var critical_flash_two_alpha: float = 0.45
+## Скорость появления второй вспышки.
+@export_range(0.01, 0.5, 0.01, "suffix:s") var critical_flash_two_in: float = 0.08
+## Длительность затухания второй вспышки.
+@export_range(0.01, 1.0, 0.01, "suffix:s") var critical_flash_two_out: float = 0.2
+
+@export_group("Критический удар — встряска")
+## Включить лёгкую встряску FightScene при критическом попадании.
+@export var critical_shake_enabled: bool = true
+## Амплитуда встряски в экранных пикселях; 0 полностью убирает смещение.
+@export_range(0.0, 10.0, 0.5, "suffix:px") var critical_shake_pixels: float = 2.0
+## Число коротких колебаний при критическом ударе.
+@export_range(1, 12, 1) var critical_shake_steps: int = 6
+## Общая длительность встряски.
+@export_range(0.02, 1.0, 0.01, "suffix:s") var critical_shake_seconds: float = 0.22
+
 var _combat: Node
 var _queue: Array[Dictionary] = []
 var _showing: bool = false
 var _overlay: CanvasLayer
 var _fade_layer: CanvasLayer
 var _fade_rect: ColorRect
+var _critical_layer: CanvasLayer
+var _critical_rect: ColorRect
 var _waiting_for_advance: bool = false
 var _typing_message: bool = false
 var _skip_typing: bool = false
@@ -242,6 +274,8 @@ func _show_one_preview(entry: Dictionary) -> void:
 			await _show_message(output, "%s уклоняется!" % victim_name, tree, result_hold_seconds)
 		else:
 			_play_hit(target_sprite, tree)
+			if bool(action.get("critical", false)):
+				await _play_critical_effect(tree)
 			var message: String = "%s получает %d ед. урона." % [victim_name, int(action.get("damage", 0))]
 			if bool(action.get("critical", false)):
 				message = "Критический удар! " + message
@@ -262,16 +296,97 @@ func _show_one_preview(entry: Dictionary) -> void:
 	if fade_enabled:
 		await _fade_to(0.0, fade_in_seconds, tree)
 	_cleanup_fade()
+	_cleanup_critical_effect()
 	tree.paused = was_paused
 	preview_finished.emit()
 	if debug_preview:
 		print("S7 FIGHT PREVIEW: последовательность событий завершена")
 
 
+func _play_critical_effect(tree: SceneTree) -> void:
+	# Визуализация использует готовый action.critical; здесь нет RNG.
+	if not critical_flash_enabled and not critical_shake_enabled:
+		return
+
+	# Слой вспышки выше HUD, но ниже чёрного Fade-перехода.
+	if critical_flash_enabled:
+		_create_critical_overlay(tree)
+	var flash_tween: Tween
+	if critical_flash_enabled and is_instance_valid(_critical_rect):
+		flash_tween = tree.create_tween()
+		flash_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		flash_tween.tween_property(_critical_rect, "color:a", critical_flash_one_alpha, critical_flash_one_in)
+		flash_tween.tween_property(_critical_rect, "color:a", 0.0, critical_flash_one_out)
+		flash_tween.tween_interval(critical_flash_gap)
+		flash_tween.tween_property(_critical_rect, "color:a", critical_flash_two_alpha, critical_flash_two_in)
+		flash_tween.tween_property(_critical_rect, "color:a", 0.0, critical_flash_two_out)
+
+	var shake_tween: Tween
+	if critical_shake_enabled and is_instance_valid(_overlay) and critical_shake_pixels > 0.0:
+		var original_offset: Vector2 = _overlay.offset
+		shake_tween = tree.create_tween()
+		shake_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		var steps: int = maxi(critical_shake_steps, 1)
+		var step_duration: float = critical_shake_seconds / float(steps)
+		for step in range(steps):
+			var sign_x: float = 1.0 if step % 2 == 0 else -1.0
+			var sign_y: float = -1.0 if step % 2 == 0 else 1.0
+			var magnitude: float = critical_shake_pixels * (1.0 - float(step) / float(steps))
+			shake_tween.tween_property(
+				_overlay, "offset",
+				original_offset + Vector2(sign_x * magnitude, sign_y * magnitude * 0.5),
+				step_duration
+			)
+		shake_tween.tween_property(_overlay, "offset", original_offset, 0.02)
+
+	# Ждём один раз по максимальной длительности. Нельзя последовательно
+	# ожидать сигналы двух параллельных Tween: более короткий уже завершится
+	# до второго await, и FightScene зависнет на старом сообщении.
+	var flash_duration: float = 0.0
+	if flash_tween != null:
+		flash_duration = critical_flash_one_in + critical_flash_one_out + critical_flash_gap + critical_flash_two_in + critical_flash_two_out
+	var shake_duration: float = 0.0
+	if shake_tween != null:
+		shake_duration = critical_shake_seconds + 0.02
+	var effect_duration: float = maxf(flash_duration, shake_duration)
+	if effect_duration > 0.0:
+		await tree.create_timer(effect_duration + 0.04, true).timeout
+	# Финальное состояние гарантировано, даже если параметры меняли в Inspector.
+	if is_instance_valid(_overlay):
+		_overlay.offset = Vector2.ZERO
+	if is_instance_valid(_critical_rect):
+		_critical_rect.color = Color(critical_flash_color.r, critical_flash_color.g, critical_flash_color.b, 0.0)
+
+
+func _create_critical_overlay(tree: SceneTree) -> void:
+	if is_instance_valid(_critical_layer):
+		return
+	_critical_layer = CanvasLayer.new()
+	_critical_layer.name = "CriticalHitFX"
+	_critical_layer.layer = overlay_layer + 3
+	_critical_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	tree.root.add_child(_critical_layer)
+	_critical_rect = ColorRect.new()
+	_critical_rect.name = "RedCriticalFlash"
+	_critical_rect.color = Color(critical_flash_color.r, critical_flash_color.g, critical_flash_color.b, 0.0)
+	_critical_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_critical_layer.add_child(_critical_rect)
+	_critical_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+
+func _cleanup_critical_effect() -> void:
+	if is_instance_valid(_overlay):
+		_overlay.offset = Vector2.ZERO
+	if is_instance_valid(_critical_layer):
+		_critical_layer.queue_free()
+	_critical_layer = null
+	_critical_rect = null
+
+
 func _create_fade_overlay(tree: SceneTree) -> void:
 	_fade_layer = CanvasLayer.new()
 	_fade_layer.name = "FightPreviewFade"
-	_fade_layer.layer = overlay_layer + 2
+	_fade_layer.layer = overlay_layer + 4
 	_fade_layer.process_mode = Node.PROCESS_MODE_ALWAYS
 	tree.root.add_child(_fade_layer)
 	_fade_rect = ColorRect.new()
@@ -306,6 +421,7 @@ func _cleanup_preview() -> void:
 		_overlay.queue_free()
 	_overlay = null
 	_cleanup_fade()
+	_cleanup_critical_effect()
 
 func _play_attack(sprite: AnimatedSprite2D, tree: SceneTree) -> void:
 	if sprite.sprite_frames == null or not sprite.sprite_frames.has_animation(&"attack"):

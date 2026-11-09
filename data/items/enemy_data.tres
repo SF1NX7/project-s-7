@@ -7,9 +7,11 @@
 
 [sub_resource type="Resource" id="EnemyData_goblin"]
 script = ExtResource("2_enemy")
+display_name = "Гоблин "
 scene = ExtResource("3_scene")
 portrait = ExtResource("2_18fki")
 max_hp = 10
+luck = 1
 base_movement = 3
 ai_style = 1
 detection_range = 6

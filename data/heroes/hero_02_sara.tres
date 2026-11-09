@@ -13,7 +13,8 @@ attack = 1
 magic = 4
 defense = 1
 resistance = 1
-speed = 1
+speed = 2
+luck = 8
 metadata/_custom_type_script = "uid://crdx2krqtdpx"
 
 [resource]

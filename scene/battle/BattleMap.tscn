@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://8v1nnlvh7x4n" path="res://scene/battle/heroes/sara.tscn" id="10_walb1"]
 [ext_resource type="Script" uid="uid://dvf68nv6dijmd" path="res://script/battle/battle_turn.gd" id="11_mw1ti"]
 [ext_resource type="PackedScene" uid="uid://c8c8ufoh7td0w" path="res://scene/battle/BattleMenu.tscn" id="12_inp5g"]
+[ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="12_sh5ts"]
 [ext_resource type="Script" uid="uid://btngamp3en6kb" path="res://script/battle/battle_move.gd" id="13_5a78g"]
 [ext_resource type="PackedScene" uid="uid://ck76gkdl8h12t" path="res://scene/battle/EnemySpawns.tscn" id="15_poc25"]
 [ext_resource type="Script" uid="uid://onftq43m0rbs" path="res://script/battle/battle_enemy_ai.gd" id="16_enemy_ai"]
@@ -1403,6 +1404,7 @@ script = ExtResource("10_fbxdf")
 highlight_color = Color(0, 0, 0, 1)
 highlight_strength = 0.4
 pulse_speed = 2.3
+card_font = ExtResource("12_sh5ts")
 
 [node name="BattleTurn" type="Node" parent="." unique_id=1089211797]
 script = ExtResource("11_mw1ti")
@@ -1426,13 +1428,18 @@ fallback_profile = SubResource("Resource_he8ac")
 [node name="BattleCombat" type="Node2D" parent="." unique_id=1542915884]
 script = ExtResource("18_8l6eh")
 rules = SubResource("Resource_sh5ts")
-dodge_chance = 20.5
-counter_chance = 9.5
-extra_attack_chance = 8.0
+dodge_chance = 2.0
+critical_chance = 2.0
+counter_chance = 2.0
+extra_attack_chance = 2.0
+critical_per_luck = 0.15
+extra_attack_per_luck = 0.15
 return_after_victory = false
 
 [node name="FightPreviewBridge" type="Node2D" parent="." unique_id=1601772689]
 script = ExtResource("20_ry66a")
+typewriter_chars_per_second = 50.0
+fade_out_seconds = 0.39999999999999997
 
 [editable path="Spawns"]
 [editable path="EnemySpawns"]
