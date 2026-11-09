@@ -50,6 +50,8 @@ var _battle_stopped: bool = false
 var _death_presentation_active: bool = false
 var _enemy_turn_end_pending: bool = false
 var _attack_targeting_active: bool = false
+var _attack_targets: Array[Node2D] = []
+var _attack_target_index: int = 0
 var _attack_message_serial: int = 0
 
 func _ready() -> void:
@@ -69,10 +71,8 @@ func _ready() -> void:
 	_create_indicator()
 	call_deferred("_start_first_turn")
 
-func _process(_delta: float) -> void:
-	if _attack_targeting_active and _cursor != null and not bool(_cursor.get("cursor_visible")):
-		_cursor.set("cursor_visible", true)
-		_cursor.queue_redraw()
+# При прицеливании курсор скрыт: цель отмечается пульсацией BattleHover.
+# Отдельная _process для принудительного показа рамки больше не нужна.
 
 func _start_first_turn() -> void:
 	var roster: Array[Dictionary] = []
@@ -159,6 +159,8 @@ func _start_attack_targeting() -> void:
 			return a.get_instance_id() < b.get_instance_id()
 		return da < db
 	)
+	_attack_targets = targets
+	_attack_target_index = 0
 	_attack_targeting_active = true
 	if _menu != null and _menu.has_method("close_menu"):
 		_menu.call("close_menu")
@@ -169,7 +171,7 @@ func _start_attack_targeting() -> void:
 		if movement.has_method("_apply_input_mode"):
 			movement.call("_apply_input_mode")
 	_cursor.set("attack_targeting", true)
-	_cursor.set("cursor_visible", true)
+	_cursor.set("cursor_visible", false)
 	_cursor.set("_held_direction", Vector2i.ZERO)
 	_cursor.set("selected_cell", _attack_world_to_cell(targets[0].global_position))
 	if _cursor.has_method("_update_cursor"):
@@ -219,10 +221,35 @@ func _input(event: InputEvent) -> void:
 	elif key == KEY_E or key == KEY_ENTER or key == KEY_KP_ENTER:
 		get_viewport().set_input_as_handled()
 		_confirm_hero_attack()
+	elif key == KEY_D or key == KEY_S or key == KEY_RIGHT or key == KEY_DOWN:
+		_cycle_attack_target(1)
+		get_viewport().set_input_as_handled()
+	elif key == KEY_A or key == KEY_W or key == KEY_LEFT or key == KEY_UP:
+		_cycle_attack_target(-1)
+		get_viewport().set_input_as_handled()
+
+
+## Переключает выбранного противника без движения невидимого курсора по пустым клеткам.
+## Пульсация BattleHover перенесётся на нового врага через сигнал cell_changed.
+func _cycle_attack_target(step: int) -> void:
+	if not _attack_targeting_active or _attack_targets.is_empty() or _cursor == null:
+		return
+	_attack_target_index = posmod(_attack_target_index + step, _attack_targets.size())
+	var target: Node2D = _attack_targets[_attack_target_index]
+	if not is_instance_valid(target):
+		return
+	_cursor.set("_held_direction", Vector2i.ZERO)
+	_cursor.set("selected_cell", _attack_world_to_cell(target.global_position))
+	if _cursor.has_method("_update_cursor"):
+		_cursor.call("_update_cursor")
+	if _cursor.has_signal("cell_changed"):
+		_cursor.emit_signal("cell_changed", _cursor.get("selected_cell"))
 
 
 func _end_attack_targeting() -> void:
 	_attack_targeting_active = false
+	_attack_targets.clear()
+	_attack_target_index = 0
 	if _cursor != null:
 		_cursor.set("attack_targeting", false)
 		_cursor.queue_redraw()
@@ -239,7 +266,7 @@ func _restore_after_attack_cancel() -> void:
 				movement.call("_apply_input_mode")
 
 
-## Находит живого врага под красной рамкой.
+## Находит живого врага в текущей выбранной клетке.
 func _attack_enemy_at_cursor() -> Node2D:
 	if _units == null or _cursor == null:
 		return null
@@ -265,7 +292,7 @@ func _confirm_hero_attack() -> void:
 		return
 	var target: Node2D = _attack_enemy_at_cursor()
 	if target == null:
-		_show_attack_notice("Выбери врага красной рамкой")
+		_show_attack_notice("Выбери врага для атаки")
 		return
 	var start_cell: Vector2i = _attack_world_to_cell(active_unit.global_position)
 	var target_cell: Vector2i = _attack_world_to_cell(target.global_position)

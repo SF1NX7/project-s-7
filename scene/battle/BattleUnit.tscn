@@ -1,12 +1,18 @@
 [gd_scene format=3 uid="uid://b8sp85b7x3r48"]
 
 [ext_resource type="Script" uid="uid://6iggqof5gkqn" path="res://script/battle/battle_hero_animation.gd" id="1_anim"]
+[ext_resource type="Texture2D" uid="uid://cqj5v4mkwfeqc" path="res://art/Pics/TargetRing.png" id="2_ajxd3"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_pvhtd"]
 
 [node name="BattleUnit" type="Node2D" unique_id=231097416]
 script = ExtResource("1_anim")
 
+[node name="TargetRing" type="Sprite2D" parent="." unique_id=992432177]
+visible = false
+texture = ExtResource("2_ajxd3")
+
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1063464643]
+z_index = 1
 sprite_frames = SubResource("SpriteFrames_pvhtd")
 offset = Vector2(0, -16)

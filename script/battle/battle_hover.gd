@@ -16,6 +16,14 @@ extends Node
 @export_range(0.0, 1.0, 0.01) var highlight_strength: float = 0.55
 @export_range(0.0, 12.0, 0.1) var pulse_speed: float = 3.0
 
+@export_group("Подсветка цели атаки")
+## Цвет пульсации выбранной цели при атаке.
+@export var attack_pulse_color: Color = Color(1.0, 0.3, 0.3, 1.0)
+## Насколько заметна красная подсветка (0 — нет, 1 — максимально).
+@export_range(0.0, 1.0, 0.01) var attack_pulse_strength: float = 0.78
+## Скорость пульсации выбранной цели.
+@export_range(0.1, 10.0, 0.1) var attack_pulse_speed: float = 2.6
+
 @export_group("Info Panel")
 @export var show_panel: bool = true
 @export_range(80, 320, 1) var panel_width: int = 200
@@ -86,9 +94,13 @@ func _process(delta: float) -> void:
 		return
 	_elapsed += delta
 	if highlight_enabled:
-		var wave: float = (sin(_elapsed * pulse_speed * TAU) + 1.0) * 0.5
-		var amount: float = highlight_strength * (0.55 + wave * 0.45)
-		_hovered_sprite.modulate = _original_modulate.lerp(highlight_color, amount)
+		var choosing_attack: bool = _is_attack_targeting()
+		var speed: float = attack_pulse_speed if choosing_attack else pulse_speed
+		var strength: float = attack_pulse_strength if choosing_attack else highlight_strength
+		var color: Color = attack_pulse_color if choosing_attack else highlight_color
+		var wave: float = (sin(_elapsed * speed * TAU) + 1.0) * 0.5
+		var amount: float = strength * (0.25 + wave * 0.75)
+		_hovered_sprite.modulate = _original_modulate.lerp(color, amount)
 
 
 func _on_cell_changed(_cell: Vector2i) -> void:
@@ -134,7 +146,7 @@ func _refresh_hover() -> void:
 				_original_modulate = _hovered_sprite.modulate
 			_elapsed = 0.0
 	var attack_targeting: bool = bool(_cursor.get("attack_targeting"))
-	_cursor.set("cursor_visible", attack_targeting or (not in_movement_mode and target == null))
+	_cursor.set("cursor_visible", not attack_targeting and not in_movement_mode and target == null)
 	_cursor.queue_redraw()
 	_update_panel()
 

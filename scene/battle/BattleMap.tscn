@@ -1371,6 +1371,8 @@ grid_size = Vector2i(20, 10)
 border_color = Color(0.99371403, 0.7006106, 0.6113807, 1)
 fill_color = Color(0.9310021, 0.9647047, 0.57266915, 0.26200002)
 border_width = 1.5
+attack_cursor_line_width = 2.0
+attack_corner_cut = 2.0
 
 [node name="Spawns" parent="." unique_id=2022006090 instance=ExtResource("9_cwsfq")]
 sara_scene = ExtResource("10_walb1")
@@ -1404,6 +1406,7 @@ pulse_speed = 2.3
 
 [node name="BattleTurn" type="Node" parent="." unique_id=1089211797]
 script = ExtResource("11_mw1ti")
+show_turn_indicator = false
 
 [node name="BattleMenu" parent="." unique_id=1491715639 instance=ExtResource("12_inp5g")]
 
