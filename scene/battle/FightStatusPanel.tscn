@@ -1,0 +1,179 @@
+[gd_scene format=3 uid="uid://dpjxx670m4b6l"]
+
+[ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="1_5vqhx"]
+[ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="1_k13id"]
+[ext_resource type="Texture2D" uid="uid://hr6mi1b6he4e" path="res://art/Portrait/Preview_Frame.png" id="2_7n5oy"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_36t6w"]
+bg_color = Color(0.4585479, 0.36356542, 0.47350943, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.78837514, 0.626864, 0.10322551, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_5pdoy"]
+texture = ExtResource("2_7n5oy")
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_faom2"]
+width = 128
+height = 12
+
+[sub_resource type="Gradient" id="Gradient_qaa0o"]
+offsets = PackedFloat32Array(0)
+colors = PackedColorArray(0.8495599, 3.2969565e-06, 1.540184e-06, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_r28s3"]
+gradient = SubResource("Gradient_qaa0o")
+width = 128
+height = 12
+
+[sub_resource type="Gradient" id="Gradient_lx4a4"]
+offsets = PackedFloat32Array(0.5644654)
+colors = PackedColorArray(1, 1, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_2bq8v"]
+gradient = SubResource("Gradient_lx4a4")
+width = 128
+height = 12
+fill_from = Vector2(0, 1)
+
+[sub_resource type="Gradient" id="Gradient_83qbq"]
+offsets = PackedFloat32Array(0)
+colors = PackedColorArray(0, 0, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_0xkam"]
+gradient = SubResource("Gradient_83qbq")
+width = 128
+height = 12
+
+[node name="FightStatusPanel" type="Control" unique_id=917906350]
+custom_minimum_size = Vector2(300, 80)
+layout_mode = 3
+anchor_right = 0.469
+anchor_bottom = 0.22200002
+offset_right = -300.16
+offset_bottom = -79.920006
+
+[node name="Panel" type="Panel" parent="." unique_id=1614723959]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_36t6w")
+
+[node name="MainRow" type="HBoxContainer" parent="." unique_id=961529951]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 8
+
+[node name="PortraitFrame" type="NinePatchRect" parent="MainRow" unique_id=2088695578]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+
+[node name="Portrait" type="TextureRect" parent="MainRow/PortraitFrame" unique_id=1594268510]
+texture_filter = 1
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.125
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_bottom = -8.000015
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_k13id")
+expand_mode = 2
+flip_h = true
+
+[node name="Frame" type="Panel" parent="MainRow/PortraitFrame/Portrait" unique_id=210459233]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_5pdoy")
+
+[node name="StatusFrame" type="NinePatchRect" parent="MainRow" unique_id=317523698]
+custom_minimum_size = Vector2(228, 72)
+layout_mode = 2
+
+[node name="Name" type="Label" parent="MainRow/StatusFrame" unique_id=280337749]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 6.0
+offset_right = 46.0
+offset_bottom = 29.0
+theme_override_fonts/font = ExtResource("1_5vqhx")
+text = "Name"
+
+[node name="Class" type="Label" parent="MainRow/StatusFrame" unique_id=1513971144]
+layout_mode = 0
+offset_left = 112.0
+offset_top = 6.0
+offset_right = 172.0
+offset_bottom = 29.0
+theme_override_fonts/font = ExtResource("1_5vqhx")
+text = "Class"
+
+[node name="HP" type="HBoxContainer" parent="MainRow/StatusFrame" unique_id=1242450673]
+custom_minimum_size = Vector2(208, 16)
+layout_mode = 0
+offset_top = 29.0
+offset_right = 208.0
+offset_bottom = 52.0
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="MainRow/StatusFrame/HP" unique_id=604321443]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_5vqhx")
+theme_override_font_sizes/font_size = 16
+text = " HP"
+
+[node name="HPbar" type="TextureProgressBar" parent="MainRow/StatusFrame/HP" unique_id=874145224]
+custom_minimum_size = Vector2(80, 12)
+layout_mode = 2
+size_flags_vertical = 4
+max_value = 10.0
+value = 7.0
+texture_under = SubResource("GradientTexture2D_faom2")
+texture_progress = SubResource("GradientTexture2D_r28s3")
+
+[node name="Value" type="Label" parent="MainRow/StatusFrame/HP" unique_id=182461761]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_5vqhx")
+text = "10/10"
+
+[node name="MP" type="HBoxContainer" parent="MainRow/StatusFrame" unique_id=173552959]
+custom_minimum_size = Vector2(208, 16)
+layout_mode = 0
+offset_top = 49.0
+offset_right = 208.0
+offset_bottom = 71.999954
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="MainRow/StatusFrame/MP" unique_id=1090577947]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_5vqhx")
+text = " MP"
+
+[node name="MPbar" type="TextureProgressBar" parent="MainRow/StatusFrame/MP" unique_id=191386103]
+custom_minimum_size = Vector2(80, 12)
+layout_mode = 2
+size_flags_vertical = 4
+max_value = 10.0
+value = 10.0
+texture_under = SubResource("GradientTexture2D_2bq8v")
+texture_progress = SubResource("GradientTexture2D_0xkam")
+
+[node name="Value" type="Label" parent="MainRow/StatusFrame/MP" unique_id=28138221]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_5vqhx")
+text = "8/8"
