@@ -1,107 +1,99 @@
 @tool
 extends Control
 
-## Безопасная версия панели Project S-7.
-## Не изменяет координаты, размеры рамок, отступы и расположение нод.
-## Старые экспортные настройки геометрии сохранены для совместимости
-## со значениями Inspector, но сейчас не применяются.
+## Project S-7. Левая часть панели и подписи закреплены.
+## Изменяется только длина шкал и ПРАВЫЙ край фона.
 
-@export_group("Тестовые показатели")
+@export_group("Персонаж")
+@export var character_name: String = "Max":
+	set(v):
+		character_name = v
+		_refresh_if_ready()
+
+@export_range(1, 999, 1) var character_level: int = 53:
+	set(v):
+		character_level = maxi(1, v)
+		_refresh_if_ready()
+
+@export_group("HP и MP")
 @export_range(1, 9999, 1) var max_hp: int = 10:
-	set(value):
-		max_hp = maxi(value, 1)
+	set(v):
+		max_hp = maxi(1, v)
 		hp = mini(hp, max_hp)
-		_update_when_ready()
+		_refresh_if_ready()
 
 @export_range(0, 9999, 1) var hp: int = 10:
-	set(value):
-		hp = clampi(value, 0, max_hp)
-		_update_when_ready()
+	set(v):
+		hp = clampi(v, 0, max_hp)
+		_refresh_if_ready()
 
-@export_range(0, 9999, 1) var max_mp: int = 8:
-	set(value):
-		max_mp = maxi(value, 0)
+@export_range(0, 9999, 1) var max_mp: int = 9:
+	set(v):
+		max_mp = maxi(0, v)
 		mp = mini(mp, max_mp)
-		_update_when_ready()
+		_refresh_if_ready()
 
-@export_range(0, 9999, 1) var mp: int = 8:
-	set(value):
-		mp = clampi(value, 0, max_mp)
-		_update_when_ready()
+@export_range(0, 9999, 1) var mp: int = 9:
+	set(v):
+		mp = clampi(v, 0, max_mp)
+		_refresh_if_ready()
 
-@export_group("Размеры панели")
-## После этого количества HP полоса больше не увеличивается.
+@export_group("Длина шкалы HP")
+## Максимальное HP, после которого физическая длина шкалы не растёт.
 @export_range(1, 9999, 1) var full_bar_at_hp: int = 100:
-	set(value):
-		full_bar_at_hp = maxi(value, 1)
-		_update_when_ready()
+	set(v):
+		full_bar_at_hp = maxi(1, v)
+		_refresh_if_ready()
 
-@export_range(16, 512, 1) var min_bar_width: int = 56:
-	set(value):
-		min_bar_width = value
-		_update_when_ready()
+@export_range(12, 512, 1) var min_hp_width: int = 32:
+	set(v):
+		min_hp_width = maxi(12, v)
+		_refresh_if_ready()
 
-@export_range(16, 512, 1) var max_bar_width: int = 160:
-	set(value):
-		max_bar_width = value
-		_update_when_ready()
+@export_range(12, 512, 1) var max_hp_width: int = 160:
+	set(v):
+		max_hp_width = maxi(12, v)
+		_refresh_if_ready()
 
-@export_group("Размеры шкалы MP")
-## После этого количества максимальной маны ширина MP больше не увеличивается.
+@export_group("Длина шкалы MP")
+## Максимальное MP, после которого физическая длина шкалы не растёт.
 @export_range(1, 9999, 1) var full_bar_at_mp: int = 100:
-	set(value):
-		full_bar_at_mp = maxi(value, 1)
-		_update_when_ready()
+	set(v):
+		full_bar_at_mp = maxi(1, v)
+		_refresh_if_ready()
 
-## Минимальная длина полоски MP, даже при Max MP = 0.
-@export_range(16, 512, 1) var min_mp_bar_width: int = 56:
-	set(value):
-		min_mp_bar_width = value
-		_update_when_ready()
+@export_range(12, 512, 1) var min_mp_width: int = 24:
+	set(v):
+		min_mp_width = maxi(12, v)
+		_refresh_if_ready()
 
-## Максимальная длина полоски MP.
-@export_range(16, 512, 1) var max_mp_bar_width: int = 160:
-	set(value):
-		max_mp_bar_width = value
-		_update_when_ready()
+@export_range(12, 512, 1) var max_mp_width: int = 160:
+	set(v):
+		max_mp_width = maxi(12, v)
+		_refresh_if_ready()
 
-@export_group("Внутренние отступы")
-## Расстояние от левого края фоновой рамки до портрета.
-@export_range(0, 64, 1) var inset_x: int = 8:
-	set(value):
-		inset_x = value
-		_update_when_ready()
+@export_group("Оформление")
+## Свободное место между цифрами и правой границей рамки.
+@export_range(2, 64, 1) var right_padding: int = 12:
+	set(v):
+		right_padding = maxi(2, v)
+		_refresh_if_ready()
 
-## Расстояние от верхнего и нижнего края фоновой рамки до содержимого.
-@export_range(0, 64, 1) var inset_y: int = 6:
-	set(value):
-		inset_y = value
-		_update_when_ready()
+## Минимальная ширина окна: портрет и надписи никогда не сжимаются.
+@export_range(180, 800, 1) var min_panel_width: int = 235:
+	set(v):
+		min_panel_width = maxi(180, v)
+		_refresh_if_ready()
 
-@export_group("Размеры панели")
-
-## Место для Title, числа Value, отступов и внутренних полей StatusFrame.
-@export_range(0, 512, 1) var status_extra_width: int = 112:
-	set(value):
-		status_extra_width = value
-		_update_when_ready()
-
-@export_range(0, 64, 1) var portrait_gap: int = 8:
-	set(value):
-		portrait_gap = value
-		_update_when_ready()
-
-@export_range(20, 256, 1) var panel_height: int = 88:
-	set(value):
-		panel_height = value
-		_update_when_ready()
-
-# В обновлённой сцене MainRow находится внутри Panel.
-# PortraitFrame может быть обычным Control или NinePatchRect.
-@onready var background_panel: Control = get_node_or_null("Panel") as Control
-@onready var main_row: HBoxContainer = get_node_or_null("Panel/MainRow") as HBoxContainer
-@onready var portrait_frame: Control = get_node_or_null("Panel/MainRow/PortraitFrame") as Control
+# Имена и пути совместимы с FightStatusPanel.tscn.
+@onready var panel: Panel = get_node_or_null("Panel") as Panel
 @onready var status_frame: Control = get_node_or_null("Panel/MainRow/StatusFrame") as Control
+@onready var name_label: Label = get_node_or_null("Panel/MainRow/StatusFrame/Name") as Label
+@onready var level_label: Label = get_node_or_null("Panel/MainRow/StatusFrame/Level") as Label
+@onready var hp_row: HBoxContainer = get_node_or_null("Panel/MainRow/StatusFrame/HP") as HBoxContainer
+@onready var mp_row: HBoxContainer = get_node_or_null("Panel/MainRow/StatusFrame/MP") as HBoxContainer
+@onready var hp_title: Label = get_node_or_null("Panel/MainRow/StatusFrame/HP/Title") as Label
+@onready var mp_title: Label = get_node_or_null("Panel/MainRow/StatusFrame/MP/Title") as Label
 @onready var hp_bar: TextureProgressBar = get_node_or_null("Panel/MainRow/StatusFrame/HP/HPbar") as TextureProgressBar
 @onready var mp_bar: TextureProgressBar = get_node_or_null("Panel/MainRow/StatusFrame/MP/MPbar") as TextureProgressBar
 @onready var hp_number: Label = get_node_or_null("Panel/MainRow/StatusFrame/HP/Value") as Label
@@ -112,37 +104,46 @@ func _ready() -> void:
 	_refresh()
 
 
-func _update_when_ready() -> void:
+func _refresh_if_ready() -> void:
 	if is_node_ready():
 		_refresh()
 
 
-## Для будущего подключения к BattleCombat без изменения логики панели.
+## Интерфейс для будущего подключения к рассчитанным событиям FightScene.
 func set_stats(new_hp: int, new_max_hp: int, new_mp: int, new_max_mp: int) -> void:
-	max_hp = maxi(new_max_hp, 1)
+	max_hp = maxi(1, new_max_hp)
 	hp = clampi(new_hp, 0, max_hp)
-	max_mp = maxi(new_max_mp, 0)
+	max_mp = maxi(0, new_max_mp)
 	mp = clampi(new_mp, 0, max_mp)
-	_update_when_ready()
+	_refresh_if_ready()
+
+
+func _bar_width(max_stat: int, width_at: int, minimum_width: int, maximum_width: int) -> float:
+	var amount: float = clampf(float(max_stat) / float(maxi(width_at, 1)), 0.0, 1.0)
+	return roundf(lerpf(float(minimum_width), float(maxi(minimum_width, maximum_width)), amount))
 
 
 func _refresh() -> void:
-	# Только данные: расположением портрета, фона, текстов и строк
-	# управляет сцена. HBoxContainer сам размещает дочерние узлы.
-	if hp_bar == null or mp_bar == null or hp_number == null or mp_number == null:
-		push_warning("FightStatusPanel: не найдены HPbar, MPbar или Value. Проверьте пути в сцене.")
+	if not is_node_ready():
+		return
+	if panel == null or status_frame == null or hp_row == null or mp_row == null:
+		push_warning("FightStatusPanel: не найдена основная нода или строки HP/MP.")
+		return
+	if name_label == null or level_label == null or hp_bar == null or mp_bar == null or hp_number == null or mp_number == null or hp_title == null or mp_title == null:
+		push_warning("FightStatusPanel: не найдены некоторые подписи или полоски.")
 		return
 
-	var hp_ratio: float = clampf(float(max_hp) / float(maxi(full_bar_at_hp, 1)), 0.0, 1.0)
-	var mp_ratio: float = clampf(float(max_mp) / float(maxi(full_bar_at_mp, 1)), 0.0, 1.0)
-	var hp_width: float = roundf(lerpf(float(min_bar_width), float(max_bar_width), hp_ratio))
-	var mp_width: float = roundf(lerpf(float(min_mp_bar_width), float(max_mp_bar_width), mp_ratio))
+	name_label.text = character_name
+	level_label.text = "Lv %d" % character_level
+	hp_number.text = "%d/%d" % [hp, max_hp]
+	mp_number.text = "%d/%d" % [mp, max_mp]
 
-	# Не меняем положение и размеры MainRow, PortraitFrame,
-	# StatusFrame, Panel и корня — это раньше сдвигало всю сцену.
+	var hp_width: float = _bar_width(max_hp, full_bar_at_hp, min_hp_width, max_hp_width)
+	var mp_width: float = _bar_width(max_mp, full_bar_at_mp, min_mp_width, max_mp_width)
+
+	# Только размеры полосок. Никаких переносов портрета, подписей и строк.
 	hp_bar.custom_minimum_size.x = hp_width
 	mp_bar.custom_minimum_size.x = mp_width
-
 	hp_bar.min_value = 0.0
 	hp_bar.max_value = float(max_hp)
 	hp_bar.value = float(hp)
@@ -150,5 +151,22 @@ func _refresh() -> void:
 	mp_bar.max_value = float(maxi(max_mp, 1))
 	mp_bar.value = float(mp)
 
-	hp_number.text = "%d/%d" % [hp, max_hp]
-	mp_number.text = "%d/%d" % [mp, max_mp]
+	# HBoxContainer располагает Title / Bar / Value.
+	# У самих строк фиксированы левый и верхний края.
+	var hp_need: float = hp_title.get_combined_minimum_size().x + hp_width + hp_number.get_combined_minimum_size().x + 2.0 * float(hp_row.get_theme_constant("separation"))
+	var mp_need: float = mp_title.get_combined_minimum_size().x + mp_width + mp_number.get_combined_minimum_size().x + 2.0 * float(mp_row.get_theme_constant("separation"))
+	hp_row.size.x = hp_need
+	mp_row.size.x = mp_need
+
+	var header_end: float = maxf(
+		name_label.position.x + name_label.get_combined_minimum_size().x,
+		level_label.position.x + level_label.get_combined_minimum_size().x
+	)
+	var status_end: float = maxf(header_end, maxf(hp_row.position.x + hp_need, mp_row.position.x + mp_need))
+	var needed_width: float = ceilf(maxf(float(min_panel_width), status_frame.position.x + status_end + float(right_padding)))
+
+	# КРИТИЧЕСКОЕ ПРАВИЛО: левый край и позиции неизменны.
+	# Изменяется только правый край фона.
+	size.x = needed_width
+	panel.size.x = needed_width
+	status_frame.size.x = maxf(0.0, needed_width - status_frame.position.x)
