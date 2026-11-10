@@ -1,0 +1,224 @@
+[gd_scene format=3 uid="uid://bh2poj744ouqd"]
+
+[ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="1_ivp2k"]
+[ext_resource type="Script" uid="uid://dkslke44t57kg" path="res://script/battle/FightPanel.gd" id="1_luhg5"]
+[ext_resource type="Texture2D" uid="uid://hsame3218pdn" path="res://art/Portrait/goblin1.png" id="2_luhg5"]
+
+[sub_resource type="StyleBoxFlat" id="PortraitFrameStyle"]
+bg_color = Color(0.035, 0.14, 0.23, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.88, 0.68, 0.32, 1)
+
+[sub_resource type="StyleBoxFlat" id="BarBackground"]
+bg_color = Color(0.055, 0.11, 0.18, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.79, 0.65, 0.39, 1)
+
+[sub_resource type="StyleBoxFlat" id="HPFill"]
+bg_color = Color(0.86, 0.12, 0.13, 1)
+
+[sub_resource type="StyleBoxFlat" id="MPFill"]
+bg_color = Color(0.1, 0.38, 0.98, 1)
+
+[node name="FightPanel" type="Control" unique_id=1512256534]
+custom_minimum_size = Vector2(640, 360)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_luhg5")
+hero_level = 87
+
+[node name="HeroSide" type="Control" parent="." unique_id=2118421572]
+layout_mode = 1
+anchors_preset = 0
+offset_right = 180.0
+offset_bottom = 288.0
+mouse_filter = 2
+
+[node name="PortraitFrame" type="Panel" parent="HeroSide" unique_id=33403822]
+layout_mode = 1
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 76.0
+offset_bottom = 76.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("PortraitFrameStyle")
+
+[node name="Portrait" type="TextureRect" parent="HeroSide/PortraitFrame" unique_id=1445198131]
+layout_mode = 1
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 66.0
+offset_bottom = 66.0
+mouse_filter = 2
+texture = ExtResource("1_ivp2k")
+expand_mode = 1
+stretch_mode = 5
+flip_h = true
+
+[node name="NameLabel" type="Label" parent="HeroSide" unique_id=121454538]
+layout_mode = 1
+offset_left = 80.0
+offset_top = 8.0
+offset_right = 170.0
+offset_bottom = 36.0
+theme_override_font_sizes/font_size = 18
+text = "Макс"
+
+[node name="LevelLabel" type="Label" parent="HeroSide" unique_id=98708019]
+layout_mode = 1
+offset_left = 80.0
+offset_top = 36.0
+offset_right = 170.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 16
+text = "Lv 10"
+
+[node name="HPBar" type="ProgressBar" parent="HeroSide" unique_id=129067836]
+layout_mode = 1
+offset_left = 8.0
+offset_top = 105.0
+offset_right = 30.0
+offset_bottom = 276.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("BarBackground")
+theme_override_styles/fill = SubResource("HPFill")
+value = 80.0
+fill_mode = 3
+show_percentage = false
+
+[node name="HPValue" type="Label" parent="HeroSide" unique_id=623958205]
+layout_mode = 1
+offset_left = 10.0
+offset_top = 80.0
+offset_right = 58.0
+offset_bottom = 98.0
+theme_override_font_sizes/font_size = 11
+text = "80"
+
+[node name="MPBar" type="ProgressBar" parent="HeroSide" unique_id=1566697460]
+layout_mode = 1
+offset_left = 35.0
+offset_top = 105.0
+offset_right = 57.0
+offset_bottom = 276.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("BarBackground")
+theme_override_styles/fill = SubResource("MPFill")
+value = 55.0
+fill_mode = 3
+show_percentage = false
+
+[node name="MPValue" type="Label" parent="HeroSide" unique_id=1107504620]
+layout_mode = 1
+offset_left = 35.0
+offset_top = 80.0
+offset_right = 83.0
+offset_bottom = 98.0
+theme_override_font_sizes/font_size = 11
+text = "55"
+
+[node name="EnemySide" type="Control" parent="." unique_id=843069260]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -180.0
+offset_bottom = 288.0
+grow_horizontal = 0
+mouse_filter = 2
+
+[node name="PortraitFrame" type="Panel" parent="EnemySide" unique_id=719318709]
+layout_mode = 1
+offset_left = 104.0
+offset_top = 8.0
+offset_right = 172.0
+offset_bottom = 76.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("PortraitFrameStyle")
+
+[node name="Portrait" type="TextureRect" parent="EnemySide/PortraitFrame" unique_id=1682328737]
+layout_mode = 1
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 66.0
+offset_bottom = 66.0
+mouse_filter = 2
+texture = ExtResource("2_luhg5")
+expand_mode = 1
+stretch_mode = 5
+flip_h = true
+
+[node name="NameLabel" type="Label" parent="EnemySide" unique_id=1026261267]
+layout_mode = 1
+offset_left = 4.0
+offset_top = 8.0
+offset_right = 94.0
+offset_bottom = 36.0
+theme_override_font_sizes/font_size = 18
+text = "Гоблин"
+horizontal_alignment = 2
+
+[node name="LevelLabel" type="Label" parent="EnemySide" unique_id=1954463497]
+layout_mode = 1
+offset_left = 4.0
+offset_top = 36.0
+offset_right = 94.0
+offset_bottom = 60.0
+theme_override_font_sizes/font_size = 16
+text = "Lv 8"
+horizontal_alignment = 2
+
+[node name="HPBar" type="ProgressBar" parent="EnemySide" unique_id=1044055590]
+layout_mode = 1
+offset_left = 124.0
+offset_top = 105.0
+offset_right = 146.0
+offset_bottom = 276.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("BarBackground")
+theme_override_styles/fill = SubResource("HPFill")
+value = 80.0
+fill_mode = 3
+show_percentage = false
+
+[node name="HPValue" type="Label" parent="EnemySide" unique_id=1410284827]
+layout_mode = 1
+offset_left = 116.0
+offset_top = 281.0
+offset_right = 164.0
+offset_bottom = 299.0
+theme_override_font_sizes/font_size = 11
+text = "80/100"
+
+[node name="MPBar" type="ProgressBar" parent="EnemySide" unique_id=64266183]
+layout_mode = 1
+offset_left = 151.0
+offset_top = 105.0
+offset_right = 173.0
+offset_bottom = 276.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("BarBackground")
+theme_override_styles/fill = SubResource("MPFill")
+value = 55.0
+fill_mode = 3
+show_percentage = false
+
+[node name="MPValue" type="Label" parent="EnemySide" unique_id=1753280328]
+layout_mode = 1
+offset_left = 143.0
+offset_top = 281.0
+offset_right = 191.0
+offset_bottom = 299.0
+theme_override_font_sizes/font_size = 11
+text = "55/100"

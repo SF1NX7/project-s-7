@@ -5,7 +5,6 @@
 [ext_resource type="Texture2D" uid="uid://gu6c4tmivx3p" path="res://art/anim/fight_anim/Heroes/Max/MaxFightSprite.png" id="2_slxud"]
 [ext_resource type="Texture2D" uid="uid://desnflmnl6qr3" path="res://art/anim/fight_anim/Enemies/Goblin/GoblinFightSprite.png" id="3_tknds"]
 [ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="3_ynsy3"]
-[ext_resource type="PackedScene" uid="uid://dpjxx670m4b6l" path="res://scene/battle/FightStatusPanel.tscn" id="5_28x6u"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_28x6u"]
 atlas = ExtResource("2_slxud")
@@ -143,14 +142,6 @@ animations = [{
 "speed": 3.0
 }]
 
-[sub_resource type="Gradient" id="Gradient_deokp"]
-colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
-
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_gl1sc"]
-gradient = SubResource("Gradient_deokp")
-width = 128
-height = 12
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m4pho"]
 bg_color = Color(0.14733289, 0.21209751, 0.4222509, 0.85300004)
 border_width_left = 3
@@ -159,6 +150,7 @@ border_width_right = 3
 border_width_bottom = 3
 border_color = Color(0.8156863, 0.58431375, 0.3254902, 1)
 corner_detail = 1
+shadow_offset = Vector2(0, -2.44)
 
 [node name="FightScene" type="Node2D" unique_id=806865229]
 script = ExtResource("1_tknds")
@@ -200,32 +192,6 @@ flip_h = true
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1593888051]
 
-[node name="HeroStatus" parent="HUD" unique_id=917906350 instance=ExtResource("5_28x6u")]
-offset_left = 150.0
-offset_top = 6.0
-offset_right = 502.0
-offset_bottom = 96.0
-max_hp = 106
-hp = 12
-
-[node name="Panel" parent="HUD/HeroStatus" index="0" unique_id=1614723959]
-offset_right = 352.0
-
-[node name="StatusFrame" parent="HUD/HeroStatus/Panel/MainRow" parent_id_path=PackedInt32Array(917906350, 961529951) index="1" unique_id=317523698]
-offset_right = 352.0
-
-[node name="HP" parent="HUD/HeroStatus/Panel/MainRow/StatusFrame" index="2" unique_id=1242450673]
-offset_right = 256.0
-
-[node name="HPbar" parent="HUD/HeroStatus/Panel/MainRow/StatusFrame/HP" index="1" unique_id=874145224]
-custom_minimum_size = Vector2(160, 12)
-max_value = 100.0
-value = 12.0
-texture_progress = SubResource("GradientTexture2D_gl1sc")
-
-[node name="Value" parent="HUD/HeroStatus/Panel/MainRow/StatusFrame/HP" index="2" unique_id=182461761]
-text = "12/106"
-
 [node name="DialoguePanel" type="PanelContainer" parent="HUD" unique_id=962373078]
 anchors_preset = 15
 anchor_right = 1.0
@@ -243,5 +209,3 @@ theme_override_font_sizes/normal_font_size = 18
 text = "Макс атакует !!
 Нанесено 33 ед. урона"
 horizontal_alignment = 1
-
-[editable path="HUD/HeroStatus"]

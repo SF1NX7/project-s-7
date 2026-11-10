@@ -1,13 +1,13 @@
 [gd_scene format=3 uid="uid://dpjxx670m4b6l"]
 
-[ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="1_5vqhx"]
-[ext_resource type="Script" uid="uid://5ytwwll3nobn" path="res://script/battle/FightStatusPanel.gd" id="1_36t6w"]
-[ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="1_k13id"]
-[ext_resource type="Texture2D" uid="uid://hr6mi1b6he4e" path="res://art/Pics/Preview_Frame.png" id="2_7n5oy"]
-[ext_resource type="Texture2D" uid="uid://cyx13lhbwpufp" path="res://art/Pics/HpMpFrame.png" id="4_7n5oy"]
+[ext_resource type="Script" uid="uid://5ytwwll3nobn" path="res://script/battle/TacticalPanel.gd" id="1_cmggg"]
+[ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="2_lsc6j"]
+[ext_resource type="Texture2D" uid="uid://hr6mi1b6he4e" path="res://art/Pics/Preview_Frame.png" id="3_sbpvh"]
+[ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="4_ldymq"]
+[ext_resource type="Texture2D" uid="uid://cyx13lhbwpufp" path="res://art/Pics/HpMpFrame.png" id="5_0bo07"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_36t6w"]
-bg_color = Color(0.025840001, 0.17558163, 0.2784093, 0.4)
+bg_color = Color(0.025840001, 0.17558163, 0.2784093, 0.6)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -19,13 +19,13 @@ corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_5pdoy"]
-texture = ExtResource("2_7n5oy")
+texture = ExtResource("3_sbpvh")
 
-[sub_resource type="Gradient" id="Gradient_36t6w"]
+[sub_resource type="Gradient" id="Gradient_cmggg"]
 colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
 
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_5pdoy"]
-gradient = SubResource("Gradient_36t6w")
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_lsc6j"]
+gradient = SubResource("Gradient_cmggg")
 width = 128
 height = 12
 
@@ -48,22 +48,22 @@ gradient = SubResource("Gradient_83qbq")
 width = 128
 height = 12
 
-[node name="FightStatusPanel" type="Control" unique_id=917906350]
+[node name="TacticalPanel" type="Control" unique_id=917906350]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 297.0
+offset_right = 363.0
 offset_bottom = 90.0
-script = ExtResource("1_36t6w")
-character_level = 10
-max_hp = 60
-hp = 60
+script = ExtResource("1_cmggg")
+character_level = 13
+max_hp = 187
+hp = 149
 max_mp = 10
 mp = 10
 hp_layer_colors = Array[Color]([Color(0.8509804, 0, 0, 1), Color(0.827451, 0.6392157, 0.23921569, 1), Color(0.19215687, 0.49019608, 0.8901961, 1), Color(0.2166301, 0.086905114, 0.31827405, 1), Color(0.22352941, 0.7176471, 0.48235294, 1)])
 
 [node name="Panel" type="Panel" parent="." unique_id=1614723959]
 layout_mode = 1
-offset_right = 297.0
+offset_right = 363.0
 offset_bottom = 90.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_36t6w")
 
@@ -86,7 +86,7 @@ texture_filter = 1
 layout_mode = 1
 offset_right = 64.0
 offset_bottom = 64.0
-texture = ExtResource("1_k13id")
+texture = ExtResource("2_lsc6j")
 expand_mode = 1
 stretch_mode = 5
 flip_h = true
@@ -104,7 +104,7 @@ theme_override_styles/panel = SubResource("StyleBoxTexture_5pdoy")
 layout_mode = 1
 offset_left = 84.0
 offset_top = 6.0
-offset_right = 297.0
+offset_right = 363.0
 offset_bottom = 90.0
 draw_center = false
 
@@ -114,7 +114,7 @@ offset_left = 6.0
 offset_top = 6.0
 offset_right = 78.0
 offset_bottom = 29.0
-theme_override_fonts/font = ExtResource("1_5vqhx")
+theme_override_fonts/font = ExtResource("4_ldymq")
 text = "Max"
 
 [node name="Level" type="Label" parent="Panel/MainRow/StatusFrame" unique_id=1513971144]
@@ -123,14 +123,14 @@ offset_left = 83.0
 offset_top = 6.0
 offset_right = 155.0
 offset_bottom = 29.0
-theme_override_fonts/font = ExtResource("1_5vqhx")
-text = "Lv 10"
+theme_override_fonts/font = ExtResource("4_ldymq")
+text = "Lv 13"
 
 [node name="HP" type="HBoxContainer" parent="Panel/MainRow/StatusFrame" unique_id=1242450673]
 layout_mode = 1
 offset_left = 6.0
 offset_top = 31.0
-offset_right = 201.0
+offset_right = 267.0
 offset_bottom = 53.0
 theme_override_constants/separation = 6
 
@@ -138,30 +138,30 @@ theme_override_constants/separation = 6
 custom_minimum_size = Vector2(32, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.8436718, 0.8172893, 1)
-theme_override_fonts/font = ExtResource("1_5vqhx")
+theme_override_fonts/font = ExtResource("4_ldymq")
 theme_override_font_sizes/font_size = 16
 text = "HP"
 
 [node name="HPbar" type="TextureProgressBar" parent="Panel/MainRow/StatusFrame/HP" unique_id=874145224]
-custom_minimum_size = Vector2(109, 12)
+custom_minimum_size = Vector2(160, 12)
 layout_mode = 2
 size_flags_vertical = 4
-max_value = 60.0
-value = 60.0
+value = 49.0
 nine_patch_stretch = true
 stretch_margin_left = 3
 stretch_margin_top = 2
 stretch_margin_right = 3
 stretch_margin_bottom = 2
-texture_over = ExtResource("4_7n5oy")
-texture_progress = SubResource("GradientTexture2D_5pdoy")
-tint_under = Color(0, 0, 0, 1)
-tint_progress = Color(0.8509804, 0, 0, 1)
+texture_under = SubResource("GradientTexture2D_lsc6j")
+texture_over = ExtResource("5_0bo07")
+texture_progress = SubResource("GradientTexture2D_lsc6j")
+tint_under = Color(0.8509804, 0, 0, 1)
+tint_progress = Color(0.827451, 0.6392157, 0.23921569, 1)
 
 [node name="Value" type="Label" parent="Panel/MainRow/StatusFrame/HP" unique_id=182461761]
 layout_mode = 2
-theme_override_fonts/font = ExtResource("1_5vqhx")
-text = "60/60"
+theme_override_fonts/font = ExtResource("4_ldymq")
+text = "149/187"
 
 [node name="MP" type="HBoxContainer" parent="Panel/MainRow/StatusFrame" unique_id=173552959]
 layout_mode = 1
@@ -175,7 +175,7 @@ theme_override_constants/separation = 6
 custom_minimum_size = Vector2(32, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.79364747, 0.86296123, 1, 1)
-theme_override_fonts/font = ExtResource("1_5vqhx")
+theme_override_fonts/font = ExtResource("4_ldymq")
 theme_override_font_sizes/font_size = 16
 text = "MP"
 
@@ -191,10 +191,10 @@ stretch_margin_top = 2
 stretch_margin_right = 3
 stretch_margin_bottom = 2
 texture_under = SubResource("GradientTexture2D_2bq8v")
-texture_over = ExtResource("4_7n5oy")
+texture_over = ExtResource("5_0bo07")
 texture_progress = SubResource("GradientTexture2D_0xkam")
 
 [node name="Value" type="Label" parent="Panel/MainRow/StatusFrame/MP" unique_id=28138221]
 layout_mode = 2
-theme_override_fonts/font = ExtResource("1_5vqhx")
+theme_override_fonts/font = ExtResource("4_ldymq")
 text = "10/10"
