@@ -201,9 +201,9 @@ flip_h = true
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1593888051]
 
 [node name="HeroStatus" parent="HUD" unique_id=917906350 instance=ExtResource("5_28x6u")]
-offset_left = 3.0
+offset_left = 150.0
 offset_top = 6.0
-offset_right = 355.0
+offset_right = 502.0
 offset_bottom = 96.0
 max_hp = 106
 hp = 12
@@ -225,15 +225,6 @@ texture_progress = SubResource("GradientTexture2D_gl1sc")
 
 [node name="Value" parent="HUD/HeroStatus/Panel/MainRow/StatusFrame/HP" index="2" unique_id=182461761]
 text = "12/106"
-
-[node name="EnemyStatus" parent="HUD" unique_id=863653869 instance=ExtResource("5_28x6u")]
-offset_left = 368.0
-offset_top = 6.0
-offset_right = 723.0
-offset_bottom = 96.0
-character_name = "Гоблин"
-character_level = 8
-max_hp = 100
 
 [node name="DialoguePanel" type="PanelContainer" parent="HUD" unique_id=962373078]
 anchors_preset = 15
