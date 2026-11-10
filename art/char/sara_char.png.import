@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://hr6mi1b6he4e"
-path="res://.godot/imported/Preview_Frame.png-77b6fe5615a345d67ac7afa77f0fd908.ctex"
+uid="uid://bpjnt7lk23j52"
+path="res://.godot/imported/sara_char.png-9e581fe1b0e37ef4163a0b28cb2333ba.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/Portrait/Preview_Frame.png"
-dest_files=["res://.godot/imported/Preview_Frame.png-77b6fe5615a345d67ac7afa77f0fd908.ctex"]
+source_file="res://art/char/sara_char.png"
+dest_files=["res://.godot/imported/sara_char.png-9e581fe1b0e37ef4163a0b28cb2333ba.ctex"]
 
 [params]
 
