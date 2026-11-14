@@ -6,6 +6,13 @@ class_name HeroData
 @export var profession_name: String = "Class"
 @export var portrait: Texture2D
 
+@export_group("Боевые эмоции")
+## Idle = обычный portrait выше, его менять не нужно.
+@export var portrait_attack: Texture2D
+@export var portrait_hit: Texture2D
+@export var portrait_victory: Texture2D
+@export var portrait_defeat: Texture2D
+
 @export_group("Equipment Permissions")
 @export_flags("AXE","SWORD","MACE","BOW","STAFF","DAGGER","ROBE","LIGHT_ARMOR","HEAVY_ARMOR")
 var allowed_profs_mask: int = 0

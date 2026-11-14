@@ -3,28 +3,67 @@
 [ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="1_ivp2k"]
 [ext_resource type="Script" uid="uid://dkslke44t57kg" path="res://script/battle/FightPanel.gd" id="1_luhg5"]
 [ext_resource type="Texture2D" uid="uid://hsame3218pdn" path="res://art/Portrait/goblin1.png" id="2_luhg5"]
+[ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="2_tv074"]
+[ext_resource type="Texture2D" uid="uid://cl16fas5by5de" path="res://art/Pics/HpMpFrameVertical.png" id="3_ay8bc"]
+[ext_resource type="Texture2D" uid="uid://hr6mi1b6he4e" path="res://art/Pics/Preview_Frame.png" id="5_nhdr8"]
 
-[sub_resource type="StyleBoxFlat" id="PortraitFrameStyle"]
-bg_color = Color(0.035, 0.14, 0.23, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.88, 0.68, 0.32, 1)
+[sub_resource type="Gradient" id="HeroHPWhiteGradient"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
 
-[sub_resource type="StyleBoxFlat" id="BarBackground"]
-bg_color = Color(0.055, 0.11, 0.18, 0.95)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.79, 0.65, 0.39, 1)
+[sub_resource type="GradientTexture2D" id="HeroHPUnder"]
+gradient = SubResource("HeroHPWhiteGradient")
+width = 22
+height = 171
 
-[sub_resource type="StyleBoxFlat" id="HPFill"]
-bg_color = Color(0.86, 0.12, 0.13, 1)
+[sub_resource type="GradientTexture2D" id="HeroHPProgress"]
+gradient = SubResource("HeroHPWhiteGradient")
+width = 22
+height = 171
 
-[sub_resource type="StyleBoxFlat" id="MPFill"]
-bg_color = Color(0.1, 0.38, 0.98, 1)
+[sub_resource type="Gradient" id="HeroMPWhiteGradient"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="HeroMPUnder"]
+gradient = SubResource("HeroMPWhiteGradient")
+width = 22
+height = 171
+
+[sub_resource type="GradientTexture2D" id="HeroMPProgress"]
+gradient = SubResource("HeroMPWhiteGradient")
+width = 22
+height = 171
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_1t7i5"]
+texture = ExtResource("5_nhdr8")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_ska61"]
+texture = ExtResource("5_nhdr8")
+
+[sub_resource type="Gradient" id="EnemyHPWhiteGradient"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="EnemyHPUnder"]
+gradient = SubResource("EnemyHPWhiteGradient")
+width = 22
+height = 171
+
+[sub_resource type="GradientTexture2D" id="EnemyHPProgress"]
+gradient = SubResource("EnemyHPWhiteGradient")
+width = 22
+height = 171
+
+[sub_resource type="Gradient" id="EnemyMPWhiteGradient"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="EnemyMPUnder"]
+gradient = SubResource("EnemyMPWhiteGradient")
+width = 22
+height = 171
+
+[sub_resource type="GradientTexture2D" id="EnemyMPProgress"]
+gradient = SubResource("EnemyMPWhiteGradient")
+width = 22
+height = 171
 
 [node name="FightPanel" type="Control" unique_id=1512256534]
 custom_minimum_size = Vector2(640, 360)
@@ -36,7 +75,14 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_luhg5")
-hero_level = 87
+hero_level = 6
+hero_hp = 100
+hero_max_mp = 5
+hero_mp = 5
+enemy_max_hp = 30
+enemy_hp = 30
+enemy_max_mp = 5
+enemy_mp = 68
 
 [node name="HeroSide" type="Control" parent="." unique_id=2118421572]
 layout_mode = 1
@@ -45,33 +91,13 @@ offset_right = 180.0
 offset_bottom = 288.0
 mouse_filter = 2
 
-[node name="PortraitFrame" type="Panel" parent="HeroSide" unique_id=33403822]
-layout_mode = 1
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 76.0
-offset_bottom = 76.0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("PortraitFrameStyle")
-
-[node name="Portrait" type="TextureRect" parent="HeroSide/PortraitFrame" unique_id=1445198131]
-layout_mode = 1
-offset_left = 2.0
-offset_top = 2.0
-offset_right = 66.0
-offset_bottom = 66.0
-mouse_filter = 2
-texture = ExtResource("1_ivp2k")
-expand_mode = 1
-stretch_mode = 5
-flip_h = true
-
 [node name="NameLabel" type="Label" parent="HeroSide" unique_id=121454538]
 layout_mode = 1
 offset_left = 80.0
 offset_top = 8.0
 offset_right = 170.0
 offset_bottom = 36.0
+theme_override_fonts/font = ExtResource("2_tv074")
 theme_override_font_sizes/font_size = 18
 text = "Макс"
 
@@ -81,52 +107,118 @@ offset_left = 80.0
 offset_top = 36.0
 offset_right = 170.0
 offset_bottom = 60.0
+theme_override_fonts/font = ExtResource("2_tv074")
 theme_override_font_sizes/font_size = 16
-text = "Lv 10"
+text = "Lv 6"
 
-[node name="HPBar" type="ProgressBar" parent="HeroSide" unique_id=129067836]
+[node name="HPBar" type="TextureProgressBar" parent="HeroSide" unique_id=129067836]
 layout_mode = 1
 offset_left = 8.0
 offset_top = 105.0
 offset_right = 30.0
 offset_bottom = 276.0
 mouse_filter = 2
-theme_override_styles/background = SubResource("BarBackground")
-theme_override_styles/fill = SubResource("HPFill")
-value = 80.0
+value = 100.0
 fill_mode = 3
-show_percentage = false
+nine_patch_stretch = true
+stretch_margin_left = 2
+stretch_margin_top = 2
+stretch_margin_right = 2
+stretch_margin_bottom = 2
+texture_under = SubResource("HeroHPUnder")
+texture_over = ExtResource("3_ay8bc")
+texture_progress = SubResource("HeroHPProgress")
+tint_under = Color(0.055, 0.11, 0.18, 0.95)
+tint_over = Color(0.79, 0.65, 0.39, 1)
+tint_progress = Color(0.8627451, 0.13333334, 0.14509805, 1)
 
 [node name="HPValue" type="Label" parent="HeroSide" unique_id=623958205]
 layout_mode = 1
-offset_left = 10.0
-offset_top = 80.0
-offset_right = 58.0
-offset_bottom = 98.0
+offset_left = -13.0
+offset_top = 90.0
+offset_right = 51.0
+offset_bottom = 108.0
+theme_override_fonts/font = ExtResource("2_tv074")
 theme_override_font_sizes/font_size = 11
-text = "80"
+text = "100"
+horizontal_alignment = 1
 
-[node name="MPBar" type="ProgressBar" parent="HeroSide" unique_id=1566697460]
+[node name="MPBar" type="TextureProgressBar" parent="HeroSide" unique_id=1566697460]
 layout_mode = 1
 offset_left = 35.0
 offset_top = 105.0
 offset_right = 57.0
 offset_bottom = 276.0
 mouse_filter = 2
-theme_override_styles/background = SubResource("BarBackground")
-theme_override_styles/fill = SubResource("MPFill")
-value = 55.0
+value = 100.0
 fill_mode = 3
-show_percentage = false
+nine_patch_stretch = true
+stretch_margin_left = 2
+stretch_margin_top = 2
+stretch_margin_right = 2
+stretch_margin_bottom = 2
+texture_under = SubResource("HeroMPUnder")
+texture_over = ExtResource("3_ay8bc")
+texture_progress = SubResource("HeroMPProgress")
+tint_under = Color(0.055, 0.11, 0.18, 0.95)
+tint_over = Color(0.79, 0.65, 0.39, 1)
+tint_progress = Color(0.1, 0.38, 0.98, 1)
 
 [node name="MPValue" type="Label" parent="HeroSide" unique_id=1107504620]
 layout_mode = 1
-offset_left = 35.0
-offset_top = 80.0
-offset_right = 83.0
-offset_bottom = 98.0
+offset_left = 14.0
+offset_top = 90.0
+offset_right = 78.0
+offset_bottom = 108.0
+theme_override_fonts/font = ExtResource("2_tv074")
 theme_override_font_sizes/font_size = 11
-text = "55"
+text = "5"
+horizontal_alignment = 1
+
+[node name="Portrait" type="TextureRect" parent="HeroSide" unique_id=1445198131]
+layout_mode = 1
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 74.0
+offset_bottom = 74.0
+mouse_filter = 2
+texture = ExtResource("1_ivp2k")
+expand_mode = 1
+stretch_mode = 5
+flip_h = true
+
+[node name="PortraitFrame" type="Panel" parent="HeroSide/Portrait" unique_id=33403822]
+layout_mode = 1
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 66.0
+offset_bottom = 66.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_1t7i5")
+
+[node name="HPTitle" type="Label" parent="HeroSide" unique_id=1374861328]
+layout_mode = 1
+offset_left = -13.0
+offset_top = 280.0
+offset_right = 51.0
+offset_bottom = 298.0
+theme_override_colors/font_color = Color(1, 0.6931168, 0.68507314, 1)
+theme_override_fonts/font = ExtResource("2_tv074")
+theme_override_font_sizes/font_size = 11
+text = "HP"
+horizontal_alignment = 1
+
+[node name="MPTitle" type="Label" parent="HeroSide" unique_id=764919523]
+layout_mode = 1
+offset_left = 14.0
+offset_top = 280.0
+offset_right = 78.0
+offset_bottom = 298.0
+theme_override_colors/font_color = Color(0.6238573, 0.83387375, 0.9995175, 1)
+theme_override_fonts/font = ExtResource("2_tv074")
+theme_override_font_sizes/font_size = 11
+text = "MP"
+horizontal_alignment = 1
 
 [node name="EnemySide" type="Control" parent="." unique_id=843069260]
 layout_mode = 1
@@ -138,26 +230,26 @@ offset_bottom = 288.0
 grow_horizontal = 0
 mouse_filter = 2
 
-[node name="PortraitFrame" type="Panel" parent="EnemySide" unique_id=719318709]
+[node name="Portrait" type="TextureRect" parent="EnemySide" unique_id=1682328737]
 layout_mode = 1
-offset_left = 104.0
-offset_top = 8.0
-offset_right = 172.0
-offset_bottom = 76.0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("PortraitFrameStyle")
-
-[node name="Portrait" type="TextureRect" parent="EnemySide/PortraitFrame" unique_id=1682328737]
-layout_mode = 1
-offset_left = 2.0
-offset_top = 2.0
-offset_right = 66.0
-offset_bottom = 66.0
+offset_left = 106.0
+offset_top = 10.0
+offset_right = 170.0
+offset_bottom = 74.0
 mouse_filter = 2
 texture = ExtResource("2_luhg5")
 expand_mode = 1
 stretch_mode = 5
 flip_h = true
+
+[node name="PortraitFrame" type="Panel" parent="EnemySide/Portrait" unique_id=719318709]
+layout_mode = 1
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 66.0
+offset_bottom = 66.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_ska61")
 
 [node name="NameLabel" type="Label" parent="EnemySide" unique_id=1026261267]
 layout_mode = 1
@@ -165,6 +257,7 @@ offset_left = 4.0
 offset_top = 8.0
 offset_right = 94.0
 offset_bottom = 36.0
+theme_override_fonts/font = ExtResource("2_tv074")
 theme_override_font_sizes/font_size = 18
 text = "Гоблин"
 horizontal_alignment = 2
@@ -175,50 +268,95 @@ offset_left = 4.0
 offset_top = 36.0
 offset_right = 94.0
 offset_bottom = 60.0
+theme_override_fonts/font = ExtResource("2_tv074")
 theme_override_font_sizes/font_size = 16
 text = "Lv 8"
 horizontal_alignment = 2
 
-[node name="HPBar" type="ProgressBar" parent="EnemySide" unique_id=1044055590]
+[node name="HPBar" type="TextureProgressBar" parent="EnemySide" unique_id=1044055590]
 layout_mode = 1
 offset_left = 124.0
 offset_top = 105.0
 offset_right = 146.0
 offset_bottom = 276.0
 mouse_filter = 2
-theme_override_styles/background = SubResource("BarBackground")
-theme_override_styles/fill = SubResource("HPFill")
-value = 80.0
+value = 100.0
 fill_mode = 3
-show_percentage = false
+nine_patch_stretch = true
+stretch_margin_left = 2
+stretch_margin_top = 2
+stretch_margin_right = 2
+stretch_margin_bottom = 2
+texture_under = SubResource("EnemyHPUnder")
+texture_over = ExtResource("3_ay8bc")
+texture_progress = SubResource("EnemyHPProgress")
+tint_under = Color(0.055, 0.11, 0.18, 0.95)
+tint_over = Color(0.79, 0.65, 0.39, 1)
+tint_progress = Color(0.8627451, 0.13333334, 0.14509805, 1)
 
 [node name="HPValue" type="Label" parent="EnemySide" unique_id=1410284827]
 layout_mode = 1
-offset_left = 116.0
-offset_top = 281.0
-offset_right = 164.0
-offset_bottom = 299.0
+offset_left = 103.0
+offset_top = 90.0
+offset_right = 167.0
+offset_bottom = 108.0
+theme_override_fonts/font = ExtResource("2_tv074")
 theme_override_font_sizes/font_size = 11
-text = "80/100"
+text = "30"
+horizontal_alignment = 1
 
-[node name="MPBar" type="ProgressBar" parent="EnemySide" unique_id=64266183]
+[node name="MPBar" type="TextureProgressBar" parent="EnemySide" unique_id=64266183]
 layout_mode = 1
 offset_left = 151.0
 offset_top = 105.0
 offset_right = 173.0
 offset_bottom = 276.0
 mouse_filter = 2
-theme_override_styles/background = SubResource("BarBackground")
-theme_override_styles/fill = SubResource("MPFill")
-value = 55.0
+value = 100.0
 fill_mode = 3
-show_percentage = false
+nine_patch_stretch = true
+stretch_margin_left = 2
+stretch_margin_top = 2
+stretch_margin_right = 2
+stretch_margin_bottom = 2
+texture_under = SubResource("EnemyMPUnder")
+texture_over = ExtResource("3_ay8bc")
+texture_progress = SubResource("EnemyMPProgress")
+tint_under = Color(0.055, 0.11, 0.18, 0.95)
+tint_over = Color(0.79, 0.65, 0.39, 1)
+tint_progress = Color(0.1, 0.38, 0.98, 1)
 
 [node name="MPValue" type="Label" parent="EnemySide" unique_id=1753280328]
 layout_mode = 1
-offset_left = 143.0
-offset_top = 281.0
-offset_right = 191.0
-offset_bottom = 299.0
+offset_left = 130.0
+offset_top = 90.0
+offset_right = 194.0
+offset_bottom = 108.0
+theme_override_fonts/font = ExtResource("2_tv074")
 theme_override_font_sizes/font_size = 11
-text = "55/100"
+text = "5"
+horizontal_alignment = 1
+
+[node name="HPTitle" type="Label" parent="EnemySide" unique_id=1055207734]
+layout_mode = 1
+offset_left = 103.0
+offset_top = 280.0
+offset_right = 167.0
+offset_bottom = 298.0
+theme_override_colors/font_color = Color(1, 0.69411767, 0.6862745, 1)
+theme_override_fonts/font = ExtResource("2_tv074")
+theme_override_font_sizes/font_size = 11
+text = "HP"
+horizontal_alignment = 1
+
+[node name="MPTitle" type="Label" parent="EnemySide" unique_id=766346675]
+layout_mode = 1
+offset_left = 130.0
+offset_top = 280.0
+offset_right = 194.0
+offset_bottom = 298.0
+theme_override_colors/font_color = Color(0.62352943, 0.8352941, 1, 1)
+theme_override_fonts/font = ExtResource("2_tv074")
+theme_override_font_sizes/font_size = 11
+text = "MP"
+horizontal_alignment = 1
