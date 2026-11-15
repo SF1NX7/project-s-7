@@ -141,7 +141,7 @@ offset_top = 90.0
 offset_right = 51.0
 offset_bottom = 108.0
 theme_override_fonts/font = ExtResource("2_tv074")
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 12
 text = "100"
 horizontal_alignment = 1
 
@@ -173,7 +173,7 @@ offset_top = 90.0
 offset_right = 78.0
 offset_bottom = 108.0
 theme_override_fonts/font = ExtResource("2_tv074")
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 12
 text = "5"
 horizontal_alignment = 1
 
@@ -302,7 +302,7 @@ offset_top = 90.0
 offset_right = 167.0
 offset_bottom = 108.0
 theme_override_fonts/font = ExtResource("2_tv074")
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 12
 text = "30"
 horizontal_alignment = 1
 
@@ -334,7 +334,7 @@ offset_top = 90.0
 offset_right = 194.0
 offset_bottom = 108.0
 theme_override_fonts/font = ExtResource("2_tv074")
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 12
 text = "5"
 horizontal_alignment = 1
 
