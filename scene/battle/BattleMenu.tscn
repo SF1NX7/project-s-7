@@ -2,11 +2,15 @@
 
 [ext_resource type="Script" uid="uid://8jqo3b126w34" path="res://script/battle/battle_menu.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://clxyxdig3m7pj" path="res://script/ui/CrossMenuBlink.gd" id="2_blink"]
+[ext_resource type="Texture2D" uid="uid://bnd7bkaihbxau" path="res://art/anim/battle_anim/item_anim1.png" id="3_35xua"]
 [ext_resource type="Script" uid="uid://ctmwo0ltvf4a3" path="res://script/ui/CrossMenuNameHint.gd" id="3_hint"]
 [ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="4_font"]
 [ext_resource type="Texture2D" uid="uid://cbr6csofxw5qf" path="res://art/anim/battle_anim/defend_anim1.png" id="4_hqf2m"]
+[ext_resource type="Texture2D" uid="uid://dwkd46d164nxc" path="res://art/anim/battle_anim/item_anim2.png" id="4_y56ys"]
 [ext_resource type="Texture2D" uid="uid://cgsg2b6yf6p76" path="res://art/anim/battle_anim/defend_anim2.png" id="5_7nify"]
+[ext_resource type="Texture2D" uid="uid://c7qt48j5vy8q0" path="res://art/anim/battle_anim/magic_annim1.png" id="6_m0g4y"]
 [ext_resource type="Texture2D" uid="uid://c1dyy7b38li2b" path="res://art/anim/battle_anim/attack_anim1.png" id="6_x55x6"]
+[ext_resource type="Texture2D" uid="uid://cd627bw0devsf" path="res://art/anim/battle_anim/magic_annim2.png" id="7_22jix"]
 [ext_resource type="Texture2D" uid="uid://j45s1rus8u2h" path="res://art/anim/battle_anim/attack_anim2.png" id="7_t4uqf"]
 
 [sub_resource type="StyleBoxFlat" id="HintStyle"]
@@ -55,6 +59,8 @@ grow_horizontal = 0
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("2_blink")
+frame_a = ExtResource("3_35xua")
+frame_b = ExtResource("4_y56ys")
 
 [node name="Bg" type="TextureRect" parent="UiRoot/MenuRoot/ItemPanel" unique_id=1106859990]
 layout_mode = 1
@@ -87,6 +93,8 @@ offset_right = 4.196167e-05
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("2_blink")
+frame_a = ExtResource("6_m0g4y")
+frame_b = ExtResource("7_22jix")
 
 [node name="Bg" type="TextureRect" parent="UiRoot/MenuRoot/MagicPanel" unique_id=832911127]
 layout_mode = 1

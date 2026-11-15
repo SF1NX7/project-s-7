@@ -11,6 +11,14 @@ enum AIStyle { AGGRESSIVE, DEFENSIVE, PASSIVE, RANGED, SUPPORT }
 @export var scene: PackedScene
 @export var portrait: Texture2D
 
+@export_group("Боевые эмоции")
+## Idle использует стандартный portrait из раздела Identity.
+## Если слот пуст, FightPanel показывает обычный портрет.
+@export var portrait_attack: Texture2D
+@export var portrait_hit: Texture2D
+@export var portrait_victory: Texture2D
+@export var portrait_defeat: Texture2D
+
 @export_group("Base Stats")
 @export_range(1, 9999, 1) var max_hp: int = 8
 @export_range(0, 9999, 1) var max_mp: int = 0

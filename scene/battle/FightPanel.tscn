@@ -1,10 +1,11 @@
 [gd_scene format=3 uid="uid://bh2poj744ouqd"]
 
-[ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="1_ivp2k"]
 [ext_resource type="Script" uid="uid://dkslke44t57kg" path="res://script/battle/FightPanel.gd" id="1_luhg5"]
+[ext_resource type="Resource" uid="uid://cfspmqlral7bh" path="res://data/heroes/hero_01_max.tres" id="2_ay8bc"]
 [ext_resource type="Texture2D" uid="uid://hsame3218pdn" path="res://art/Portrait/goblin1.png" id="2_luhg5"]
 [ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="2_tv074"]
 [ext_resource type="Texture2D" uid="uid://cl16fas5by5de" path="res://art/Pics/HpMpFrameVertical.png" id="3_ay8bc"]
+[ext_resource type="Texture2D" uid="uid://ffux0rnn56si" path="res://art/Portrait/Heroes/Max/dan2.jpeg" id="5_1t7i5"]
 [ext_resource type="Texture2D" uid="uid://hr6mi1b6he4e" path="res://art/Pics/Preview_Frame.png" id="5_nhdr8"]
 
 [sub_resource type="Gradient" id="HeroHPWhiteGradient"]
@@ -83,6 +84,7 @@ enemy_max_hp = 30
 enemy_hp = 30
 enemy_max_mp = 5
 enemy_mp = 68
+hero_portrait_data = ExtResource("2_ay8bc")
 
 [node name="HeroSide" type="Control" parent="." unique_id=2118421572]
 layout_mode = 1
@@ -182,10 +184,9 @@ offset_top = 10.0
 offset_right = 74.0
 offset_bottom = 74.0
 mouse_filter = 2
-texture = ExtResource("1_ivp2k")
+texture = ExtResource("5_1t7i5")
 expand_mode = 1
 stretch_mode = 5
-flip_h = true
 
 [node name="PortraitFrame" type="Panel" parent="HeroSide/Portrait" unique_id=33403822]
 layout_mode = 1
