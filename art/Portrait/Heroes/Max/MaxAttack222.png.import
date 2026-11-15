@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c5vbsnlwxufce"
-path="res://.godot/imported/MaxHit.png-e3bd58bf517ba66df6dfd68c3431a886.ctex"
+uid="uid://csn3v86v2yxjr"
+path="res://.godot/imported/MaxAttack222.png-a2b40243e7a080cf25177127a9154295.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/Portrait/Heroes/Max/MaxHit.png"
-dest_files=["res://.godot/imported/MaxHit.png-e3bd58bf517ba66df6dfd68c3431a886.ctex"]
+source_file="res://art/Portrait/Heroes/Max/MaxAttack222.png"
+dest_files=["res://.godot/imported/MaxAttack222.png-a2b40243e7a080cf25177127a9154295.ctex"]
 
 [params]
 

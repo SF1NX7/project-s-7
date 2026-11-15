@@ -32,6 +32,7 @@ extends Node2D
 var _hero: AnimatedSprite2D
 var _enemy: AnimatedSprite2D
 var _battle_text: RichTextLabel
+var _fight_panel: Node
 var _busy: bool = false
 
 
@@ -39,6 +40,9 @@ func _ready() -> void:
 	_hero = get_node_or_null(hero_path) as AnimatedSprite2D
 	_enemy = get_node_or_null(enemy_path) as AnimatedSprite2D
 	_battle_text = get_node_or_null(text_path) as RichTextLabel
+	_fight_panel = get_node_or_null(^"HUD/FightPanel")
+	if _fight_panel != null and _fight_panel.has_method("reset_emotions"):
+		_fight_panel.call("reset_emotions")
 
 	if _hero == null or _enemy == null:
 		push_error("FightScene: проверь пути Hero/Enemy Body в Inspector.")
@@ -101,6 +105,7 @@ func _attack_sequence(attacker: AnimatedSprite2D, defender: AnimatedSprite2D, ac
 		push_warning("FightScene: анимация attack не найдена у %s." % actor_name)
 		return
 	_busy = true
+	_set_test_emotion("trigger_attack", attacker == _hero)
 	_show_message("%s атакует!" % actor_name)
 
 	attacker.stop()
@@ -114,8 +119,11 @@ func _attack_sequence(attacker: AnimatedSprite2D, defender: AnimatedSprite2D, ac
 		await attacker.animation_finished
 
 	_play_idle(attacker)
+	_set_test_emotion("trigger_idle", attacker == _hero)
 	_show_message("%s получает удар! (тест без изменения HP)" % target_name)
+	_set_test_emotion("trigger_hit", defender == _hero)
 	await _hit_flash(defender)
+	_set_test_emotion("trigger_idle", defender == _hero)
 	_play_idle(defender)
 	_busy = false
 
@@ -138,8 +146,15 @@ func _hit_sequence(sprite: AnimatedSprite2D, actor_name: String) -> void:
 	_busy = true
 	_show_message("%s получает удар! (тест)" % actor_name)
 	_play_idle(sprite)
+	_set_test_emotion("trigger_hit", sprite == _hero)
 	await _hit_flash(sprite)
+	_set_test_emotion("trigger_idle", sprite == _hero)
 	_busy = false
+
+
+func _set_test_emotion(method: String, is_hero: bool) -> void:
+	if is_instance_valid(_fight_panel) and _fight_panel.has_method(method):
+		_fight_panel.call(method, is_hero)
 
 
 func _hit_flash(sprite: AnimatedSprite2D) -> void:

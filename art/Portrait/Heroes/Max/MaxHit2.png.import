@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ffux0rnn56si"
-path="res://.godot/imported/dan2.jpeg-93844b9df3f05e41c49630597a0b496d.ctex"
+uid="uid://ibapw8a653xx"
+path="res://.godot/imported/MaxHit2.png-c8cb35204fe0e92cebd9381274eb235d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/Portrait/Heroes/Max/dan2.jpeg"
-dest_files=["res://.godot/imported/dan2.jpeg-93844b9df3f05e41c49630597a0b496d.ctex"]
+source_file="res://art/Portrait/Heroes/Max/MaxHit2.png"
+dest_files=["res://.godot/imported/MaxHit2.png-c8cb35204fe0e92cebd9381274eb235d.ctex"]
 
 [params]
 

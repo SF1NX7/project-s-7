@@ -238,6 +238,9 @@ func _show_one_preview(entry: Dictionary) -> void:
 	var hero: AnimatedSprite2D = fight.get_node_or_null("HeroAnchor/HeroVisual/Body") as AnimatedSprite2D
 	var enemy: AnimatedSprite2D = fight.get_node_or_null("EnemyAnchor/EnemyVisual/Body") as AnimatedSprite2D
 	var output: RichTextLabel = fight.get_node_or_null("HUD/DialoguePanel/BattleText") as RichTextLabel
+	var portraits: Node = fight.get_node_or_null("HUD/FightPanel")
+	if portraits != null and portraits.has_method("reset_emotions"):
+		portraits.call("reset_emotions")
 	if hero == null or enemy == null:
 		push_warning("FightPreviewBridge: в FightScene отсутствует Body героя или врага.")
 		_cleanup_preview()
@@ -267,12 +270,18 @@ func _show_one_preview(entry: Dictionary) -> void:
 			announcement = "%s контратакует!" % actor_name
 		elif kind == "extra":
 			announcement = "%s атакует повторно!" % actor_name
+		# source_is_enemy: false = герой, true = враг.
+		# Портрет атакующего переключается до объявления и анимации удара.
+		_set_portrait_emotion(portraits, &"trigger_attack", not attacking_enemy)
 		await _show_message(output, announcement, tree, announcement_seconds)
 		await _play_attack(attacker_sprite, tree)
+		_set_portrait_emotion(portraits, &"trigger_idle", not attacking_enemy)
 		if bool(action.get("dodged", false)):
 			await _play_dodge(target_sprite, tree)
 			await _show_message(output, "%s уклоняется!" % victim_name, tree, result_hold_seconds)
 		else:
+			# Реакция Hit не вызывается при уклонении.
+			_set_portrait_emotion(portraits, &"trigger_hit", attacking_enemy)
 			_play_hit(target_sprite, tree)
 			if bool(action.get("critical", false)):
 				await _play_critical_effect(tree)
@@ -280,7 +289,11 @@ func _show_one_preview(entry: Dictionary) -> void:
 			if bool(action.get("critical", false)):
 				message = "Критический удар! " + message
 			await _show_message(output, message, tree, result_hold_seconds)
+			if not bool(action.get("defeated", false)):
+				_set_portrait_emotion(portraits, &"trigger_idle", attacking_enemy)
 		if bool(action.get("defeated", false)):
+			_set_portrait_emotion(portraits, &"trigger_defeat", attacking_enemy)
+			_set_portrait_emotion(portraits, &"trigger_victory", not attacking_enemy)
 			await _show_message(output, "%s повержен!" % victim_name, tree, result_hold_seconds)
 
 	# Сначала закрываем FightScene затемнением, потом убираем её из дерева.
@@ -301,6 +314,12 @@ func _show_one_preview(entry: Dictionary) -> void:
 	preview_finished.emit()
 	if debug_preview:
 		print("S7 FIGHT PREVIEW: последовательность событий завершена")
+
+
+func _set_portrait_emotion(panel: Node, method: StringName, is_hero: bool) -> void:
+	# Если FightPanel отсутствует, бой продолжает работать как раньше.
+	if is_instance_valid(panel) and panel.has_method(method):
+		panel.call(method, is_hero)
 
 
 func _play_critical_effect(tree: SceneTree) -> void:

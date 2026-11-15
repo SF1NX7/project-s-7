@@ -143,6 +143,10 @@ func reset_emotions() -> void:
 
 func _portrait_for_side(is_hero: bool) -> Texture2D:
     var data: Resource = hero_portrait_data if is_hero else enemy_portrait_data
+    # Enemy Portrait Data может ссылаться на реестр с Array[EnemyData],
+    # а не на один EnemyData. В таком случае берём первый ресурс из списка.
+    # HeroData и одиночный EnemyData продолжают работать как раньше.
+    data = _resolve_portrait_data(data)
     var fallback: Texture2D = hero_portrait if is_hero else enemy_portrait
     var emotion: int = (
             preview_hero_emotion if is_hero else preview_enemy_emotion
@@ -173,6 +177,24 @@ func _portrait_for_side(is_hero: bool) -> Texture2D:
         if expression != null:
             return expression
     return idle
+
+
+
+func _resolve_portrait_data(data: Resource) -> Resource:
+    if data == null:
+        return null
+
+    for property_info: Dictionary in data.get_property_list():
+        if String(property_info.get("name", "")) != "enemies":
+            continue
+        var entries: Variant = data.get("enemies")
+        if entries is Array:
+            for entry in entries:
+                if entry is Resource:
+                    return entry as Resource
+        return null
+
+    return data
 
 
 func _resource_texture(data: Resource, key: String) -> Texture2D:

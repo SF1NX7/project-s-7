@@ -1,10 +1,11 @@
 [gd_resource type="Resource" script_class="HeroData" format=3 uid="uid://cfspmqlral7bh"]
 
 [ext_resource type="Script" uid="uid://crdx2krqtdpx" path="res://script/system/stats_bonus.gd" id="1_wh0gk"]
-[ext_resource type="Texture2D" uid="uid://ffux0rnn56si" path="res://art/Portrait/Heroes/Max/dan2.jpeg" id="2_8dbka"]
-[ext_resource type="Texture2D" uid="uid://ctx4kpl4pj7fu" path="res://art/Portrait/Heroes/Max/MaxAttack.png" id="3_3b4md"]
+[ext_resource type="Texture2D" uid="uid://2rm8yicxs5vs" path="res://art/Portrait/Heroes/Max/MaxIdle2.png" id="2_3b4md"]
+[ext_resource type="Texture2D" uid="uid://csn3v86v2yxjr" path="res://art/Portrait/Heroes/Max/MaxAttack222.png" id="3_0lt7l"]
 [ext_resource type="Script" uid="uid://drif5nqii2jwo" path="res://script/player/HeroData.gd" id="3_8dbka"]
-[ext_resource type="Texture2D" uid="uid://c5vbsnlwxufce" path="res://art/Portrait/Heroes/Max/MaxHit.png" id="4_0lt7l"]
+[ext_resource type="Texture2D" uid="uid://ibapw8a653xx" path="res://art/Portrait/Heroes/Max/MaxHit2.png" id="4_bltfu"]
+[ext_resource type="Texture2D" uid="uid://wr4id2jb22q3" path="res://art/Portrait/Heroes/Max/MaxVictory.png" id="5_0yvdg"]
 
 [sub_resource type="Resource" id="Resource_tkf0n"]
 script = ExtResource("1_wh0gk")
@@ -19,9 +20,10 @@ metadata/_custom_type_script = "uid://crdx2krqtdpx"
 script = ExtResource("3_8dbka")
 hero_name = "Max"
 profession_name = "Мечник"
-portrait = ExtResource("2_8dbka")
-portrait_attack = ExtResource("3_3b4md")
-portrait_hit = ExtResource("4_0lt7l")
+portrait = ExtResource("2_3b4md")
+portrait_attack = ExtResource("3_0lt7l")
+portrait_hit = ExtResource("4_bltfu")
+portrait_victory = ExtResource("5_0yvdg")
 allowed_profs_mask = 386
 base_stats = SubResource("Resource_tkf0n")
 base_movement = 6
