@@ -5,8 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://gu6c4tmivx3p" path="res://art/anim/fight_anim/Heroes/Max/MaxFightSprite.png" id="2_slxud"]
 [ext_resource type="Texture2D" uid="uid://desnflmnl6qr3" path="res://art/anim/fight_anim/Enemies/Goblin/GoblinFightSprite.png" id="3_tknds"]
 [ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="3_ynsy3"]
-
-[ext_resource type="PackedScene" path="res://scene/battle/FightPanel.tscn" id="fightpanel_scene"]
+[ext_resource type="PackedScene" uid="uid://bh2poj744ouqd" path="res://scene/battle/FightPanel.tscn" id="fightpanel_scene"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_28x6u"]
 atlas = ExtResource("2_slxud")
@@ -194,7 +193,8 @@ flip_h = true
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1593888051]
 
-[node name="FightPanel" parent="HUD" instance=ExtResource("fightpanel_scene")]
+[node name="FightPanel" parent="HUD" unique_id=1730075935 instance=ExtResource("fightpanel_scene")]
+hp_animation_seconds = null
 
 [node name="DialoguePanel" type="PanelContainer" parent="HUD" unique_id=962373078]
 anchors_preset = 15

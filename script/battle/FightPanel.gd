@@ -32,6 +32,10 @@ extends Control
 @export var layer_4_purple: Color = Color("#a55cda")
 @export var layer_5_green: Color = Color("#38ac76")
 
+@export_group("Анимация HP")
+## Время плавного изменения HP при попадании в FightScene.
+@export_range(0.05, 2.0, 0.05, "suffix:s") var hp_animation_seconds: float = 0.55
+
 @export_group("Портреты: данные персонажей")
 ## Перетащи HeroData/EnemyData .tres для проверки эмоций в редакторе.
 ## В игре можно назначить ресурсы через set_side_portraits_from_data().
@@ -92,6 +96,34 @@ func set_side_data(
         enemy_mp = clampi(current_mp, 0, enemy_max_mp)
         if portrait_texture != null:
             enemy_portrait = portrait_texture
+    _refresh()
+
+
+## Визуально вычитает заранее рассчитанный урон, не изменяя BattleCombat.
+## is_hero: true = Макс, false = враг. Возвращает управление после анимации.
+func animate_damage(is_hero: bool, damage: int) -> void:
+    var before: int = hero_hp if is_hero else enemy_hp
+    var after: int = maxi(0, before - maxi(0, damage))
+    if after == before:
+        return
+
+    var tween: Tween = create_tween()
+    # Боевая карта может быть поставлена на паузу FightPreviewBridge.
+    tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+    tween.set_trans(Tween.TRANS_LINEAR)
+    tween.tween_method(
+            Callable(self, "_set_animated_hp").bind(is_hero),
+            float(before), float(after), hp_animation_seconds
+    )
+    await tween.finished
+    _set_animated_hp(float(after), is_hero)
+
+
+func _set_animated_hp(value: float, is_hero: bool) -> void:
+    if is_hero:
+        hero_hp = clampi(roundi(value), 0, maxi(1, hero_max_hp))
+    else:
+        enemy_hp = clampi(roundi(value), 0, maxi(1, enemy_max_hp))
     _refresh()
 
 

@@ -4,11 +4,13 @@
 [ext_resource type="Script" uid="uid://casjtwqr2hmuv" path="res://script/system/EnemyData.gd" id="2_enemy"]
 [ext_resource type="Texture2D" uid="uid://bs45h2jkh2hdp" path="res://art/Portrait/Enemies/goblin1/GoblinIdle.png" id="2_ohjnc"]
 [ext_resource type="Texture2D" uid="uid://gl1dfwljwjyn" path="res://art/Portrait/Enemies/goblin1/GoblinAttack.png" id="3_o5mil"]
+[ext_resource type="PackedScene" uid="uid://d2ftdwv0ucmem" path="res://scene/battle/enemies/Goblin.tscn" id="3_scene"]
 [ext_resource type="Texture2D" uid="uid://w2lk2805iv4" path="res://art/Portrait/Enemies/goblin1/GoblinHit.png" id="4_4ciye"]
 
 [sub_resource type="Resource" id="EnemyData_goblin"]
 script = ExtResource("2_enemy")
 display_name = "Гоблин "
+scene = ExtResource("3_scene")
 portrait = ExtResource("2_ohjnc")
 portrait_attack = ExtResource("3_o5mil")
 portrait_hit = ExtResource("4_4ciye")

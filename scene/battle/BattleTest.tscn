@@ -13,11 +13,9 @@ border_color = Color(1, 0.95, 0.35, 1)
 fill_color = Color(1, 0.95, 0.35, 0.18)
 border_width = 2.0
 attack_cursor_color = Color(1, 0.11774104, 0.16007765, 0.762)
-attack_cursor_line_width = 2.0
-attack_corner_cut = 2.0
 
 [node name="BattleCombat" parent="BattleMap" index="13" unique_id=1542915884]
-dodge_chance = 93.0
+dodge_chance = 3.0
 
 [editable path="BattleMap"]
 [editable path="BattleMap/Spawns"]

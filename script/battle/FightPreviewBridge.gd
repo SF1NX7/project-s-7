@@ -283,6 +283,10 @@ func _show_one_preview(entry: Dictionary) -> void:
 			# Реакция Hit не вызывается при уклонении.
 			_set_portrait_emotion(portraits, &"trigger_hit", attacking_enemy)
 			_play_hit(target_sprite, tree)
+			# Анимируем только визуальное HP жертвы по готовому damage.
+			# Применение настоящего HP остаётся в commit_pending_exchange().
+			if is_instance_valid(portraits) and portraits.has_method("animate_damage"):
+				await portraits.call("animate_damage", attacking_enemy, int(action.get("damage", 0)))
 			if bool(action.get("critical", false)):
 				await _play_critical_effect(tree)
 			var message: String = "%s получает %d ед. урона." % [victim_name, int(action.get("damage", 0))]
