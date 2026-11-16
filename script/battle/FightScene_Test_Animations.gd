@@ -105,10 +105,10 @@ func _attack_sequence(attacker: AnimatedSprite2D, defender: AnimatedSprite2D, ac
 		push_warning("FightScene: анимация attack не найдена у %s." % actor_name)
 		return
 	_busy = true
-	_set_test_emotion("trigger_attack", attacker == _hero)
 	_show_message("%s атакует!" % actor_name)
 
 	attacker.stop()
+	_set_test_emotion("trigger_attack", attacker == _hero)
 	attacker.play(attack_animation)
 	if attacker.sprite_frames.get_animation_loop(attack_animation):
 		push_warning("FightScene: отключи Loop у attack; используется таймер.")

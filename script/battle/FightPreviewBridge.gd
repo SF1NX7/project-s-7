@@ -241,9 +241,9 @@ func _show_one_preview(entry: Dictionary) -> void:
 	var portraits: Node = fight.get_node_or_null("HUD/FightPanel")
 	if portraits != null and portraits.has_method("reset_emotions"):
 		portraits.call("reset_emotions")
-	# До первой анимации удара синхронизируем HP из BattleCombat.
-	# Настройки MP, шрифтов, рамок и портретов FightPanel не изменяем.
-	_sync_fight_panel_hp(portraits, entry)
+	# Перед первым ударом читаем актуальные HP и MP обоих юнитов.
+	# Оформление, портреты и рамки FightPanel не изменяем.
+	_sync_fight_panel_stats(portraits, entry)
 	if hero == null or enemy == null:
 		push_warning("FightPreviewBridge: в FightScene отсутствует Body героя или врага.")
 		_cleanup_preview()
@@ -273,10 +273,10 @@ func _show_one_preview(entry: Dictionary) -> void:
 			announcement = "%s контратакует!" % actor_name
 		elif kind == "extra":
 			announcement = "%s атакует повторно!" % actor_name
-		# source_is_enemy: false = герой, true = враг.
-		# Портрет атакующего переключается до объявления и анимации удара.
-		_set_portrait_emotion(portraits, &"trigger_attack", not attacking_enemy)
+		# Сначала сообщение: портрет остаётся Idle.
 		await _show_message(output, announcement, tree, announcement_seconds)
+		# Эмоция Attack начинается вместе с анимацией самого удара.
+		_set_portrait_emotion(portraits, &"trigger_attack", not attacking_enemy)
 		await _play_attack(attacker_sprite, tree)
 		_set_portrait_emotion(portraits, &"trigger_idle", not attacking_enemy)
 		if bool(action.get("dodged", false)):
@@ -323,14 +323,17 @@ func _show_one_preview(entry: Dictionary) -> void:
 		print("S7 FIGHT PREVIEW: последовательность событий завершена")
 
 
-## Начальные HP нужны из реальных юнитов, а не тестовые из Inspector.
+## Начальные HP/MP читаем из реальных юнитов, а не из Inspector.
 ## BattleCombat применит итоговый урон после завершения FightScene.
-func _sync_fight_panel_hp(panel: Node, exchange: Dictionary) -> void:
+func _sync_fight_panel_stats(panel: Node, exchange: Dictionary) -> void:
 	if not is_instance_valid(panel) or not panel.has_method("set_side_data"):
 		return
 	if not is_instance_valid(_combat):
 		return
 	if not _combat.has_method("get_current_hp") or not _combat.has_method("get_max_hp"):
+		return
+	if not _combat.has_method("get_current_mp") or not _combat.has_method("get_max_mp"):
+		push_warning("FightPreviewBridge: BattleCombat не поддерживает синхронизацию MP.")
 		return
 
 	var attacker: Node2D = exchange.get("attacker") as Node2D
@@ -342,13 +345,13 @@ func _sync_fight_panel_hp(panel: Node, exchange: Dictionary) -> void:
 		var prefix: String = "hero_" if is_hero else "enemy_"
 		var hp_max: int = maxi(1, int(_combat.call("get_max_hp", unit)))
 		var hp_now: int = clampi(int(_combat.call("get_current_hp", unit)), 0, hp_max)
-		# Остальные поля панели оставляем в том виде, как они настроены сейчас.
+		var mp_max: int = maxi(0, int(_combat.call("get_max_mp", unit)))
+		var mp_now: int = clampi(int(_combat.call("get_current_mp", unit)), 0, mp_max)
+		# Не меняем имя и уровень: они уже корректно настроены на панели.
 		var shown_name: String = str(panel.get(prefix + "name"))
 		var shown_level: int = int(panel.get(prefix + "level"))
-		var shown_mp: int = int(panel.get(prefix + "mp"))
-		var shown_mp_max: int = int(panel.get(prefix + "max_mp"))
 		panel.call("set_side_data", is_hero, shown_name, shown_level,
-				hp_now, hp_max, shown_mp, shown_mp_max)
+				hp_now, hp_max, mp_now, mp_max)
 
 
 func _set_portrait_emotion(panel: Node, method: StringName, is_hero: bool) -> void:

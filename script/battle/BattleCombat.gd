@@ -308,6 +308,34 @@ func get_max_hp(unit: Node2D) -> int:
 		return maxi(0, _resource_int(stats, "hp"))
 	return 0
 
+## Текущее MP персонажа на тактической карте (только чтение).
+func get_current_mp(unit: Node2D) -> int:
+	if not is_instance_valid(unit):
+		return 0
+	var maximum: int = get_max_mp(unit)
+	if _is_enemy(unit):
+		# Враги, у которых mp_current ещё не задан, начинают с полного MP.
+		return clampi(int(unit.get_meta("mp_current", maximum)), 0, maximum)
+	var hero: Resource = _hero_data(unit)
+	if hero != null:
+		return clampi(_resource_int(hero, "mp_current"), 0, maximum)
+	return 0
+
+
+## Максимальное MP из EnemyData или базовых характеристик героя.
+func get_max_mp(unit: Node2D) -> int:
+	if not is_instance_valid(unit):
+		return 0
+	if _is_enemy(unit):
+		var data: Resource = unit.get_meta("enemy_data", null) as Resource
+		return maxi(0, _resource_int(data, "max_mp"))
+	var hero: Resource = _hero_data(unit)
+	if hero != null:
+		var stats: Resource = hero.get("base_stats") as Resource
+		return maxi(0, _resource_int(stats, "mp"))
+	return 0
+
+
 func _set_current_hp(unit: Node2D, value: int) -> void:
 	var new_value: int = clampi(value, 0, get_max_hp(unit))
 	if _is_enemy(unit):

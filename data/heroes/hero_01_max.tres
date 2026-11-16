@@ -10,6 +10,7 @@
 [sub_resource type="Resource" id="Resource_tkf0n"]
 script = ExtResource("1_wh0gk")
 hp = 10
+mp = 5
 attack = 4
 defense = 3
 speed = 2
