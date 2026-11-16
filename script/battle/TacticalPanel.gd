@@ -58,6 +58,13 @@ extends Control
 @export_group("Цветные слои HP")
 ## Если включено, каждые HP Per Layer единиц образуют отдельный цветной слой.
 ## Внешняя ширина шкалы по-прежнему зависит от Max HP и Full Bar At HP.
+## Оттенок незаполненной части первого слоя HP.
+## Рамка Texture Over при этом не изменяется.
+@export var hp_empty_color: Color = Color("#10263b"):
+	set(v):
+		hp_empty_color = v
+		_refresh_if_ready()
+
 @export var hp_layers_enabled: bool = true:
 	set(v):
 		hp_layers_enabled = v
@@ -203,10 +210,12 @@ func _update_hp_visual() -> void:
 	hp_bar.tint_progress = _hp_color(current_layer)
 
 	if current_layer == 0:
-		# Первый слой (в том числе 56/400): красное заполнение
-		# поверх обычного фона незаполненной полосы.
-		hp_bar.texture_under = _hp_original_under
-		hp_bar.tint_under = _hp_original_under_tint
+		# На первом слое фон должен быть ТЁМНЫМ, а не красным.
+		# В исходной сцене texture_under уже окрашен в красный:
+		# иначе 6/8 визуально выглядит как полная красная шкала.
+		# Белая текстура и отдельный оттенок дают видимый остаток.
+		hp_bar.texture_under = _hp_white_fill
+		hp_bar.tint_under = hp_empty_color
 	else:
 		# У предыдущего слоя всегда полное заполнение. Следующий
 		# цвет расходуется поверх него. Over-рамка не меняется.

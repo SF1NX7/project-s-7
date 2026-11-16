@@ -36,6 +36,10 @@ extends Control
 ## Время плавного изменения HP при попадании в FightScene.
 @export_range(0.05, 2.0, 0.05, "suffix:s") var hp_animation_seconds: float = 0.55
 
+@export_group("Анимация MP")
+## Время анимации расхода/восстановления маны.
+@export_range(0.05, 2.0, 0.05, "suffix:s") var mp_animation_seconds: float = 0.55
+
 @export_group("Портреты: данные персонажей")
 ## Перетащи HeroData/EnemyData .tres для проверки эмоций в редакторе.
 ## В игре можно назначить ресурсы через set_side_portraits_from_data().
@@ -99,16 +103,18 @@ func set_side_data(
     _refresh()
 
 
-## Визуально вычитает заранее рассчитанный урон, не изменяя BattleCombat.
-## is_hero: true = Макс, false = враг. Возвращает управление после анимации.
-func animate_damage(is_hero: bool, damage: int) -> void:
+## Анимации только отображают значения. Реальные HP/MP меняются в игровой логике.
+## is_hero: true — герой, false — враг.
+## Эти методы подходят для урона, лечения, расхода и восстановления MP.
+func animate_hp_to(is_hero: bool, target_hp: int) -> void:
     var before: int = hero_hp if is_hero else enemy_hp
-    var after: int = maxi(0, before - maxi(0, damage))
-    if after == before:
+    var maximum: int = hero_max_hp if is_hero else enemy_max_hp
+    var after: int = clampi(target_hp, 0, maxi(1, maximum))
+    if before == after:
         return
 
     var tween: Tween = create_tween()
-    # Боевая карта может быть поставлена на паузу FightPreviewBridge.
+    # FightPreviewBridge может ставить тактическую карту на паузу.
     tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
     tween.set_trans(Tween.TRANS_LINEAR)
     tween.tween_method(
@@ -119,11 +125,49 @@ func animate_damage(is_hero: bool, damage: int) -> void:
     _set_animated_hp(float(after), is_hero)
 
 
+func animate_mp_to(is_hero: bool, target_mp: int) -> void:
+    var before: int = hero_mp if is_hero else enemy_mp
+    var maximum: int = hero_max_mp if is_hero else enemy_max_mp
+    var after: int = clampi(target_mp, 0, maxi(0, maximum))
+    if before == after:
+        return
+
+    var tween: Tween = create_tween()
+    tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+    tween.set_trans(Tween.TRANS_LINEAR)
+    tween.tween_method(
+            Callable(self, "_set_animated_mp").bind(is_hero),
+            float(before), float(after), mp_animation_seconds
+    )
+    await tween.finished
+    _set_animated_mp(float(after), is_hero)
+
+
+## Совместимость с существующим FightPreviewBridge (никаких изменений моста).
+func animate_damage(is_hero: bool, damage: int) -> void:
+    var before: int = hero_hp if is_hero else enemy_hp
+    await animate_hp_to(is_hero, before - maxi(0, damage))
+
+
+## Для будущих зелий и лечащих заклинаний; amount — сколько восстановить.
+func animate_heal(is_hero: bool, amount: int) -> void:
+    var before: int = hero_hp if is_hero else enemy_hp
+    await animate_hp_to(is_hero, before + maxi(0, amount))
+
+
 func _set_animated_hp(value: float, is_hero: bool) -> void:
     if is_hero:
         hero_hp = clampi(roundi(value), 0, maxi(1, hero_max_hp))
     else:
         enemy_hp = clampi(roundi(value), 0, maxi(1, enemy_max_hp))
+    _refresh()
+
+
+func _set_animated_mp(value: float, is_hero: bool) -> void:
+    if is_hero:
+        hero_mp = clampi(roundi(value), 0, maxi(0, hero_max_mp))
+    else:
+        enemy_mp = clampi(roundi(value), 0, maxi(0, enemy_max_mp))
     _refresh()
 
 

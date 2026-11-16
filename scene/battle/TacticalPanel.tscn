@@ -21,11 +21,11 @@ corner_radius_bottom_left = 4
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_5pdoy"]
 texture = ExtResource("3_sbpvh")
 
-[sub_resource type="Gradient" id="Gradient_cmggg"]
+[sub_resource type="Gradient" id="Gradient_lsc6j"]
 colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 1)
 
-[sub_resource type="GradientTexture2D" id="GradientTexture2D_lsc6j"]
-gradient = SubResource("Gradient_cmggg")
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_sbpvh"]
+gradient = SubResource("Gradient_lsc6j")
 width = 128
 height = 12
 
@@ -51,19 +51,20 @@ height = 12
 [node name="TacticalPanel" type="Control" unique_id=917906350]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 363.0
+offset_right = 357.0
 offset_bottom = 90.0
 script = ExtResource("1_cmggg")
-character_level = 13
-max_hp = 187
-hp = 149
+character_level = 21
+max_hp = 254
+hp = 64
 max_mp = 10
 mp = 10
+hp_empty_color = null
 hp_layer_colors = Array[Color]([Color(0.8509804, 0, 0, 1), Color(0.827451, 0.6392157, 0.23921569, 1), Color(0.19215687, 0.49019608, 0.8901961, 1), Color(0.2166301, 0.086905114, 0.31827405, 1), Color(0.22352941, 0.7176471, 0.48235294, 1)])
 
 [node name="Panel" type="Panel" parent="." unique_id=1614723959]
 layout_mode = 1
-offset_right = 363.0
+offset_right = 357.0
 offset_bottom = 90.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_36t6w")
 
@@ -104,7 +105,7 @@ theme_override_styles/panel = SubResource("StyleBoxTexture_5pdoy")
 layout_mode = 1
 offset_left = 84.0
 offset_top = 6.0
-offset_right = 363.0
+offset_right = 357.0
 offset_bottom = 90.0
 draw_center = false
 
@@ -124,13 +125,13 @@ offset_top = 6.0
 offset_right = 155.0
 offset_bottom = 29.0
 theme_override_fonts/font = ExtResource("4_ldymq")
-text = "Lv 13"
+text = "Lv 21"
 
 [node name="HP" type="HBoxContainer" parent="Panel/MainRow/StatusFrame" unique_id=1242450673]
 layout_mode = 1
 offset_left = 6.0
 offset_top = 31.0
-offset_right = 267.0
+offset_right = 261.0
 offset_bottom = 53.0
 theme_override_constants/separation = 6
 
@@ -146,22 +147,22 @@ text = "HP"
 custom_minimum_size = Vector2(160, 12)
 layout_mode = 2
 size_flags_vertical = 4
-value = 49.0
+value = 64.0
 nine_patch_stretch = true
 stretch_margin_left = 3
 stretch_margin_top = 2
 stretch_margin_right = 3
 stretch_margin_bottom = 2
-texture_under = SubResource("GradientTexture2D_lsc6j")
+texture_under = SubResource("GradientTexture2D_sbpvh")
 texture_over = ExtResource("5_0bo07")
-texture_progress = SubResource("GradientTexture2D_lsc6j")
-tint_under = Color(0.8509804, 0, 0, 1)
-tint_progress = Color(0.827451, 0.6392157, 0.23921569, 1)
+texture_progress = SubResource("GradientTexture2D_sbpvh")
+tint_under = Color(0, 0, 0, 1)
+tint_progress = Color(0.8509804, 0, 0, 1)
 
 [node name="Value" type="Label" parent="Panel/MainRow/StatusFrame/HP" unique_id=182461761]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_ldymq")
-text = "149/187"
+text = "64/254"
 
 [node name="MP" type="HBoxContainer" parent="Panel/MainRow/StatusFrame" unique_id=173552959]
 layout_mode = 1
