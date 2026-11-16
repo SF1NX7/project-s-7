@@ -26,6 +26,8 @@ extends Node
 
 @export_group("Info Panel")
 @export var show_panel: bool = true
+## Перетащи TacticalPanel.tscn из FileSystem в это поле.
+@export var tactical_panel_scene: PackedScene
 @export_range(80, 320, 1) var panel_width: int = 200
 @export_range(48, 220, 1) var panel_height: int = 92
 @export_range(0, 80, 1) var panel_margin: int = 10
@@ -54,21 +56,13 @@ var _units: Node2D
 var _movement: Node
 var _turn: Node
 var _last_attack_targeting: bool = false
-var _target_hud: PanelContainer
-var _target_portrait: TextureRect
-var _target_name: Label
-var _target_hp: Label
-var _target_mp: Label
+var _target_hud: Control
 var _hovered: Node2D
 var _hovered_sprite: CanvasItem
 var _original_modulate: Color = Color.WHITE
 var _elapsed: float = 0.0
 var _last_movement_mode: bool = false
-var _hud: PanelContainer
-var _portrait: TextureRect
-var _name: Label
-var _hp: Label
-var _mp: Label
+var _hud: Control
 
 var _panel_keys: Dictionary = {"top": "", "bottom": ""}
 var _panel_tweens: Dictionary = {}
@@ -176,38 +170,49 @@ func _find_hero(unit: Node2D) -> HeroData:
 	return null
 
 
-func _fill_hero(hero: HeroData, unit: Node2D, picture: TextureRect, title: Label, hp_text: Label, mp_text: Label) -> void:
-	if hero == null:
-		picture.texture = null
-		title.text = unit.name if is_instance_valid(unit) else ""
-		hp_text.text = ""
-		mp_text.text = ""
+func _fill_hero(hero: HeroData, unit: Node2D, panel: Control) -> void:
+	if panel == null:
 		return
-	picture.texture = hero.portrait
-	title.text = hero.hero_name
-	var hp_max: int = 0
+	if hero == null:
+		# Не оставляем на карточке данные предыдущего бойца.
+		panel.set("character_name", String(unit.name) if is_instance_valid(unit) else "")
+		panel.call("set_stats", 0, 1, 0, 0)
+		return
+	var hp_max: int = 1
 	var mp_max: int = 0
 	if hero.base_stats != null:
-		hp_max = hero.base_stats.hp
-		mp_max = hero.base_stats.mp
-	hp_text.text = "HP: %d / %d" % [hero.hp_current, hp_max]
-	mp_text.text = "MP: %d / %d" % [hero.mp_current, mp_max]
+		hp_max = maxi(1, int(hero.base_stats.hp))
+		mp_max = maxi(0, int(hero.base_stats.mp))
+	var hero_level: int = maxi(1, int(hero.get("level")))
+	panel.set("character_name", hero.hero_name)
+	panel.set("character_level", hero_level)
+	panel.call("set_stats", clampi(hero.hp_current, 0, hp_max), hp_max, clampi(hero.mp_current, 0, mp_max), mp_max)
+	_set_portrait(panel, hero.portrait)
 
 
-func _fill_enemy(unit: Node2D, picture: TextureRect, title: Label, hp_text: Label, mp_text: Label) -> void:
+func _fill_enemy(unit: Node2D, panel: Control) -> void:
+	if not is_instance_valid(unit) or panel == null:
+		return
 	var data: EnemyData = unit.get_meta("enemy_data", null) as EnemyData
 	if data == null:
-		picture.texture = null
-		title.text = unit.name
-		hp_text.text = ""
-		mp_text.text = ""
+		panel.set("character_name", unit.name)
+		panel.call("set_stats", 0, 1, 0, 0)
 		return
-	picture.texture = data.portrait
-	title.text = data.display_name if not data.display_name.is_empty() else String(data.enemy_id)
-	var hp_max: int = maxi(0, data.max_hp)
+	var hp_max: int = maxi(1, data.max_hp)
 	var hp_now: int = clampi(int(unit.get_meta("hp_current", hp_max)), 0, hp_max)
-	hp_text.text = "HP: %d / %d" % [hp_now, hp_max]
-	mp_text.text = "MP: %d" % maxi(0, data.max_mp)
+	var mp_max: int = maxi(0, data.max_mp)
+	var mp_now: int = clampi(int(unit.get_meta("mp_current", mp_max)), 0, mp_max)
+	var enemy_level: int = 1  # В EnemyData нет свойства level; безопасное значение по умолчанию.
+	panel.set("character_name", data.display_name if not data.display_name.is_empty() else String(data.enemy_id))
+	panel.set("character_level", enemy_level)
+	panel.call("set_stats", hp_now, hp_max, mp_now, mp_max)
+	_set_portrait(panel, data.portrait)
+
+
+func _set_portrait(panel: Control, texture: Texture2D) -> void:
+	var picture := panel.get_node_or_null("Panel/MainRow/PortraitFrame/Portrait") as TextureRect
+	if picture != null:
+		picture.texture = texture
 
 
 func _update_panel() -> void:
@@ -229,7 +234,7 @@ func _update_panel() -> void:
 		if show_panel and hero != null:
 			var actor_key: String = "actor_%d" % hero.get_instance_id()
 			_transition_panel(_hud, "top", actor_key, func() -> void:
-				_fill_hero(hero, actor, _portrait, _name, _hp, _mp)
+				_fill_hero(hero, actor, _hud)
 			)
 		else:
 			_hide_panel(_hud, "top")
@@ -239,7 +244,7 @@ func _update_panel() -> void:
 			var selected_enemy: Node2D = _hovered
 			_transition_panel(_target_hud, "bottom", "target_%d" % selected_enemy.get_instance_id(), func() -> void:
 				if is_instance_valid(selected_enemy):
-					_fill_enemy(selected_enemy, _target_portrait, _target_name, _target_hp, _target_mp)
+					_fill_enemy(selected_enemy, _target_hud)
 			)
 		else:
 			_hide_panel(_target_hud, "bottom")
@@ -253,21 +258,27 @@ func _update_panel() -> void:
 	if hovered_now.is_in_group(&"battle_enemies"):
 		_transition_panel(_hud, "top", "enemy_%d" % hovered_now.get_instance_id(), func() -> void:
 			if is_instance_valid(hovered_now):
-				_fill_enemy(hovered_now, _portrait, _name, _hp, _mp)
+				_fill_enemy(hovered_now, _hud)
 		)
 	else:
 		_transition_panel(_hud, "top", "hero_%d" % hovered_now.get_instance_id(), func() -> void:
 			if is_instance_valid(hovered_now):
-				_fill_hero(_find_hero(hovered_now), hovered_now, _portrait, _name, _hp, _mp)
+				_fill_hero(_find_hero(hovered_now), hovered_now, _hud)
 		)
 
 
-func _panel_on_x() -> float:
-	return get_viewport().get_visible_rect().size.x - float(panel_margin + panel_width)
+func _panel_on_x(panel: Control) -> float:
+	return get_viewport().get_visible_rect().size.x - float(panel_margin) - panel.size.x
 
 
 func _panel_off_x() -> float:
 	return get_viewport().get_visible_rect().size.x + float(slide_offscreen_padding)
+
+
+func _panel_y(panel: Control, slot: String) -> float:
+	if slot == "bottom":
+		return get_viewport().get_visible_rect().size.y - float(panel_margin) - panel.size.y
+	return float(panel_margin)
 
 
 func _stop_panel_tween(slot: String) -> void:
@@ -277,22 +288,23 @@ func _stop_panel_tween(slot: String) -> void:
 	_panel_tweens.erase(slot)
 
 
-func _transition_panel(panel: PanelContainer, slot: String, key: String, fill: Callable) -> void:
+func _transition_panel(panel: Control, slot: String, key: String, fill: Callable) -> void:
 	if panel == null:
 		return
-	# Repainting the same character updates HP without restarting the animation.
+	# Тот же боец: обновляем HP без повторного выезда карточки.
 	if _panel_keys.get(slot, "") == key:
 		if not _panel_tweens.has(slot):
 			fill.call()
+			panel.position = Vector2(_panel_on_x(panel), _panel_y(panel, slot))
 		return
 	_stop_panel_tween(slot)
 	_panel_keys[slot] = key
 	if not slide_enabled:
 		fill.call()
+		panel.position = Vector2(_panel_on_x(panel), _panel_y(panel, slot))
 		panel.visible = true
-		panel.position.x = _panel_on_x()
 		return
-	var tween: Tween = create_tween()
+	var tween := create_tween()
 	_panel_tweens[slot] = tween
 	tween.set_trans(Tween.TRANS_SINE)
 	tween.set_ease(Tween.EASE_IN_OUT)
@@ -304,17 +316,22 @@ func _transition_panel(panel: PanelContainer, slot: String, key: String, fill: C
 		if _panel_keys.get(slot, "") != key:
 			return
 		fill.call()
-		panel.position.x = _panel_off_x()
+		panel.position = Vector2(_panel_off_x(), _panel_y(panel, slot))
 		panel.visible = true
 	)
-	tween.tween_property(panel, "position:x", _panel_on_x(), slide_in_duration)
+	# Конечный X вычисляется ПОСЛЕ обновления длины HP/MP.
+	tween.tween_method(_slide_panel.bind(panel), 0.0, 1.0, slide_in_duration)
 	tween.tween_callback(func() -> void:
 		if _panel_keys.get(slot, "") == key:
 			_panel_tweens.erase(slot)
 	)
 
 
-func _hide_panel(panel: PanelContainer, slot: String) -> void:
+func _slide_panel(progress: float, panel: Control) -> void:
+	panel.position.x = lerpf(_panel_off_x(), _panel_on_x(panel), progress)
+
+
+func _hide_panel(panel: Control, slot: String) -> void:
 	if panel == null or _panel_keys.get(slot, "") == "":
 		return
 	_panel_keys[slot] = ""
@@ -322,7 +339,7 @@ func _hide_panel(panel: PanelContainer, slot: String) -> void:
 	if not slide_enabled:
 		panel.visible = false
 		return
-	var tween: Tween = create_tween()
+	var tween := create_tween()
 	_panel_tweens[slot] = tween
 	tween.set_trans(Tween.TRANS_SINE)
 	tween.set_ease(Tween.EASE_IN_OUT)
@@ -334,12 +351,28 @@ func _hide_panel(panel: PanelContainer, slot: String) -> void:
 	)
 
 
-func _apply_card_font(label: Label) -> void:
-	# Цвет настраивается через Info Panel -> Text Color.
-	label.add_theme_color_override("font_color", text_color)
-	label.add_theme_font_size_override("font_size", card_font_size)
-	if card_font != null:
-		label.add_theme_font_override("font", card_font)
+func _make_tactical_panel(root: Control, node_name: String) -> Control:
+	if tactical_panel_scene == null:
+		push_warning("BattleHover: В Inspector назначь Tactical Panel Scene = TacticalPanel.tscn.")
+		return null
+	var panel := tactical_panel_scene.instantiate() as Control
+	if panel == null:
+		push_error("BattleHover: TacticalPanel.tscn должна иметь корень Control.")
+		return null
+	panel.name = node_name
+	root.add_child(panel)
+	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ignore_mouse_recursive(panel)
+	panel.visible = false
+	return panel
+
+
+func _ignore_mouse_recursive(node: Node) -> void:
+	if node is Control:
+		(node as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in node.get_children():
+		_ignore_mouse_recursive(child)
 
 
 func _build_hud() -> void:
@@ -347,99 +380,13 @@ func _build_hud() -> void:
 	layer.name = "HoverUI"
 	layer.layer = 20
 	add_child(layer)
-
 	var root := Control.new()
 	root.name = "Overlay"
+	layer.add_child(root)
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	layer.add_child(root)
-	# CanvasLayer children added dynamically require viewport-sized anchor parent.
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-	_hud = PanelContainer.new()
-	_hud.name = "InfoPanel"
-	_hud.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_hud.offset_left = -float(panel_margin + panel_width)
-	_hud.offset_right = -float(panel_margin)
-	_hud.offset_top = float(panel_margin)
-	_hud.offset_bottom = float(panel_margin + panel_height)
-	_hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style := StyleBoxFlat.new()
-	style.bg_color = panel_background
-	style.border_color = Color(0.74, 0.66, 0.44, 1.0)
-	style.set_border_width_all(2)
-	style.set_content_margin_all(6)
-	_hud.add_theme_stylebox_override("panel", style)
-	root.add_child(_hud)
-
-	var content := HBoxContainer.new()
-	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.add_theme_constant_override("separation", 7)
-	_hud.add_child(content)
-	_portrait = TextureRect.new()
-	_portrait.custom_minimum_size = Vector2(portrait_size, portrait_size)
-	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.add_child(_portrait)
-
-	var column := VBoxContainer.new()
-	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.add_child(column)
-	for field in ["name", "hp", "mp"]:
-		var label := Label.new()
-		_apply_card_font(label)
-		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		column.add_child(label)
-		match field:
-			"name": _name = label
-			"hp": _hp = label
-			"mp": _mp = label
-	_hud.visible = false
-	_build_target_hud(root)
-
-
-func _build_target_hud(root: Control) -> void:
-	# Та же ширина, высота, стиль, шрифт и размер портрета.
-	_target_hud = PanelContainer.new()
-	_target_hud.name = "AttackTargetPanel"
-	_target_hud.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	_target_hud.offset_left = -float(panel_margin + panel_width)
-	_target_hud.offset_right = -float(panel_margin)
-	_target_hud.offset_top = -float(panel_margin + panel_height)
-	_target_hud.offset_bottom = -float(panel_margin)
-	_target_hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style := StyleBoxFlat.new()
-	style.bg_color = panel_background
-	style.border_color = Color(0.74, 0.66, 0.44, 1.0)
-	style.set_border_width_all(2)
-	style.set_content_margin_all(6)
-	_target_hud.add_theme_stylebox_override("panel", style)
-	root.add_child(_target_hud)
-
-	var content := HBoxContainer.new()
-	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.add_theme_constant_override("separation", 7)
-	_target_hud.add_child(content)
-	_target_portrait = TextureRect.new()
-	_target_portrait.custom_minimum_size = Vector2(portrait_size, portrait_size)
-	_target_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_target_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_target_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.add_child(_target_portrait)
-	var column := VBoxContainer.new()
-	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.add_child(column)
-	for field in ["name", "hp", "mp"]:
-		var label := Label.new()
-		_apply_card_font(label)
-		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		column.add_child(label)
-		match field:
-			"name": _target_name = label
-			"hp": _target_hp = label
-			"mp": _target_mp = label
-	_target_hud.visible = false
+	_hud = _make_tactical_panel(root, "InfoPanel")
+	_target_hud = _make_tactical_panel(root, "AttackTargetPanel")
 
 
 func _exit_tree() -> void:

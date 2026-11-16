@@ -241,6 +241,9 @@ func _show_one_preview(entry: Dictionary) -> void:
 	var portraits: Node = fight.get_node_or_null("HUD/FightPanel")
 	if portraits != null and portraits.has_method("reset_emotions"):
 		portraits.call("reset_emotions")
+	# До первой анимации удара синхронизируем HP из BattleCombat.
+	# Настройки MP, шрифтов, рамок и портретов FightPanel не изменяем.
+	_sync_fight_panel_hp(portraits, entry)
 	if hero == null or enemy == null:
 		push_warning("FightPreviewBridge: в FightScene отсутствует Body героя или врага.")
 		_cleanup_preview()
@@ -318,6 +321,34 @@ func _show_one_preview(entry: Dictionary) -> void:
 	preview_finished.emit()
 	if debug_preview:
 		print("S7 FIGHT PREVIEW: последовательность событий завершена")
+
+
+## Начальные HP нужны из реальных юнитов, а не тестовые из Inspector.
+## BattleCombat применит итоговый урон после завершения FightScene.
+func _sync_fight_panel_hp(panel: Node, exchange: Dictionary) -> void:
+	if not is_instance_valid(panel) or not panel.has_method("set_side_data"):
+		return
+	if not is_instance_valid(_combat):
+		return
+	if not _combat.has_method("get_current_hp") or not _combat.has_method("get_max_hp"):
+		return
+
+	var attacker: Node2D = exchange.get("attacker") as Node2D
+	var target: Node2D = exchange.get("target") as Node2D
+	for unit in [attacker, target]:
+		if not is_instance_valid(unit):
+			continue
+		var is_hero: bool = not unit.is_in_group(&"battle_enemies")
+		var prefix: String = "hero_" if is_hero else "enemy_"
+		var hp_max: int = maxi(1, int(_combat.call("get_max_hp", unit)))
+		var hp_now: int = clampi(int(_combat.call("get_current_hp", unit)), 0, hp_max)
+		# Остальные поля панели оставляем в том виде, как они настроены сейчас.
+		var shown_name: String = str(panel.get(prefix + "name"))
+		var shown_level: int = int(panel.get(prefix + "level"))
+		var shown_mp: int = int(panel.get(prefix + "mp"))
+		var shown_mp_max: int = int(panel.get(prefix + "max_mp"))
+		panel.call("set_side_data", is_hero, shown_name, shown_level,
+				hp_now, hp_max, shown_mp, shown_mp_max)
 
 
 func _set_portrait_emotion(panel: Node, method: StringName, is_hero: bool) -> void:

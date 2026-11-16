@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://beva7t134bg5" path="res://script/battle/battle_test.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://b6x5ltqoep7lx" path="res://scene/battle/BattleMap.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://dpjxx670m4b6l" path="res://scene/battle/TacticalPanel.tscn" id="3_jt45t"]
 
 [node name="BattleTest" type="Node2D" unique_id=465864157]
 script = ExtResource("1")
@@ -13,6 +14,9 @@ border_color = Color(1, 0.95, 0.35, 1)
 fill_color = Color(1, 0.95, 0.35, 0.18)
 border_width = 2.0
 attack_cursor_color = Color(1, 0.11774104, 0.16007765, 0.762)
+
+[node name="BattleHover" parent="BattleMap" index="7" unique_id=716872636]
+tactical_panel_scene = ExtResource("3_jt45t")
 
 [node name="BattleCombat" parent="BattleMap" index="13" unique_id=1542915884]
 dodge_chance = 3.0
