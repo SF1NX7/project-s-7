@@ -141,6 +141,8 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_right = -3.0517578e-05
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Label" type="Label" parent="UiRoot/MenuRoot/StatusPanel" unique_id=876593800]
 visible = false
@@ -176,6 +178,8 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_right = -3.0517578e-05
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Label" type="Label" parent="UiRoot/MenuRoot/InventoryPanel" unique_id=2017133810]
 visible = false

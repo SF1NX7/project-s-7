@@ -7,7 +7,7 @@
 
 [sub_resource type="Resource" id="Resource_lj3sd"]
 script = ExtResource("4_ef2or")
-hp_restore = 5
+hp_restore = 20
 metadata/_custom_type_script = "uid://bgevxru0y4mao"
 
 [resource]
