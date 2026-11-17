@@ -52,6 +52,12 @@ func _on_body_entered(body: Node2D) -> void:
 			return_context.call("capture", world_scene.scene_file_path, body, _encounter_key(), one_time_encounter)
 	else:
 		push_warning("BattleTrigger: добавь BattleReturnContext в Autoload.")
+	# Existing World_2 InventoryScreen may hold the starting donut only in its
+	# exported starting_items. Import it into the existing global service now,
+	# before the World scene (and its UI) gets replaced.
+	var inventory_service: Node = get_node_or_null("/root/Inventory_Service")
+	if inventory_service != null and inventory_service.has_method("get_item_ids"):
+		inventory_service.call("get_item_ids")
 	_starting = true
 	set_deferred("monitoring", false)
 

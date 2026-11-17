@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://co5jpflwu0cw6"
-path="res://.godot/imported/sara1.jpeg-edae0f6b741be8211efd694883580e99.ctex"
+uid="uid://cmcjai4ayyqfl"
+path="res://.godot/imported/SaraAttack.png-1e22a46b9469baa42d89b74c34985bb2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/Portrait/sara1.jpeg"
-dest_files=["res://.godot/imported/sara1.jpeg-edae0f6b741be8211efd694883580e99.ctex"]
+source_file="res://art/Portrait/Heroes/Sara/SaraAttack.png"
+dest_files=["res://.godot/imported/SaraAttack.png-1e22a46b9469baa42d89b74c34985bb2.ctex"]
 
 [params]
 

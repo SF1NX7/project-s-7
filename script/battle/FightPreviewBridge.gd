@@ -201,6 +201,9 @@ func _drain_preview_queue() -> void:
 
 
 func _show_one_preview(entry: Dictionary) -> void:
+	if str(entry.get("kind", "")) == "item_heal":
+		await _show_one_heal_preview(entry)
+		return
 	if fight_scene == null:
 		push_warning("FightPreviewBridge: Fight Scene не назначена.")
 		return
@@ -323,6 +326,195 @@ func _show_one_preview(entry: Dictionary) -> void:
 		print("S7 FIGHT PREVIEW: последовательность событий завершена")
 
 
+## Лечебное действие использует ту же FightScene и HUD, что и обычная атака.
+## Оба участника могут быть союзниками. HP изменяет только BattleCombat.commit_pending_exchange().
+func _show_one_heal_preview(entry: Dictionary) -> void:
+	var tree: SceneTree = get_tree()
+	if tree == null:
+		return
+	var was_paused: bool = _pause_before_exchange
+	if freeze_battle_during_preview:
+		tree.paused = true
+	if fade_enabled:
+		_create_fade_overlay(tree)
+		await _fade_to(1.0, fade_out_seconds, tree)
+
+	_overlay = CanvasLayer.new()
+	_overlay.name = "FightHealOverlay"
+	_overlay.layer = overlay_layer
+	_overlay.process_mode = Node.PROCESS_MODE_ALWAYS
+	tree.root.add_child(_overlay)
+	var fight: Node = fight_scene.instantiate()
+	fight.process_mode = Node.PROCESS_MODE_ALWAYS
+	if _has_property(fight, "test_keyboard"):
+		fight.set("test_keyboard", false)
+	_overlay.add_child(fight)
+	var hud: CanvasLayer = fight.get_node_or_null("HUD") as CanvasLayer
+	if hud != null:
+		hud.layer = overlay_layer + 1
+
+	var left_sprite: AnimatedSprite2D = fight.get_node_or_null("HeroAnchor/HeroVisual/Body") as AnimatedSprite2D
+	var right_sprite: AnimatedSprite2D = fight.get_node_or_null("EnemyAnchor/EnemyVisual/Body") as AnimatedSprite2D
+	var output: RichTextLabel = fight.get_node_or_null("HUD/DialoguePanel/BattleText") as RichTextLabel
+	var panel: Node = fight.get_node_or_null("HUD/FightPanel")
+	var actor: Node2D = entry.get("attacker") as Node2D
+	var recipient: Node2D = entry.get("target") as Node2D
+	var result: Dictionary = entry.get("result", {})
+	var actions: Array = result.get("actions", [])
+	var action: Dictionary = actions[0] if not actions.is_empty() else {}
+	# Для лечения врагом врага актёр справа (EnemyAnchor), цель слева (HeroAnchor).
+	var enemy_actor: bool = is_instance_valid(actor) and actor.is_in_group(&"battle_enemies")
+	var actor_sprite: AnimatedSprite2D = right_sprite if enemy_actor else left_sprite
+	var self_heal: bool = actor == recipient
+	# При самолечении показываем только лечащего, не создавая его двойника.
+	var recipient_sprite: AnimatedSprite2D = actor_sprite if self_heal else (left_sprite if enemy_actor else right_sprite)
+
+	if not is_instance_valid(actor) or not is_instance_valid(recipient) or actor_sprite == null or recipient_sprite == null:
+		push_warning("FightPreviewBridge: нет пары юнитов для лечебного действия.")
+		_cleanup_preview()
+		if _combat != null and _combat.has_method("commit_pending_exchange"):
+			_combat.call("commit_pending_exchange")
+		tree.paused = was_paused
+		preview_finished.emit()
+		return
+
+	# Сохраняем исходные кадры до изменения любой стороны.
+	var max_frames: SpriteFrames = left_sprite.sprite_frames
+	var goblin_frames: SpriteFrames = right_sprite.sprite_frames
+	_configure_heal_sprite(actor_sprite, actor, max_frames, goblin_frames)
+	if not self_heal:
+		_configure_heal_sprite(recipient_sprite, recipient, max_frames, goblin_frames)
+	else:
+		# Вторая сторона сцены скрыта только для этого экземпляра FightScene.
+		var unused_visual: Node2D
+		if enemy_actor:
+			unused_visual = fight.get_node_or_null("HeroAnchor/HeroVisual") as Node2D
+		else:
+			unused_visual = fight.get_node_or_null("EnemyAnchor/EnemyVisual") as Node2D
+		if unused_visual != null:
+			unused_visual.hide()
+	_configure_heal_panel_side(panel, not enemy_actor, actor)
+	if self_heal:
+		var unused_side: Control
+		if enemy_actor:
+			unused_side = panel.get_node_or_null("HeroSide") as Control
+		else:
+			unused_side = panel.get_node_or_null("EnemySide") as Control
+		if unused_side != null:
+			unused_side.hide()
+	else:
+		_configure_heal_panel_side(panel, enemy_actor, recipient)
+	if panel != null and panel.has_method("reset_emotions"):
+		panel.call("reset_emotions")
+	if output != null:
+		output.text = ""
+	if fade_enabled:
+		await _fade_to(0.0, fade_in_seconds, tree)
+
+	var actor_name: String = str(action.get("source_name", actor.name))
+	var recipient_name: String = str(action.get("target_name", recipient.name))
+	var item_name: String = str(action.get("item_name", "предмет"))
+	var healed: int = int(action.get("heal", 0))
+	var xp: int = int(action.get("xp_gain", 0))
+	await _show_message(output, "%s применяет %s!" % [actor_name, item_name], tree, announcement_seconds)
+	_set_portrait_emotion(panel, &"trigger_attack", not enemy_actor)
+	await _play_heal_actor_animation(actor_sprite, tree)
+	_set_portrait_emotion(panel, &"trigger_idle", not enemy_actor)
+	await _play_heal_flash(recipient_sprite, tree)
+	if panel != null and panel.has_method("animate_heal"):
+		# При самолечении анимируем HP на стороне самого лечащего.
+		await panel.call("animate_heal", (not enemy_actor) if self_heal else enemy_actor, healed)
+	var result_text: String = "%s восстановлено %d HP." % [recipient_name, healed]
+	if xp > 0:
+		result_text += "\n%s получает %d XP." % [actor_name, xp]
+	await _show_message(output, result_text, tree, result_hold_seconds)
+
+	if fade_enabled:
+		await _fade_to(1.0, fade_out_seconds, tree)
+	if is_instance_valid(_overlay):
+		_overlay.queue_free()
+	_overlay = null
+	# Только теперь применяются реальные HP, XP и расходуется предмет.
+	if _combat != null and is_instance_valid(_combat) and _combat.has_method("commit_pending_exchange"):
+		_combat.call("commit_pending_exchange")
+	if fade_enabled:
+		await _fade_to(0.0, fade_in_seconds, tree)
+	_cleanup_fade()
+	_cleanup_critical_effect()
+	tree.paused = was_paused
+	preview_finished.emit()
+
+
+## В FightScene есть боевой Max и Goblin; для Sara используется её готовый
+## SpriteFrames из тактической сцены (специальной боевой анимации пока нет).
+func _configure_heal_sprite(sprite: AnimatedSprite2D, unit: Node2D, max_frames: SpriteFrames, goblin_frames: SpriteFrames) -> void:
+	if unit.name == "Sara":
+		sprite.sprite_frames = preload("res://scene/characters/sara_walk.tres")
+		sprite.scale = Vector2(3.0, 3.0)
+		sprite.animation = &"Idle_right"
+	elif unit.is_in_group(&"battle_enemies"):
+		if goblin_frames != null:
+			sprite.sprite_frames = goblin_frames
+		sprite.animation = &"idle"
+	else:
+		if max_frames != null:
+			sprite.sprite_frames = max_frames
+		sprite.animation = &"idle"
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(sprite.animation):
+		sprite.play(sprite.animation)
+
+
+func _configure_heal_panel_side(panel: Node, left_side: bool, unit: Node2D) -> void:
+	if not is_instance_valid(panel) or not is_instance_valid(_combat) or not is_instance_valid(unit):
+		return
+	var resource: Resource = null
+	if unit.is_in_group(&"battle_enemies"):
+		resource = unit.get_meta("enemy_data", null) as Resource
+	elif _combat.has_method("_hero_data"):
+		resource = _combat.call("_hero_data", unit) as Resource
+	var character_name: String = _unit_display_name(unit)
+	var level: int = 1
+	if resource != null:
+		for property_info: Dictionary in resource.get_property_list():
+			if str(property_info.get("name", "")) == "level":
+				level = int(resource.get("level"))
+				break
+	var hp: int = int(_combat.call("get_current_hp", unit))
+	var max_hp: int = int(_combat.call("get_max_hp", unit))
+	var mp: int = int(_combat.call("get_current_mp", unit))
+	var max_mp: int = int(_combat.call("get_max_mp", unit))
+	if panel.has_method("set_side_portraits_from_data"):
+		panel.call("set_side_portraits_from_data", left_side, resource)
+	if panel.has_method("set_side_data"):
+		panel.call("set_side_data", left_side, character_name, level, hp, max_hp, mp, max_mp)
+
+
+func _play_heal_actor_animation(sprite: AnimatedSprite2D, tree: SceneTree) -> void:
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(&"attack"):
+		await _play_attack(sprite, tree)
+	elif sprite.sprite_frames != null and sprite.sprite_frames.has_animation(&"Right"):
+		# Для Sara отсутствует отдельная battle-attack анимация в исходных ресурсах.
+		sprite.play(&"Right")
+		await tree.create_timer(0.55, true).timeout
+		if is_instance_valid(sprite) and sprite.sprite_frames.has_animation(&"Idle_right"):
+			sprite.play(&"Idle_right")
+	else:
+		await tree.create_timer(0.45, true).timeout
+
+
+## Вспышка лечения накладывается на цель без изменения её реального HP.
+func _play_heal_flash(sprite: AnimatedSprite2D, tree: SceneTree) -> void:
+	var original_color: Color = sprite.modulate
+	var original_scale: Vector2 = sprite.scale
+	var tween: Tween = tree.create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.tween_property(sprite, "modulate", Color(0.5, 1.0, 0.55, 1.0), 0.14)
+	tween.parallel().tween_property(sprite, "scale", original_scale * 1.08, 0.14)
+	tween.tween_property(sprite, "modulate", original_color, 0.24)
+	tween.parallel().tween_property(sprite, "scale", original_scale, 0.24)
+	await tween.finished
+
+
 ## Начальные HP/MP читаем из реальных юнитов, а не из Inspector.
 ## BattleCombat применит итоговый урон после завершения FightScene.
 func _sync_fight_panel_stats(panel: Node, exchange: Dictionary) -> void:
@@ -336,22 +528,16 @@ func _sync_fight_panel_stats(panel: Node, exchange: Dictionary) -> void:
 		push_warning("FightPreviewBridge: BattleCombat не поддерживает синхронизацию MP.")
 		return
 
+	# Используем ту же синхронизацию HeroData/EnemyData, которая уже
+	# работает для лечения: имя, уровень, HP/MP и все эмоции из ресурса.
+	# Так при атаке Сары FightPanel не сохраняет портрет Макса из Inspector.
 	var attacker: Node2D = exchange.get("attacker") as Node2D
 	var target: Node2D = exchange.get("target") as Node2D
 	for unit in [attacker, target]:
 		if not is_instance_valid(unit):
 			continue
-		var is_hero: bool = not unit.is_in_group(&"battle_enemies")
-		var prefix: String = "hero_" if is_hero else "enemy_"
-		var hp_max: int = maxi(1, int(_combat.call("get_max_hp", unit)))
-		var hp_now: int = clampi(int(_combat.call("get_current_hp", unit)), 0, hp_max)
-		var mp_max: int = maxi(0, int(_combat.call("get_max_mp", unit)))
-		var mp_now: int = clampi(int(_combat.call("get_current_mp", unit)), 0, mp_max)
-		# Не меняем имя и уровень: они уже корректно настроены на панели.
-		var shown_name: String = str(panel.get(prefix + "name"))
-		var shown_level: int = int(panel.get(prefix + "level"))
-		panel.call("set_side_data", is_hero, shown_name, shown_level,
-				hp_now, hp_max, mp_now, mp_max)
+		var left_side: bool = not unit.is_in_group(&"battle_enemies")
+		_configure_heal_panel_side(panel, left_side, unit)
 
 
 func _set_portrait_emotion(panel: Node, method: StringName, is_hero: bool) -> void:

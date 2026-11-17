@@ -203,6 +203,71 @@ func physical_attack(attacker: Node2D, target: Node2D) -> Dictionary:
 	return result
 
 
+## Лечение расходником: только планирование, без мгновенного изменения HP.
+## Используется BattleTurn после подтверждения цели. FightScene показывает результат,
+## а commit_pending_exchange() выполняет фактическое изменение ровно один раз.
+func use_healing_item(attacker: Node2D, target: Node2D, item: ItemData) -> Dictionary:
+	var result: Dictionary = {"ok": false, "reason": ""}
+	if _battle_finished or not _pending_exchange.is_empty():
+		result["reason"] = "Боевое действие уже выполняется."
+		return result
+	if not is_instance_valid(attacker) or not is_instance_valid(target):
+		result["reason"] = "Нет участника действия."
+		return result
+	if not attacker.is_inside_tree() or not target.is_inside_tree():
+		result["reason"] = "Участники отсутствуют на карте."
+		return result
+	if _units == null or attacker.get_parent() != _units or target.get_parent() != _units:
+		result["reason"] = "Участники не находятся среди боевых юнитов."
+		return result
+	if _is_enemy(attacker) != _is_enemy(target):
+		result["reason"] = "Нельзя лечить противника этим предметом."
+		return result
+	if get_current_hp(attacker) <= 0 or get_current_hp(target) <= 0:
+		result["reason"] = "Нельзя применить предмет к павшему персонажу."
+		return result
+	if item == null or not item.usable_in_battle or item.use_effect == null:
+		result["reason"] = "Предмет недоступен в бою."
+		return result
+	var effect: ItemUseEffect = item.use_effect
+	if effect.hp_restore <= 0:
+		result["reason"] = "У предмета нет лечебного эффекта HP."
+		return result
+	var service: Node = get_node_or_null("/root/Inventory_Service")
+	if service == null or not (service.get("items") as Array).has(item):
+		result["reason"] = "Предмет отсутствует в инвентаре."
+		return result
+	var hp_before: int = get_current_hp(target)
+	var hp_max: int = get_max_hp(target)
+	var hp_after: int = clampi(hp_before + effect.hp_restore, 0, hp_max)
+	var healed: int = hp_after - hp_before
+	if healed <= 0:
+		result["reason"] = "Здоровье цели уже полное."
+		return result
+	var xp: int = maxi(0, effect.xp_gain)
+	result = {
+		"ok": true, "reason": "", "kind": "item_heal",
+		"hp_before": hp_before, "hp_after": hp_after,
+		"healed": healed, "xp_gain": xp,
+		"actions": [{
+			"kind": "item_heal",
+			"source_name": _unit_name(attacker),
+			"target_name": _unit_name(target),
+			"item_name": item.title.strip_edges(),
+			"heal": healed, "xp_gain": xp
+		}]
+	}
+	_pending_exchange = {
+		"kind": "item_heal", "attacker": attacker, "target": target,
+		"item": item, "result": result
+	}
+	if staged_exchanges_enabled and not exchange_planned.get_connections().is_empty():
+		exchange_planned.emit(_pending_exchange.duplicate(true))
+	else:
+		commit_pending_exchange()
+	return result
+
+
 ## Базовый шанс задаётся в Inspector; LUCK персонажа добавляет небольшой бонус.
 ## Если у StatsBonus пока нет свойства luck, бонус героя будет равен нулю.
 func _effective_chance(base_chance: float, unit: Node2D, bonus_per_luck: float) -> float:
@@ -272,6 +337,28 @@ func commit_pending_exchange() -> void:
 		push_warning("BattleCombat: невозможно применить результат: юнит уже удалён.")
 		return
 	var result: Dictionary = exchange.get("result", {})
+	if str(exchange.get("kind", "")) == "item_heal":
+		var item: ItemData = exchange.get("item") as ItemData
+		var service: Node = get_node_or_null("/root/Inventory_Service")
+		if item == null or service == null:
+			push_warning("BattleCombat: лечение отменено — предмет или инвентарь недоступен.")
+			return
+		# Списание и HP происходят только здесь. Повторный commit безопасен:
+		# _pending_exchange уже сброшен перед входом в эту ветку.
+		if bool(item.use_effect.consume_on_use):
+			var item_key: String = item.id.strip_edges()
+			if item_key.is_empty() and not item.resource_path.is_empty():
+				item_key = item.resource_path.get_file().get_basename()
+			if item_key.is_empty() or not bool(service.call("remove_item_id", item_key)):
+				push_warning("BattleCombat: лечение отменено — не удалось списать предмет.")
+				return
+		_set_current_hp(target, int(result.get("hp_after", get_current_hp(target))))
+		var hero: Resource = _hero_data(attacker)
+		var gained_xp: int = int(result.get("xp_gain", 0))
+		if gained_xp > 0 and hero != null:
+			hero.set("xp", int(hero.get("xp")) + gained_xp)
+		combat_resolved.emit(attacker, target, result)
+		return
 	_set_current_hp(attacker, int(result.get("attacker_hp_after", get_current_hp(attacker))))
 	_set_current_hp(target, int(result.get("hp_after", get_current_hp(target))))
 	# Совместимый сигнал — после применения итогового состояния.

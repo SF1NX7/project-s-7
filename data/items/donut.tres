@@ -8,6 +8,7 @@
 [sub_resource type="Resource" id="Resource_lj3sd"]
 script = ExtResource("4_ef2or")
 hp_restore = 20
+xp_gain = 1
 metadata/_custom_type_script = "uid://bgevxru0y4mao"
 
 [resource]
@@ -18,6 +19,7 @@ pickup_color = Color(0.7377491, 0.44643027, 0.54920304, 1)
 title = "Пончик "
 description = "Тестовый пончик любезно приготовленный Mrs. Ololo"
 item_class = 2
+usable_in_battle = true
 usable_in_inventory = true
 use_effect = SubResource("Resource_lj3sd")
 metadata/_custom_type_script = "uid://t1mc6m4ghibm"

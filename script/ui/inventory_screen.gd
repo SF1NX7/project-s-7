@@ -42,10 +42,14 @@ func add_gold(amount: int) -> void:
 signal closed
 signal equip_item_selected(item: ItemData)
 signal equip_selection_canceled
+signal battle_item_selected(item: ItemData)
 
 @export var slot_scene: PackedScene
 @export var starting_items: Array[ItemData] = []
 @export var default_item_count := 32
+
+# In battle, USE delegates to BattleTurn; no HP change or item consumption.
+var battle_mode: bool = false
 
 @export_group("Currency")
 @export var gold_amount: int = 0
@@ -214,6 +218,14 @@ func open(item_count: int = -1) -> void:
 	_select_slot(0)
 
 
+func open_battle(items_in_inventory: Array[ItemData]) -> void:
+	battle_mode = true
+	starting_items = items_in_inventory.duplicate()
+	open()
+	if btn_drop:
+		btn_drop.disabled = true
+
+
 func open_equip_selection(slot: ItemData.EquipSlot, allowed_profs_mask: int = 0, item_count: int = -1) -> void:
 	_screen_mode = ScreenMode.EQUIP_SELECT
 	_equip_filter_slot = slot
@@ -247,6 +259,7 @@ func close() -> void:
 	if title_label: title_label.text = ""
 	if desc_label: desc_label.text = ""
 
+	battle_mode = false
 	closed.emit()
 
 
@@ -374,7 +387,7 @@ func _select_slot(i: int) -> void:
 			desc_label.bbcode_enabled = true
 			desc_label.text = item.description
 		if btn_use: btn_use.disabled = false
-		if btn_drop: btn_drop.disabled = false
+		if btn_drop: btn_drop.disabled = battle_mode
 	else:
 		if title_label: title_label.text = ""
 		if desc_label: desc_label.text = ""
@@ -399,8 +412,8 @@ func _set_action_buttons_enabled(enabled: bool) -> void:
 		btn_use.self_modulate = action_enabled_modulate if enabled else action_disabled_modulate
 		btn_use.scale = action_normal_scale
 	if btn_drop:
-		btn_drop.disabled = not enabled
-		btn_drop.self_modulate = action_enabled_modulate if enabled else action_disabled_modulate
+		btn_drop.disabled = (not enabled) or battle_mode
+		btn_drop.self_modulate = action_enabled_modulate if enabled and not battle_mode else action_disabled_modulate
 		btn_drop.scale = action_normal_scale
 
 
@@ -412,7 +425,7 @@ func _set_action_selected(idx: int) -> void:
 		btn_use.self_modulate = action_enabled_modulate if _action_index == 0 else action_unselected_modulate
 		btn_use.scale = action_selected_scale if _action_index == 0 else action_normal_scale
 	if btn_drop:
-		btn_drop.self_modulate = action_enabled_modulate if _action_index == 1 else action_unselected_modulate
+		btn_drop.self_modulate = action_disabled_modulate if battle_mode else (action_enabled_modulate if _action_index == 1 else action_unselected_modulate)
 		btn_drop.scale = action_selected_scale if _action_index == 1 else action_normal_scale
 
 
@@ -600,6 +613,18 @@ func _on_use_pressed() -> void:
 
 	var item := _get_selected_item()
 	if item == null:
+		return
+
+	if battle_mode:
+		if not item.usable_in_battle:
+			_show_use_message("Нельзя использовать в бою")
+			return
+		if item.use_effect == null:
+			_show_use_message("У предмета нет эффекта")
+			return
+		# Do not apply effects or consume inventory in this stage.
+		battle_item_selected.emit(item)
+		close()
 		return
 
 	if not ("usable_in_inventory" in item) or item.usable_in_inventory == false:
@@ -1017,7 +1042,7 @@ func _refresh_status_recursive(root: Node) -> void:
 
 func _on_drop_pressed() -> void:
 	# Remove selected item from inventory.
-	if _screen_mode != ScreenMode.NORMAL:
+	if battle_mode or _screen_mode != ScreenMode.NORMAL:
 		return
 
 	var item := _get_selected_item()

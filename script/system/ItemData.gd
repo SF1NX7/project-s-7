@@ -39,6 +39,9 @@ enum EquipSlot { NONE, HEAD, ARMOR, BOOTS, WEAPON, RING }
 )
 var required_profs_mask: int = 0
 
+@export_group("Use in Battle")
+@export var usable_in_battle: bool = false
+
 @export_group("Use in Inventory")
 @export var usable_in_inventory: bool = false
 @export var use_effect: ItemUseEffect
