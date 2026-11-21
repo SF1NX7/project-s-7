@@ -308,6 +308,14 @@ func _show_one_preview(entry: Dictionary) -> void:
 		if bool(action.get("defeated", false)):
 			_set_portrait_emotion(portraits, &"trigger_defeat", attacking_enemy)
 			_set_portrait_emotion(portraits, &"trigger_victory", not attacking_enemy)
+			# Enemy is the victim when the attacking side is a hero (also on counterattacks).
+			if not attacking_enemy and is_instance_valid(_combat) and _combat.has_method("play_enemy_pixel_death") and bool(_combat.get("pixel_death_enabled")) and bool(_combat.get("pixel_death_use_on_fight_scene")):
+				var hit_tween: Tween = null
+				if target_sprite.has_meta("s7_pending_hit_tween"):
+					hit_tween = target_sprite.get_meta("s7_pending_hit_tween") as Tween
+				if hit_tween != null and hit_tween.is_running():
+					await hit_tween.finished
+				await _combat.call("play_enemy_pixel_death", target_sprite, true)
 			await _show_message(output, "%s повержен!" % victim_name, tree, result_hold_seconds)
 
 	# Сначала закрываем FightScene затемнением, потом убираем её из дерева.
@@ -318,6 +326,7 @@ func _show_one_preview(entry: Dictionary) -> void:
 	_overlay = null
 	# HP, смерть и исход боя применяются только после всех показанных событий.
 	if _combat != null and is_instance_valid(_combat) and _combat.has_method("commit_pending_exchange"):
+		_combat.set_meta("s7_fight_preview_closing", true)
 		_combat.call("commit_pending_exchange")
 	# Прозрачная поверхность открывает прежнюю тактическую карту.
 	if fade_enabled:
@@ -325,6 +334,8 @@ func _show_one_preview(entry: Dictionary) -> void:
 	_cleanup_fade()
 	_cleanup_critical_effect()
 	tree.paused = was_paused
+	if is_instance_valid(_combat) and _combat.has_meta("s7_fight_preview_closing"):
+		_combat.remove_meta("s7_fight_preview_closing")
 	preview_finished.emit()
 	if debug_preview:
 		print("S7 FIGHT PREVIEW: последовательность событий завершена")
@@ -738,6 +749,7 @@ func _play_hit(sprite: AnimatedSprite2D, tree: SceneTree) -> void:
 	var original_modulate: Color = sprite.modulate
 	var tween: Tween = tree.create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	sprite.set_meta("s7_pending_hit_tween", tween)
 	var repeats: int = 4
 	var interval: float = hit_seconds / float(repeats * 2)
 	for i in range(repeats):
@@ -749,6 +761,7 @@ func _play_hit(sprite: AnimatedSprite2D, tree: SceneTree) -> void:
 	if is_instance_valid(sprite):
 		sprite.position = original_position
 		sprite.modulate = original_modulate
+		sprite.remove_meta("s7_pending_hit_tween")
 
 
 func _has_property(object: Object, property_name: String) -> bool:

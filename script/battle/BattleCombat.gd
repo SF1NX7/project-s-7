@@ -83,6 +83,23 @@ const RETURN_PIXEL_TRANSITION: PackedScene = preload("res://scene/battle/PixelTr
 ## Задержка после исчезновения лидера перед экраном исхода.
 @export_range(0.0, 3.0, 0.05) var end_battle_delay: float = 0.45
 
+@export_group("Pixel Death — враги")
+@export var pixel_death_enabled: bool = true
+@export var pixel_death_use_on_fight_scene: bool = true
+@export var pixel_death_use_on_tactical_map: bool = true
+@export_range(0.05, 5.0, 0.05, "suffix:s") var pixel_death_duration: float = 0.9
+## Размер блока в пикселях исходного кадра.
+@export_range(1, 32, 1, "suffix:px") var pixel_death_pixel_size: int = 4
+@export_range(1, 16, 1, "suffix:px") var pixel_death_map_pixel_size: int = 2
+## Разлёт относительно масштаба спрайта, в локальных пикселях.
+@export_range(0.0, 160.0, 1.0, "suffix:px") var pixel_death_scatter_strength: float = 28.0
+@export_range(0.0, 80.0, 1.0, "suffix:px") var pixel_death_map_scatter_strength: float = 12.0
+@export_range(0.0, 1.0, 0.05) var pixel_death_fade_strength: float = 0.7
+@export var pixel_death_flash_before_dissolve: bool = true
+@export_range(0.0, 3.0, 0.05, "suffix:s") var pixel_death_hold_after_death: float = 0.2
+
+const ENEMY_PIXEL_DEATH = preload("res://script/battle/enemy_pixel_death.gd")
+
 @export_group("Окно результата")
 ## Показывать встроенное окно победы и поражения.
 @export var show_result_panel: bool = true
@@ -557,6 +574,30 @@ func _has_living_heroes() -> bool:
 	return false
 
 
+## Shared visual effect. Returns false when disabled or no frame is available.
+func play_enemy_pixel_death(sprite: AnimatedSprite2D, closeup: bool) -> bool:
+	if not pixel_death_enabled or not is_instance_valid(sprite):
+		return false
+	if closeup and not pixel_death_use_on_fight_scene:
+		return false
+	if not closeup and not pixel_death_use_on_tactical_map:
+		return false
+	var effect = ENEMY_PIXEL_DEATH.new()
+	sprite.add_child(effect)
+	# FightScene is always processing even when BattleMap is paused.
+	if closeup:
+		effect.process_mode = Node.PROCESS_MODE_ALWAYS
+	var settings: Dictionary = {
+		"duration": pixel_death_duration,
+		"pixel_size": pixel_death_pixel_size if closeup else pixel_death_map_pixel_size,
+		"scatter": pixel_death_scatter_strength if closeup else pixel_death_map_scatter_strength,
+		"fade": pixel_death_fade_strength,
+		"flash": pixel_death_flash_before_dissolve,
+		"hold": pixel_death_hold_after_death
+	}
+	return await effect.play(sprite, settings)
+
+
 func _animate_death_and_remove(unit: Node2D, terminal: bool, victory: bool, message: String) -> void:
 	# Камера фиксируется на погибающем до начала растворения.
 	# BattleTurn откладывает переключение, если враг завершил ход в это время.
@@ -567,8 +608,13 @@ func _animate_death_and_remove(unit: Node2D, terminal: bool, victory: bool, mess
 	if _turn != null and _turn.has_method("begin_death_presentation"):
 		_turn.call("begin_death_presentation", unit)
 
+	# The tactical effect must not be consumed under the FightScene fade.
+	var use_pixel_effect: bool = _is_enemy(unit) and pixel_death_enabled and pixel_death_use_on_tactical_map
+	if use_pixel_effect:
+		while is_inside_tree() and (get_tree().paused or has_meta("s7_fight_preview_closing")):
+			await get_tree().process_frame
 	if death_camera_arrival_delay > 0.0:
-		await get_tree().create_timer(death_camera_arrival_delay).timeout
+		await get_tree().create_timer(death_camera_arrival_delay, not use_pixel_effect).timeout
 	if not is_instance_valid(unit):
 		if _turn != null and _turn.has_method("end_death_presentation"):
 			_turn.call("end_death_presentation")
@@ -578,7 +624,10 @@ func _animate_death_and_remove(unit: Node2D, terminal: bool, victory: bool, mess
 
 	var sprite := unit.get_node_or_null("AnimatedSprite2D") as CanvasItem
 	var visual: CanvasItem = sprite if sprite != null else unit as CanvasItem
-	if visual != null:
+	var pixel_played: bool = false
+	if use_pixel_effect and sprite is AnimatedSprite2D:
+		pixel_played = await play_enemy_pixel_death(sprite as AnimatedSprite2D, false)
+	if not pixel_played and is_instance_valid(visual):
 		var tween := create_tween()
 		tween.tween_property(visual, "modulate:a", 0.0, death_fade_duration)
 		if shrink_on_death and sprite is Node2D:
