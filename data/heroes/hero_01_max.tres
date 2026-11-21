@@ -17,6 +17,9 @@ speed = 2
 luck = 8
 metadata/_custom_type_script = "uid://crdx2krqtdpx"
 
+[sub_resource type="Resource" id="Resource_3b4md"]
+metadata/__load_path__ = "res://data/battle_animations/max_battle.tres"
+
 [resource]
 script = ExtResource("3_8dbka")
 hero_name = "Max"
@@ -26,6 +29,7 @@ portrait_attack = ExtResource("3_0lt7l")
 portrait_hit = ExtResource("4_bltfu")
 portrait_victory = ExtResource("5_0yvdg")
 allowed_profs_mask = 386
+battle_sprite_frames = SubResource("Resource_3b4md")
 base_stats = SubResource("Resource_tkf0n")
 base_movement = 6
 hp_current = 10

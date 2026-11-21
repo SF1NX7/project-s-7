@@ -17,6 +17,11 @@ class_name HeroData
 @export_flags("AXE","SWORD","MACE","BOW","STAFF","DAGGER","ROBE","LIGHT_ARMOR","HEAVY_ARMOR")
 var allowed_profs_mask: int = 0
 
+@export_group("Battle Animations")
+## Кадры крупного плана FightScene: idle, attack, evasion.
+## Пустой ресурс оставляет прежний механизм отображения.
+@export var battle_sprite_frames: SpriteFrames
+
 @export_group("Base Stats")
 @export var base_stats: StatsBonus = StatsBonus.new()
 

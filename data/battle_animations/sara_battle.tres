@@ -1,0 +1,70 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://dysf4d70bf0sj"]
+
+[ext_resource type="Texture2D" uid="uid://biwvl4kka1106" path="res://art/anim/fight_anim/Heroes/Sara/SaraFightSprite.png" id="1_2xvya"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dacgq"]
+atlas = ExtResource("1_2xvya")
+region = Rect2(0, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_utjev"]
+atlas = ExtResource("1_2xvya")
+region = Rect2(160, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tvrlp"]
+atlas = ExtResource("1_2xvya")
+region = Rect2(320, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f21ve"]
+atlas = ExtResource("1_2xvya")
+region = Rect2(480, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1rt23"]
+atlas = ExtResource("1_2xvya")
+region = Rect2(0, 320, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hdpbv"]
+atlas = ExtResource("1_2xvya")
+region = Rect2(0, 160, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8ikq0"]
+atlas = ExtResource("1_2xvya")
+region = Rect2(160, 160, 160, 160)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dacgq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_utjev")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tvrlp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f21ve")
+}],
+"loop": false,
+"name": &"attack",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1rt23")
+}],
+"loop": true,
+"name": &"evasion",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hdpbv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8ikq0")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 3.0
+}]

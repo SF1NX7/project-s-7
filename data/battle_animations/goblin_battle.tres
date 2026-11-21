@@ -1,0 +1,70 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bs1qof0yg4c36"]
+
+[ext_resource type="Texture2D" uid="uid://desnflmnl6qr3" path="res://art/anim/fight_anim/Enemies/Goblin/GoblinFightSprite.png" id="3_tknds"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qogna"]
+atlas = ExtResource("3_tknds")
+region = Rect2(0, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ootjp"]
+atlas = ExtResource("3_tknds")
+region = Rect2(160, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_aqge7"]
+atlas = ExtResource("3_tknds")
+region = Rect2(320, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uc2xa"]
+atlas = ExtResource("3_tknds")
+region = Rect2(480, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tknds"]
+atlas = ExtResource("3_tknds")
+region = Rect2(0, 320, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h6s3k"]
+atlas = ExtResource("3_tknds")
+region = Rect2(0, 160, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r23j0"]
+atlas = ExtResource("3_tknds")
+region = Rect2(160, 160, 160, 160)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qogna")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ootjp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_aqge7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uc2xa")
+}],
+"loop": false,
+"name": &"attack",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tknds")
+}],
+"loop": false,
+"name": &"evasion",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h6s3k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r23j0")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 3.0
+}]

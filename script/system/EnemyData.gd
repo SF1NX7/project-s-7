@@ -19,6 +19,11 @@ enum AIStyle { AGGRESSIVE, DEFENSIVE, PASSIVE, RANGED, SUPPORT }
 @export var portrait_victory: Texture2D
 @export var portrait_defeat: Texture2D
 
+@export_group("Battle Animations")
+## Кадры крупного плана FightScene: idle, attack, evasion.
+## Пустой ресурс оставляет прежний механизм отображения.
+@export var battle_sprite_frames: SpriteFrames
+
 @export_group("Base Stats")
 @export_range(1, 9999, 1) var max_hp: int = 8
 @export_range(0, 9999, 1) var max_mp: int = 0

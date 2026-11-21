@@ -1,0 +1,70 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bswajrk8wiow0"]
+
+[ext_resource type="Texture2D" uid="uid://gu6c4tmivx3p" path="res://art/anim/fight_anim/Heroes/Max/MaxFightSprite.png" id="2_slxud"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_28x6u"]
+atlas = ExtResource("2_slxud")
+region = Rect2(0, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_deokp"]
+atlas = ExtResource("2_slxud")
+region = Rect2(160, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gl1sc"]
+atlas = ExtResource("2_slxud")
+region = Rect2(320, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h1euv"]
+atlas = ExtResource("2_slxud")
+region = Rect2(480, 0, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4vxdd"]
+atlas = ExtResource("2_slxud")
+region = Rect2(0, 320, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1i8gu"]
+atlas = ExtResource("2_slxud")
+region = Rect2(0, 160, 160, 160)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p0g5l"]
+atlas = ExtResource("2_slxud")
+region = Rect2(160, 160, 160, 160)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_28x6u")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_deokp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gl1sc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h1euv")
+}],
+"loop": false,
+"name": &"attack",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4vxdd")
+}],
+"loop": false,
+"name": &"evasion",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1i8gu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p0g5l")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 3.0
+}]

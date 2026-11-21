@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dpjxx670m4b6l"]
 
 [ext_resource type="Script" uid="uid://5ytwwll3nobn" path="res://script/battle/TacticalPanel.gd" id="1_cmggg"]
-[ext_resource type="Texture2D" uid="uid://cfdsclvydvp8" path="res://art/Portrait/dan1.jpeg" id="2_lsc6j"]
+[ext_resource type="Texture2D" uid="uid://2rm8yicxs5vs" path="res://art/Portrait/Heroes/Max/MaxIdle2.png" id="2_cmggg"]
 [ext_resource type="Texture2D" uid="uid://hr6mi1b6he4e" path="res://art/Pics/Preview_Frame.png" id="3_sbpvh"]
 [ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="4_ldymq"]
 [ext_resource type="Texture2D" uid="uid://cyx13lhbwpufp" path="res://art/Pics/HpMpFrame.png" id="5_0bo07"]
@@ -51,20 +51,19 @@ height = 12
 [node name="TacticalPanel" type="Control" unique_id=917906350]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 357.0
+offset_right = 364.0
 offset_bottom = 90.0
 script = ExtResource("1_cmggg")
-character_level = 21
-max_hp = 254
-hp = 64
+character_level = 6
+max_hp = 267
+hp = 267
 max_mp = 10
-mp = 10
-hp_empty_color = null
+mp = 2
 hp_layer_colors = Array[Color]([Color(0.8509804, 0, 0, 1), Color(0.827451, 0.6392157, 0.23921569, 1), Color(0.19215687, 0.49019608, 0.8901961, 1), Color(0.2166301, 0.086905114, 0.31827405, 1), Color(0.22352941, 0.7176471, 0.48235294, 1)])
 
 [node name="Panel" type="Panel" parent="." unique_id=1614723959]
 layout_mode = 1
-offset_right = 357.0
+offset_right = 364.0
 offset_bottom = 90.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_36t6w")
 
@@ -87,10 +86,9 @@ texture_filter = 1
 layout_mode = 1
 offset_right = 64.0
 offset_bottom = 64.0
-texture = ExtResource("2_lsc6j")
+texture = ExtResource("2_cmggg")
 expand_mode = 1
 stretch_mode = 5
-flip_h = true
 
 [node name="Frame" type="Panel" parent="Panel/MainRow/PortraitFrame/Portrait" unique_id=210459233]
 layout_mode = 1
@@ -105,7 +103,7 @@ theme_override_styles/panel = SubResource("StyleBoxTexture_5pdoy")
 layout_mode = 1
 offset_left = 84.0
 offset_top = 6.0
-offset_right = 357.0
+offset_right = 364.0
 offset_bottom = 90.0
 draw_center = false
 
@@ -125,13 +123,13 @@ offset_top = 6.0
 offset_right = 155.0
 offset_bottom = 29.0
 theme_override_fonts/font = ExtResource("4_ldymq")
-text = "Lv 21"
+text = "Lv 6"
 
 [node name="HP" type="HBoxContainer" parent="Panel/MainRow/StatusFrame" unique_id=1242450673]
 layout_mode = 1
 offset_left = 6.0
 offset_top = 31.0
-offset_right = 261.0
+offset_right = 268.0
 offset_bottom = 53.0
 theme_override_constants/separation = 6
 
@@ -147,7 +145,7 @@ text = "HP"
 custom_minimum_size = Vector2(160, 12)
 layout_mode = 2
 size_flags_vertical = 4
-value = 64.0
+value = 67.0
 nine_patch_stretch = true
 stretch_margin_left = 3
 stretch_margin_top = 2
@@ -156,19 +154,19 @@ stretch_margin_bottom = 2
 texture_under = SubResource("GradientTexture2D_sbpvh")
 texture_over = ExtResource("5_0bo07")
 texture_progress = SubResource("GradientTexture2D_sbpvh")
-tint_under = Color(0, 0, 0, 1)
-tint_progress = Color(0.8509804, 0, 0, 1)
+tint_under = Color(0.827451, 0.6392157, 0.23921569, 1)
+tint_progress = Color(0.19215687, 0.49019608, 0.8901961, 1)
 
 [node name="Value" type="Label" parent="Panel/MainRow/StatusFrame/HP" unique_id=182461761]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_ldymq")
-text = "64/254"
+text = "267/267"
 
 [node name="MP" type="HBoxContainer" parent="Panel/MainRow/StatusFrame" unique_id=173552959]
 layout_mode = 1
 offset_left = 6.0
 offset_top = 54.0
-offset_right = 126.0
+offset_right = 119.0
 offset_bottom = 76.0
 theme_override_constants/separation = 6
 
@@ -185,7 +183,7 @@ custom_minimum_size = Vector2(38, 12)
 layout_mode = 2
 size_flags_vertical = 4
 max_value = 10.0
-value = 10.0
+value = 2.0
 nine_patch_stretch = true
 stretch_margin_left = 3
 stretch_margin_top = 2
@@ -198,4 +196,4 @@ texture_progress = SubResource("GradientTexture2D_0xkam")
 [node name="Value" type="Label" parent="Panel/MainRow/StatusFrame/MP" unique_id=28138221]
 layout_mode = 2
 theme_override_fonts/font = ExtResource("4_ldymq")
-text = "10/10"
+text = "2/10"

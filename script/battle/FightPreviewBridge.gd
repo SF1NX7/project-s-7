@@ -256,6 +256,10 @@ func _show_one_preview(entry: Dictionary) -> void:
 		preview_finished.emit()
 		return
 
+	# Стороны обычного боя остаются прежними. Кадры берём из карточек
+	# фактических участников, в том числе при контратаке.
+	_configure_exchange_sprites(hero, enemy, entry)
+
 	var result: Dictionary = entry.get("result", {})
 	var actions: Array = result.get("actions", [])
 	if output != null:
@@ -445,9 +449,50 @@ func _show_one_heal_preview(entry: Dictionary) -> void:
 	preview_finished.emit()
 
 
-## В FightScene есть боевой Max и Goblin; для Sara используется её готовый
-## SpriteFrames из тактической сцены (специальной боевой анимации пока нет).
+## Один способ чтения карточек для героев, врагов и будущих боссов.
+func _unit_visual_data(unit: Node2D) -> Resource:
+	if not is_instance_valid(unit):
+		return null
+	if unit.is_in_group(&"battle_enemies"):
+		return unit.get_meta("enemy_data", null) as Resource
+	if is_instance_valid(_combat) and _combat.has_method("_hero_data"):
+		return _combat.call("_hero_data", unit) as Resource
+	return null
+
+
+## Не изменяем общий SpriteFrames и не заменяем рабочие кадры неполным набором.
+func _apply_card_battle_frames(sprite: AnimatedSprite2D, unit: Node2D) -> bool:
+	var data: Resource = _unit_visual_data(unit)
+	if data == null or not _has_property(data, "battle_sprite_frames"):
+		return false
+	var frames: SpriteFrames = data.get("battle_sprite_frames") as SpriteFrames
+	if frames == null:
+		return false
+	for animation_name: StringName in [&"idle", &"attack", &"evasion"]:
+		if not frames.has_animation(animation_name) or frames.get_frame_count(animation_name) == 0:
+			push_warning("FightPreviewBridge: неполные боевые кадры у %s (%s)." % [_unit_display_name(unit), animation_name])
+			return false
+	sprite.stop()
+	sprite.sprite_frames = frames
+	sprite.play(&"idle")
+	return true
+
+
+func _configure_exchange_sprites(hero: AnimatedSprite2D, enemy: AnimatedSprite2D, entry: Dictionary) -> void:
+	var attacker: Node2D = entry.get("attacker") as Node2D
+	var target: Node2D = entry.get("target") as Node2D
+	for unit in [attacker, target]:
+		if not is_instance_valid(unit):
+			continue
+		var sprite: AnimatedSprite2D = enemy if unit.is_in_group(&"battle_enemies") else hero
+		_apply_card_battle_frames(sprite, unit)
+
+
+## Общие боевые кадры имеют приоритет также при лечении.
+## Если карточка пока не настроена, оставляем прежний fallback.
 func _configure_heal_sprite(sprite: AnimatedSprite2D, unit: Node2D, max_frames: SpriteFrames, goblin_frames: SpriteFrames) -> void:
+	if _apply_card_battle_frames(sprite, unit):
+		return
 	if unit.name == "Sara":
 		sprite.sprite_frames = preload("res://scene/characters/sara_walk.tres")
 		sprite.scale = Vector2(3.0, 3.0)
@@ -467,11 +512,7 @@ func _configure_heal_sprite(sprite: AnimatedSprite2D, unit: Node2D, max_frames: 
 func _configure_heal_panel_side(panel: Node, left_side: bool, unit: Node2D) -> void:
 	if not is_instance_valid(panel) or not is_instance_valid(_combat) or not is_instance_valid(unit):
 		return
-	var resource: Resource = null
-	if unit.is_in_group(&"battle_enemies"):
-		resource = unit.get_meta("enemy_data", null) as Resource
-	elif _combat.has_method("_hero_data"):
-		resource = _combat.call("_hero_data", unit) as Resource
+	var resource: Resource = _unit_visual_data(unit)
 	var character_name: String = _unit_display_name(unit)
 	var level: int = 1
 	if resource != null:
