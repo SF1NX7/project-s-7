@@ -1379,10 +1379,10 @@ attack_corner_cut = 2.0
 sara_scene = ExtResource("10_walb1")
 
 [node name="Spawn1" parent="Spawns" index="0"]
-position = Vector2(-528, -176)
+position = Vector2(-400, -144)
 
 [node name="Spawn2" parent="Spawns" index="1"]
-position = Vector2(-528, -240)
+position = Vector2(-400, -176)
 
 [node name="Spawn3" parent="Spawns" index="2"]
 position = Vector2(-528, -208)
@@ -1415,11 +1415,14 @@ show_turn_indicator = false
 [node name="BattleMove" type="Node2D" parent="." unique_id=1472764406]
 script = ExtResource("13_5a78g")
 move_duration = 0.17
+reachable_color = Color(0.12543294, 0.4890107, 0.91332763, 0.2509804)
+reachable_outline = Color(0.3189972, 0.43405715, 0.6704099, 0.1)
+outline_width = 1.5
 
 [node name="EnemySpawns" parent="." unique_id=595819906 instance=ExtResource("15_poc25")]
 
 [node name="EnemySpawn1" parent="EnemySpawns" index="0" unique_id=208487325]
-position = Vector2(-80, -80)
+position = Vector2(-240, -144)
 
 [node name="BattleEnemyAI" type="Node" parent="." unique_id=287329850]
 script = ExtResource("16_enemy_ai")
@@ -1439,7 +1442,7 @@ return_after_victory = false
 [node name="FightPreviewBridge" type="Node2D" parent="." unique_id=1601772689]
 script = ExtResource("20_ry66a")
 typewriter_chars_per_second = 50.0
-fade_out_seconds = 0.39999999999999997
+fade_out_seconds = 0.4
 
 [editable path="Spawns"]
 [editable path="EnemySpawns"]

@@ -187,9 +187,11 @@ animations = [{
 }]
 
 [node name="BattleHero" type="Node2D" unique_id=886394300]
+y_sort_enabled = true
 script = ExtResource("3_anim")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=582956700]
+y_sort_enabled = true
 sprite_frames = SubResource("SpriteFrames_65p5e")
 animation = &"Idle_up"
 offset = Vector2(0, -16)
