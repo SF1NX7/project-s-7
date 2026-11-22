@@ -33,6 +33,8 @@ signal active_unit_changed(unit: Node2D, hero: HeroData)
 signal turn_completed(unit: Node2D, hero: HeroData)
 signal enemy_turn_started(unit: Node2D, enemy_data: Resource)
 signal attack_preview_finished
+## Stage 1: validated selection; no MP/HP/turn mutation.
+signal battle_spell_selected(unit: Node2D, hero: HeroData, spell: SpellData)
 
 var active_unit: Node2D
 var active_hero: HeroData
@@ -53,6 +55,16 @@ var _attack_targeting_active: bool = false
 var _attack_targets: Array[Node2D] = []
 var _attack_target_index: int = 0
 var _attack_message_serial: int = 0
+
+const BATTLE_MAGIC_SCENE: PackedScene = preload("res://scene/ui/MagicScreen.tscn")
+var _battle_magic_layer: CanvasLayer
+var _battle_magic: MagicScreen
+var _battle_magic_open: bool = false
+var _battle_spell_chosen: SpellData
+var _magic_move_process: bool
+var _magic_move_input: bool
+var _magic_cursor_input: bool
+var _magic_menu_input: bool
 
 const BATTLE_INVENTORY_SCENE: PackedScene = preload("res://scene/ui/InventoryScreen.tscn")
 var _battle_inventory_layer: CanvasLayer
@@ -132,6 +144,11 @@ func _on_command_selected(command: String) -> void:
 		return
 	if _menu == null or _menu.get("is_open") != true:
 		return
+	if _battle_magic_open:
+		return
+	if command == "magic":
+		_open_battle_magic()
+		return
 	if command == "item":
 		_open_battle_inventory()
 		return
@@ -152,6 +169,81 @@ func _on_command_selected(command: String) -> void:
 
 ## Open the existing global inventory UI, using its real grid/tabs/cursor.
 ## Stage 1: USE selects an item; target selection and effects are not implemented here.
+func _open_battle_magic() -> void:
+	if _battle_magic_open or _battle_inventory_open or active_hero == null:
+		return
+	var movement: Node = get_node_or_null(^"../BattleMove")
+	if movement != null and bool(movement.get("_animating")):
+		return
+	var screen: MagicScreen = BATTLE_MAGIC_SCENE.instantiate() as MagicScreen
+	if screen == null:
+		push_error("BattleTurn: MagicScreen root is invalid.")
+		return
+	_battle_magic_open = true
+	_battle_spell_chosen = null
+	_battle_magic = screen
+	_magic_menu_input = _menu.is_processing_input()
+	_menu.call("close_menu")
+	_menu.set_process_input(false)
+	if movement != null:
+		_magic_move_process = movement.is_processing()
+		_magic_move_input = movement.is_processing_unhandled_key_input()
+		movement.set("_direction", Vector2i.ZERO)
+		movement.set_process(false)
+		movement.set_process_unhandled_key_input(false)
+	if _cursor != null:
+		_magic_cursor_input = _cursor.is_processing_unhandled_key_input()
+		_cursor.set("_held_direction", Vector2i.ZERO)
+		_cursor.set_process_unhandled_key_input(false)
+	_battle_magic_layer = CanvasLayer.new()
+	_battle_magic_layer.name = "BattleMagicLayer"
+	_battle_magic_layer.layer = 40
+	add_child(_battle_magic_layer)
+	screen.party = party
+	_battle_magic_layer.add_child(screen)
+	screen.battle_spell_selected.connect(_on_battle_spell_selected)
+	screen.closed.connect(_on_battle_magic_closed)
+	screen.open_battle(party, active_hero)
+
+func _on_battle_spell_selected(spell: SpellData) -> void:
+	if _battle_magic_open and active_hero != null and spell != null:
+		if active_hero.mp_current >= maxi(0, spell.mp_cost):
+			_battle_spell_chosen = spell
+
+func _on_battle_magic_closed() -> void:
+	if not _battle_magic_open:
+		return
+	# Deferred: the closing key must not reach BattleMenu or Battlefield.
+	call_deferred("_finish_battle_magic_close")
+
+func _finish_battle_magic_close() -> void:
+	if not _battle_magic_open:
+		return
+	var chosen: SpellData = _battle_spell_chosen
+	_battle_spell_chosen = null
+	_battle_magic_open = false
+	if is_instance_valid(_battle_magic_layer):
+		_battle_magic_layer.queue_free()
+	_battle_magic_layer = null
+	_battle_magic = null
+	var movement: Node = get_node_or_null(^"../BattleMove")
+	if movement != null:
+		movement.set_process(_magic_move_process)
+		movement.set_process_unhandled_key_input(_magic_move_input)
+	if is_instance_valid(_cursor):
+		_cursor.set_process_unhandled_key_input(_magic_cursor_input)
+	if is_instance_valid(_menu):
+		_menu.set_process_input(_magic_menu_input)
+		if not _battle_stopped and not _is_switching:
+			_menu.call("open_menu")
+	if movement != null and movement.has_method("_apply_input_mode"):
+		movement.call("_apply_input_mode")
+	if chosen != null and active_hero != null and is_instance_valid(active_unit) and not _battle_stopped:
+		# Temporary stage-1 endpoint. Stage 2 will start targeting here.
+		print("S7 MAGIC SELECT: ", active_hero.hero_name, " -> ", chosen.title)
+		_show_attack_notice("Магия выбрана: " + chosen.title)
+		battle_spell_selected.emit(active_unit, active_hero, chosen)
+
 func _open_battle_inventory() -> void:
 	if _battle_inventory_open or active_hero == null:
 		return
@@ -773,6 +865,19 @@ func _enemy_int(entry: Resource, keys: Array[String], fallback: int) -> int:
 
 ## Вызывается из BattleCombat, когда битва завершилась.
 func stop_battle() -> void:
+	if _battle_magic_open:
+		_battle_magic_open = false
+		_battle_spell_chosen = null
+		if is_instance_valid(_battle_magic_layer):
+			_battle_magic_layer.visible = false
+			_battle_magic_layer.queue_free()
+		_battle_magic_layer = null
+		_battle_magic = null
+		var movement: Node = get_node_or_null(^"../BattleMove")
+		if movement != null:
+			movement.set_process(_magic_move_process)
+			movement.set_process_unhandled_key_input(_magic_move_input)
+		_set_player_controls_for_turn(false)
 	if _item_targeting_active:
 		_end_item_targeting()
 	if _battle_inventory_open:

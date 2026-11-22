@@ -2,6 +2,9 @@ extends Control
 class_name MagicScreen
 
 signal closed
+signal battle_spell_selected(spell: SpellData)
+
+var _battle_hero: HeroData = null
 
 @export_group("Data")
 @export var party: PartyData
@@ -53,6 +56,7 @@ func _ready() -> void:
 
 
 func open() -> void:
+	_battle_hero = null
 	visible = true
 	set_process_unhandled_input(true)
 	_collect_nodes()
@@ -63,6 +67,37 @@ func open() -> void:
 	_slot_idx = clampi(_slot_idx, 0, max(_slots.size() - 1, 0))
 	_refresh_all()
 
+
+func open_battle(p_party: PartyData, p_hero: HeroData) -> void:
+	party = p_party
+	_battle_hero = p_hero
+	visible = true
+	set_process_unhandled_input(true)
+	_collect_nodes()
+	_resolve_desc_nodes()
+	_hero_idx = maxi(0, party.heroes.find(p_hero)) if party != null else 0
+	_slot_idx = 0
+	_focus = Focus.GRID
+	_refresh_all()
+	for i in range(_slots.size()):
+		if _slots[i].exists and not _slots[i].locked and _slots[i].spell != null:
+			_slot_idx = i
+			break
+	_update_grid_highlight()
+	_show_selected_spell()
+
+func _confirm_battle_spell() -> void:
+	if _battle_hero == null or _slots.is_empty():
+		return
+	var slot: MagicSlot = _slots[_slot_idx]
+	if not slot.exists or slot.locked or slot.spell == null:
+		return
+	var spell: SpellData = slot.spell
+	_show_selected_spell()
+	if _battle_hero.mp_current < maxi(0, spell.mp_cost):
+		return
+	battle_spell_selected.emit(spell)
+	close()
 
 func close() -> void:
 	visible = false
@@ -75,7 +110,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event.is_action_pressed("menu") or event.is_action_pressed("ui_cancel"):
-		if _focus == Focus.GRID:
+		if _focus == Focus.GRID and _battle_hero == null:
 			_set_focus(Focus.PARTY)
 			get_viewport().set_input_as_handled()
 			return
@@ -84,7 +119,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event.is_action_pressed("action") or event.is_action_pressed("ui_accept"):
-		if _focus == Focus.PARTY:
+		if _battle_hero != null:
+			_confirm_battle_spell()
+		elif _focus == Focus.PARTY:
 			_set_focus(Focus.GRID)
 		else:
 			_show_selected_spell()
@@ -185,6 +222,8 @@ func _hero_count() -> int:
 
 
 func _get_hero() -> HeroData:
+	if _battle_hero != null:
+		return _battle_hero
 	if party == null:
 		return null
 	if _hero_idx < 0 or _hero_idx >= party.heroes.size():
@@ -193,6 +232,8 @@ func _get_hero() -> HeroData:
 
 
 func _select_hero(i: int) -> void:
+	if _battle_hero != null:
+		return
 	var n: int = _hero_count()
 	if n <= 0:
 		_hero_idx = 0
@@ -392,3 +433,7 @@ func _show_selected_spell() -> void:
 		sp.mp_cost,
 		elem
 	]
+	if _battle_hero != null:
+		desc_text.append_text("\nMP: %d" % _battle_hero.mp_current)
+		if _battle_hero.mp_current < maxi(0, sp.mp_cost):
+			desc_text.append_text("\n[color=red]Недостаточно MP.[/color]")
