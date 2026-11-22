@@ -45,6 +45,25 @@ signal battle_spell_targets_confirmed(unit: Node2D, hero: HeroData, spell: Spell
 @export var magic_center_outline: Color = Color(1.0, 0.9, 0.35, 1.0)
 @export_range(0.5, 4.0, 0.5) var magic_outline_width: float = 1.5
 
+
+@export_group("Magic Highlight Effects")
+@export var magic_enable_pulse: bool = true
+@export_range(0.0, 5.0, 0.05) var magic_pulse_speed: float = 1.25
+@export_range(0.0, 0.9, 0.05) var magic_pulse_strength: float = 0.28
+@export var magic_enable_rounded_corners: bool = true
+@export_range(0.0, 12.0, 1.0) var magic_corner_radius: float = 4.0
+@export_range(0.0, 6.0, 0.5) var magic_cell_inset: float = 1.0
+@export_range(0.0, 1.0, 0.05) var magic_fill_opacity: float = 0.8
+@export var magic_enable_glow: bool = true
+@export_range(0.0, 1.0, 0.05) var magic_glow_strength: float = 0.65
+@export var magic_enable_animated_border: bool = true
+@export var magic_enable_particles: bool = true
+@export_range(0, 16, 1) var magic_particle_amount: int = 5
+@export_range(0.0, 32.0, 0.5) var magic_particle_speed: float = 8.0
+@export_range(-10, 10, 1) var magic_overlay_z_index: int = 0
+
+var _magic_fx_clock: float = 0.0
+
 var _spell_targeting: bool = false
 var _pending_spell: SpellData
 var _spell_centers: Array[Vector2i] = []
@@ -365,8 +384,12 @@ func _start_spell_targeting(spell: SpellData) -> void:
 	_cursor.set("attack_targeting", true)
 	_spell_overlay = Node2D.new()
 	_spell_overlay.name = "MagicTargetOverlay"
-	var overlay_parent: Node = movement if movement != null else _cursor.get_parent()
+	# Keep the highlight between the terrain and Units, outside their Y-sort.
+	var overlay_parent: Node = _units.get_parent()
 	overlay_parent.add_child(_spell_overlay)
+	overlay_parent.move_child(_spell_overlay, _units.get_index())
+	_spell_overlay.z_index = magic_overlay_z_index
+	_magic_fx_clock = 0.0
 	_spell_overlay.draw.connect(_draw_spell_overlay)
 	_set_spell_center(initial)
 
@@ -414,6 +437,78 @@ func _move_spell_center(step: Vector2i) -> void:
 		_set_spell_center(_spell_single_cells[posmod(index + increment, _spell_single_cells.size())])
 
 
+
+func _process(delta: float) -> void:
+	if not _spell_targeting or not is_instance_valid(_spell_overlay):
+		return
+	if magic_enable_pulse or magic_enable_particles or magic_enable_animated_border:
+		_magic_fx_clock += delta
+		_spell_overlay.queue_redraw()
+
+
+func _magic_style(rect: Rect2, fill_color: Color, border_color: Color, width: int) -> void:
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+		return
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill_color
+	style.border_color = border_color
+	style.set_border_width_all(width)
+	var radius: int = 0
+	if magic_enable_rounded_corners:
+		radius = mini(roundi(magic_corner_radius), floori(minf(rect.size.x, rect.size.y) * 0.5))
+	style.set_corner_radius_all(radius)
+	style.anti_aliasing = false
+	_spell_overlay.draw_style_box(style, rect)
+
+
+func _magic_alpha(color: Color, opacity: float) -> Color:
+	return Color(color.r, color.g, color.b, clampf(color.a * opacity, 0.0, 1.0))
+
+
+func _magic_pulse(phase: float) -> float:
+	if not magic_enable_pulse:
+		return 1.0
+	return 1.0 - magic_pulse_strength * (0.5 + 0.5 * sin(_magic_fx_clock * TAU * magic_pulse_speed + phase))
+
+
+func _draw_magic_cell(rect: Rect2, cell: Vector2i, color: Color, affected: bool) -> void:
+	var inset: float = minf(magic_cell_inset, rect.size.x * 0.2)
+	var inner: Rect2 = rect.grow(-inset)
+	var phase: float = float(cell.x + cell.y) * 0.65
+	var pulse: float = _magic_pulse(phase)
+	var edge: Color = Color(color.r, color.g, color.b, 0.0)
+	if affected:
+		edge.a = 0.65 * pulse
+		if magic_enable_animated_border:
+			edge.a *= 0.6 + 0.4 * (0.5 + 0.5 * sin(_magic_fx_clock * TAU * maxf(0.2, magic_pulse_speed) - phase))
+		if magic_enable_glow:
+			var glow_color: Color = _magic_alpha(Color(color.r, color.g, color.b, 1.0), magic_glow_strength * 0.18 * pulse)
+			_magic_style(inner.grow(1.0), Color.TRANSPARENT, glow_color, 2)
+	_magic_style(inner, _magic_alpha(color, pulse * magic_fill_opacity), edge, 1 if affected else 0)
+	if not affected or not magic_enable_particles:
+		return
+	# Deterministic particles; no random flickering between frames.
+	var span: Vector2 = inner.size - Vector2(4.0, 4.0)
+	if span.x <= 0.0 or span.y <= 0.0:
+		return
+	for i in range(magic_particle_amount):
+		var seed: float = float(cell.x * 73 + cell.y * 137 + i * 29)
+		var px: float = fposmod(seed * 0.617, 1.0)
+		var life: float = fposmod(seed * 0.173 + _magic_fx_clock * magic_particle_speed / maxf(1.0, span.y), 1.0)
+		var point := inner.position + Vector2(2.0 + px * span.x, 2.0 + (1.0 - life) * span.y)
+		var spark: Color = color.lerp(Color.WHITE, 0.65)
+		spark.a = sin(life * PI) * 0.8
+		_spell_overlay.draw_rect(Rect2(point.floor(), Vector2.ONE * (2.0 if i % 3 == 0 else 1.0)), spark)
+
+
+func _draw_magic_marker(rect: Rect2, color: Color) -> void:
+	var pulse: float = _magic_pulse(0.0)
+	var width: int = maxi(1, roundi(magic_outline_width))
+	if magic_enable_glow:
+		_magic_style(rect.grow(1.0), Color.TRANSPARENT, _magic_alpha(color, magic_glow_strength * 0.3 * pulse), width + 1)
+	_magic_style(rect, Color.TRANSPARENT, _magic_alpha(color, pulse), width)
+
+
 func _draw_spell_overlay() -> void:
 	if not _spell_targeting or not is_instance_valid(_spell_overlay) or _pending_spell == null:
 		return
@@ -434,15 +529,15 @@ func _draw_spell_overlay() -> void:
 			var p: Vector2 = _spell_overlay.to_local(grid_parent.to_global(origin + Vector2(cell - first) * cell_size))
 			var rect := Rect2(p, Vector2.ONE * cell_size)
 			if in_range:
-				_spell_overlay.draw_rect(rect, magic_range_color)
+				_draw_magic_cell(rect, cell, magic_range_color, false)
 			if in_area:
-				_spell_overlay.draw_rect(rect, magic_area_color)
+				_draw_magic_cell(rect, cell, magic_area_color, true)
 	for enemy in _spell_targets_at(_spell_center):
 		var cell: Vector2i = _attack_world_to_cell(enemy.global_position)
 		var p: Vector2 = _spell_overlay.to_local(grid_parent.to_global(origin + Vector2(cell - first) * cell_size))
-		_spell_overlay.draw_rect(Rect2(p, Vector2.ONE * cell_size).grow(-1.0), magic_enemy_outline, false, magic_outline_width)
+		_draw_magic_marker(Rect2(p, Vector2.ONE * cell_size).grow(-1.0), magic_enemy_outline)
 	var center_pos: Vector2 = _spell_overlay.to_local(grid_parent.to_global(origin + Vector2(_spell_center - first) * cell_size))
-	_spell_overlay.draw_rect(Rect2(center_pos, Vector2.ONE * cell_size).grow(-3.0), magic_center_outline, false, magic_outline_width)
+	_draw_magic_marker(Rect2(center_pos, Vector2.ONE * cell_size).grow(-3.0), magic_center_outline)
 
 
 func _confirm_spell_targeting() -> void:
