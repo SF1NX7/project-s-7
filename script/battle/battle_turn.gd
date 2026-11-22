@@ -35,6 +35,27 @@ signal enemy_turn_started(unit: Node2D, enemy_data: Resource)
 signal attack_preview_finished
 ## Stage 1: validated selection; no MP/HP/turn mutation.
 signal battle_spell_selected(unit: Node2D, hero: HeroData, spell: SpellData)
+## Stage 2: confirmed target queue; no combat mutation yet.
+signal battle_spell_targets_confirmed(unit: Node2D, hero: HeroData, spell: SpellData, center: Vector2i, targets: Array[Node2D])
+
+@export_group("Magic Targeting")
+@export var magic_range_color: Color = Color(0.25, 0.55, 1.0, 0.18)
+@export var magic_area_color: Color = Color(1.0, 0.55, 0.12, 0.35)
+@export var magic_enemy_outline: Color = Color(1.0, 0.25, 0.15, 1.0)
+@export var magic_center_outline: Color = Color(1.0, 0.9, 0.35, 1.0)
+@export_range(0.5, 4.0, 0.5) var magic_outline_width: float = 1.5
+
+var _spell_targeting: bool = false
+var _pending_spell: SpellData
+var _spell_centers: Array[Vector2i] = []
+var _spell_single_cells: Array[Vector2i] = []
+var _spell_center: Vector2i
+var _spell_overlay: Node2D
+var _spell_saved_mode: bool
+var _spell_saved_move_process: bool
+var _spell_saved_move_input: bool
+var _spell_saved_cursor_input: bool
+var _spell_saved_menu_input: bool
 
 var active_unit: Node2D
 var active_hero: HeroData
@@ -144,7 +165,7 @@ func _on_command_selected(command: String) -> void:
 		return
 	if _menu == null or _menu.get("is_open") != true:
 		return
-	if _battle_magic_open:
+	if _battle_magic_open or _spell_targeting:
 		return
 	if command == "magic":
 		_open_battle_magic()
@@ -234,15 +255,249 @@ func _finish_battle_magic_close() -> void:
 		_cursor.set_process_unhandled_key_input(_magic_cursor_input)
 	if is_instance_valid(_menu):
 		_menu.set_process_input(_magic_menu_input)
-		if not _battle_stopped and not _is_switching:
+		if chosen == null and not _battle_stopped and not _is_switching:
 			_menu.call("open_menu")
 	if movement != null and movement.has_method("_apply_input_mode"):
 		movement.call("_apply_input_mode")
 	if chosen != null and active_hero != null and is_instance_valid(active_unit) and not _battle_stopped:
-		# Temporary stage-1 endpoint. Stage 2 will start targeting here.
-		print("S7 MAGIC SELECT: ", active_hero.hero_name, " -> ", chosen.title)
-		_show_attack_notice("Магия выбрана: " + chosen.title)
 		battle_spell_selected.emit(active_unit, active_hero, chosen)
+		_start_spell_targeting(chosen)
+
+
+# Magic Stage 2: targeting only. Uses the same cell convention as physical attacks.
+func is_spell_targeting() -> bool:
+	return _spell_targeting
+
+
+func is_spell_target_unit(unit: Node2D) -> bool:
+	return _spell_targeting and _spell_targets_at(_spell_center).has(unit)
+
+
+func _spell_distance(a: Vector2i, b: Vector2i) -> int:
+	return absi(a.x - b.x) + absi(a.y - b.y)
+
+
+func _spell_targets_at(center: Vector2i) -> Array[Node2D]:
+	var targets: Array[Node2D] = []
+	if _pending_spell == null or _units == null:
+		return targets
+	for child in _units.get_children():
+		var enemy: Node2D = child as Node2D
+		if not is_instance_valid(enemy) or not enemy.is_in_group(&"battle_enemies") or not _unit_is_alive(enemy):
+			continue
+		if _spell_distance(center, _attack_world_to_cell(enemy.global_position)) <= maxi(0, _pending_spell.area_radius):
+			targets.append(enemy)
+	# Center first, then map order. Each unit appears only once.
+	targets.sort_custom(func(a: Node2D, b: Node2D) -> bool:
+		var ca: Vector2i = _attack_world_to_cell(a.global_position)
+		var cb: Vector2i = _attack_world_to_cell(b.global_position)
+		var da: int = _spell_distance(center, ca)
+		var db: int = _spell_distance(center, cb)
+		if da != db:
+			return da < db
+		if ca.y != cb.y:
+			return ca.y < cb.y
+		if ca.x != cb.x:
+			return ca.x < cb.x
+		return a.get_index() < b.get_index()
+	)
+	return targets
+
+
+func _start_spell_targeting(spell: SpellData) -> void:
+	if spell == null or active_hero == null or not is_instance_valid(active_unit) or _cursor == null or _units == null or _battle_stopped or _is_switching:
+		return
+	if spell.effect_type != SpellData.EffectType.DAMAGE:
+		_show_attack_notice("Пока доступен выбор атакующей магии")
+		_restore_after_attack_cancel()
+		return
+	if active_hero.mp_current < maxi(0, spell.mp_cost):
+		_show_attack_notice("Недостаточно MP")
+		_restore_after_attack_cancel()
+		return
+	_pending_spell = spell
+	_spell_centers.clear()
+	_spell_single_cells.clear()
+	var origin: Vector2i = _attack_world_to_cell(active_unit.global_position)
+	var first: Vector2i = _cursor.get("first_cell")
+	var size: Vector2i = _cursor.get("grid_size")
+	for y in range(first.y, first.y + size.y):
+		for x in range(first.x, first.x + size.x):
+			var cell := Vector2i(x, y)
+			if _spell_distance(origin, cell) <= maxi(0, spell.range_tiles):
+				_spell_centers.append(cell)
+				if spell.area_radius <= 0 and not _spell_targets_at(cell).is_empty():
+					_spell_single_cells.append(cell)
+	var choices: Array[Vector2i] = _spell_single_cells if spell.area_radius <= 0 else _spell_centers
+	if choices.is_empty():
+		_pending_spell = null
+		_show_attack_notice("Нет целей в дальности магии")
+		_restore_after_attack_cancel()
+		return
+	var initial: Vector2i = choices[0]
+	var best: int = 2147483647
+	for cell in choices:
+		if _spell_targets_at(cell).is_empty():
+			continue
+		var distance: int = _spell_distance(origin, cell)
+		if distance < best:
+			best = distance
+			initial = cell
+	if best == 2147483647 and spell.area_radius > 0 and _spell_centers.has(origin):
+		initial = origin
+	_spell_targeting = true
+	_spell_saved_menu_input = _menu.is_processing_input()
+	_spell_saved_cursor_input = _cursor.is_processing_unhandled_key_input()
+	_menu.call("close_menu")
+	_menu.set_process_input(false)
+	var movement: Node2D = get_node_or_null(^"../BattleMove") as Node2D
+	if movement != null:
+		_spell_saved_mode = bool(movement.get("_movement_mode"))
+		_spell_saved_move_process = movement.is_processing()
+		_spell_saved_move_input = movement.is_processing_unhandled_key_input()
+		movement.set("_movement_mode", false)
+		movement.set("_direction", Vector2i.ZERO)
+		movement.set_process(false)
+		movement.set_process_unhandled_key_input(false)
+		movement.queue_redraw()
+	_cursor.set_process_unhandled_key_input(false)
+	_cursor.set("_held_direction", Vector2i.ZERO)
+	_cursor.set("attack_targeting", true)
+	_spell_overlay = Node2D.new()
+	_spell_overlay.name = "MagicTargetOverlay"
+	var overlay_parent: Node = movement if movement != null else _cursor.get_parent()
+	overlay_parent.add_child(_spell_overlay)
+	_spell_overlay.draw.connect(_draw_spell_overlay)
+	_set_spell_center(initial)
+
+
+func _set_spell_center(cell: Vector2i) -> void:
+	_spell_center = cell
+	_cursor.set("selected_cell", cell)
+	_cursor.set("cursor_visible", false)
+	_cursor.call("_update_cursor")
+	_cursor.emit_signal("cell_changed", cell)
+	if is_instance_valid(_spell_overlay):
+		_spell_overlay.queue_redraw()
+	_attack_message_serial += 1
+	if _label != null:
+		_label.text = "%s | Целей: %d" % [_pending_spell.title, _spell_targets_at(cell).size()]
+
+
+func _spell_target_input(key: Key) -> void:
+	match key:
+		KEY_Q, KEY_ESCAPE:
+			_end_spell_targeting(true)
+			_open_battle_magic()
+		KEY_E, KEY_ENTER, KEY_KP_ENTER:
+			_confirm_spell_targeting()
+		KEY_W, KEY_UP:
+			_move_spell_center(Vector2i.UP)
+		KEY_S, KEY_DOWN:
+			_move_spell_center(Vector2i.DOWN)
+		KEY_A, KEY_LEFT:
+			_move_spell_center(Vector2i.LEFT)
+		KEY_D, KEY_RIGHT:
+			_move_spell_center(Vector2i.RIGHT)
+
+
+func _move_spell_center(step: Vector2i) -> void:
+	if _pending_spell == null:
+		return
+	if _pending_spell.area_radius > 0:
+		var next_cell: Vector2i = _spell_center + step
+		if _spell_centers.has(next_cell):
+			_set_spell_center(next_cell)
+	else:
+		var index: int = _spell_single_cells.find(_spell_center)
+		var increment: int = 1 if step.x + step.y > 0 else -1
+		_set_spell_center(_spell_single_cells[posmod(index + increment, _spell_single_cells.size())])
+
+
+func _draw_spell_overlay() -> void:
+	if not _spell_targeting or not is_instance_valid(_spell_overlay) or _pending_spell == null:
+		return
+	var first: Vector2i = _cursor.get("first_cell")
+	var size: Vector2i = _cursor.get("grid_size")
+	var origin: Vector2 = _cursor.get("grid_origin")
+	var cell_size: float = float(_cursor.get("cell_size"))
+	var grid_parent: Node2D = _cursor.get_parent() as Node2D
+	if grid_parent == null:
+		return
+	for y in range(first.y, first.y + size.y):
+		for x in range(first.x, first.x + size.x):
+			var cell := Vector2i(x, y)
+			var in_range: bool = _spell_centers.has(cell)
+			var in_area: bool = _spell_distance(cell, _spell_center) <= maxi(0, _pending_spell.area_radius)
+			if not in_range and not in_area:
+				continue
+			var p: Vector2 = _spell_overlay.to_local(grid_parent.to_global(origin + Vector2(cell - first) * cell_size))
+			var rect := Rect2(p, Vector2.ONE * cell_size)
+			if in_range:
+				_spell_overlay.draw_rect(rect, magic_range_color)
+			if in_area:
+				_spell_overlay.draw_rect(rect, magic_area_color)
+	for enemy in _spell_targets_at(_spell_center):
+		var cell: Vector2i = _attack_world_to_cell(enemy.global_position)
+		var p: Vector2 = _spell_overlay.to_local(grid_parent.to_global(origin + Vector2(cell - first) * cell_size))
+		_spell_overlay.draw_rect(Rect2(p, Vector2.ONE * cell_size).grow(-1.0), magic_enemy_outline, false, magic_outline_width)
+	var center_pos: Vector2 = _spell_overlay.to_local(grid_parent.to_global(origin + Vector2(_spell_center - first) * cell_size))
+	_spell_overlay.draw_rect(Rect2(center_pos, Vector2.ONE * cell_size).grow(-3.0), magic_center_outline, false, magic_outline_width)
+
+
+func _confirm_spell_targeting() -> void:
+	if not _spell_targeting or _pending_spell == null or active_hero == null or _battle_stopped or _is_switching:
+		return
+	if not _spell_centers.has(_spell_center):
+		return
+	if active_hero.mp_current < maxi(0, _pending_spell.mp_cost):
+		_show_attack_notice("Недостаточно MP")
+		return
+	var targets: Array[Node2D] = _spell_targets_at(_spell_center)
+	if targets.is_empty():
+		_show_attack_notice("Нет противников в области")
+		return
+	var spell: SpellData = _pending_spell
+	var center: Vector2i = _spell_center
+	_end_spell_targeting(true)
+	battle_spell_targets_confirmed.emit(active_unit, active_hero, spell, center, targets)
+	var names := PackedStringArray()
+	for enemy in targets:
+		names.append(String(enemy.name))
+	print("S7 MAGIC TARGETS: ", spell.title, " -> ", ", ".join(names))
+	_restore_after_attack_cancel()
+	_show_attack_notice("%s: целей %d" % [spell.title, targets.size()])
+
+
+func _end_spell_targeting(restore_cursor: bool) -> void:
+	_spell_targeting = false
+	_pending_spell = null
+	_spell_centers.clear()
+	_spell_single_cells.clear()
+	if is_instance_valid(_spell_overlay):
+		_spell_overlay.hide()
+		_spell_overlay.queue_free()
+	_spell_overlay = null
+	var movement: Node2D = get_node_or_null(^"../BattleMove") as Node2D
+	if movement != null:
+		movement.set("_movement_mode", _spell_saved_mode)
+		movement.set("_direction", Vector2i.ZERO)
+		movement.set_process(_spell_saved_move_process)
+		movement.set_process_unhandled_key_input(_spell_saved_move_input)
+		movement.queue_redraw()
+	if is_instance_valid(_menu):
+		_menu.set_process_input(_spell_saved_menu_input)
+	if is_instance_valid(_cursor):
+		_cursor.set("attack_targeting", false)
+		_cursor.set("_held_direction", Vector2i.ZERO)
+		_cursor.set_process_unhandled_key_input(_spell_saved_cursor_input)
+		if restore_cursor:
+			_focus_cursor()
+		else:
+			_cursor.emit_signal("cell_changed", _cursor.get("selected_cell"))
+		_cursor.queue_redraw()
+	_update_indicator()
+
 
 func _open_battle_inventory() -> void:
 	if _battle_inventory_open or active_hero == null:
@@ -518,19 +773,25 @@ func _show_attack_notice(message: String) -> void:
 		_label.text = message
 	print("S7 ATTACK: ", message)
 	get_tree().create_timer(no_targets_duration).timeout.connect(func() -> void:
-		if is_inside_tree() and serial == _attack_message_serial and not _attack_targeting_active:
+		if is_inside_tree() and serial == _attack_message_serial and not _attack_targeting_active and not _spell_targeting:
 			_update_indicator()
 	)
 
 
 ## На этапе выбора цели Q или Esc возвращают обычный курсор.
 func _input(event: InputEvent) -> void:
-	if not (_attack_targeting_active or _item_targeting_active) or not (event is InputEventKey):
+	if not (_attack_targeting_active or _item_targeting_active or _spell_targeting) or not (event is InputEventKey):
 		return
 	var key_event: InputEventKey = event as InputEventKey
 	if not key_event.pressed or key_event.echo:
+		if _spell_targeting:
+			get_viewport().set_input_as_handled()
 		return
 	var key: Key = key_event.physical_keycode if key_event.physical_keycode != KEY_NONE else key_event.keycode
+	if _spell_targeting:
+		get_viewport().set_input_as_handled()
+		_spell_target_input(key)
+		return
 	if _item_targeting_active:
 		match key:
 			KEY_Q, KEY_ESCAPE:
@@ -683,6 +944,8 @@ func _on_attack_preview_finished() -> void:
 
 
 func _next_turn() -> void:
+	if _spell_targeting:
+		_end_spell_targeting(false)
 	_end_attack_targeting()
 	if _battle_stopped or _death_presentation_active or _roster.is_empty():
 		_is_switching = false
@@ -865,6 +1128,8 @@ func _enemy_int(entry: Resource, keys: Array[String], fallback: int) -> int:
 
 ## Вызывается из BattleCombat, когда битва завершилась.
 func stop_battle() -> void:
+	if _spell_targeting:
+		_end_spell_targeting(false)
 	if _battle_magic_open:
 		_battle_magic_open = false
 		_battle_spell_chosen = null

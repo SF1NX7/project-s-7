@@ -135,6 +135,10 @@ func _refresh_hover() -> void:
 			if cell_rect.grow(0.01).has_point(unit.global_position):
 				target = unit
 				break
+	# Magic targeting: allied / unaffected cells never become attack targets.
+	if is_instance_valid(_turn) and _turn.has_method("is_spell_targeting") and bool(_turn.call("is_spell_targeting")):
+		if target != null and not bool(_turn.call("is_spell_target_unit", target)):
+			target = null
 	if target != _hovered:
 		_clear_highlight()
 		_hovered = target
@@ -239,20 +243,12 @@ func _update_panel() -> void:
 		else:
 			_hide_panel(_hud, "top")
 
-		var item_targeting: bool = is_instance_valid(_turn) and _turn.get("_item_targeting_active") == true
-		var selected_target: Node2D = _hovered if is_instance_valid(_hovered) else null
-		var target_is_enemy: bool = selected_target != null and selected_target.is_in_group(&"battle_enemies")
-		var target_hero: HeroData = _find_hero(selected_target) if selected_target != null and not target_is_enemy else null
-		# При атаке по-прежнему отображаем только врага.
-		# При выборе предмета показываем снизу выбранного союзника.
-		if show_panel and selected_target != null and (target_is_enemy and not item_targeting or item_targeting and target_hero != null):
-			_transition_panel(_target_hud, "bottom", "target_%d" % selected_target.get_instance_id(), func() -> void:
-				if not is_instance_valid(selected_target):
-					return
-				if item_targeting:
-					_fill_hero(_find_hero(selected_target), selected_target, _target_hud)
-				else:
-					_fill_enemy(selected_target, _target_hud)
+		var enemy_selected: bool = is_instance_valid(_hovered) and _hovered.is_in_group(&"battle_enemies")
+		if show_panel and enemy_selected:
+			var selected_enemy: Node2D = _hovered
+			_transition_panel(_target_hud, "bottom", "target_%d" % selected_enemy.get_instance_id(), func() -> void:
+				if is_instance_valid(selected_enemy):
+					_fill_enemy(selected_enemy, _target_hud)
 			)
 		else:
 			_hide_panel(_target_hud, "bottom")

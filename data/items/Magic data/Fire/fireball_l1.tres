@@ -13,3 +13,5 @@ element = 1
 mp_cost = 5
 damage_min = 4
 damage_max = 8
+range_tiles = 1
+area_radius = 1

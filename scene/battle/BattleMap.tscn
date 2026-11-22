@@ -1409,6 +1409,9 @@ card_font = ExtResource("12_sh5ts")
 [node name="BattleTurn" type="Node" parent="." unique_id=1089211797]
 script = ExtResource("11_mw1ti")
 show_turn_indicator = false
+magic_enemy_outline = Color(0.8612534, 0.4340107, 0.15142694, 1)
+magic_center_outline = Color(0.85646725, 0, 0.7748048, 0.381)
+magic_outline_width = 2.0
 
 [node name="BattleMenu" parent="." unique_id=1491715639 instance=ExtResource("12_inp5g")]
 
