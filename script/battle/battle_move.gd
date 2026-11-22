@@ -30,6 +30,27 @@ extends Node2D
 @export var reachable_outline: Color = Color(0.30, 0.73, 1.0, 0.45)
 @export_range(0.0, 4.0, 0.25) var outline_width: float = 1.0
 
+@export_group("Movement Highlight Effects")
+@export var enable_pulse: bool = true
+@export_range(0.0, 8.0, 0.1) var pulse_speed: float = 1.5
+@export_range(0.0, 1.0, 0.05) var pulse_strength: float = 0.25
+@export var enable_rounded_corners: bool = true
+@export_range(0.0, 12.0, 0.5) var corner_radius: float = 3.0
+@export_range(0.0, 8.0, 0.25) var cell_inset: float = 1.0
+@export_range(0.0, 1.0, 0.05) var fill_opacity: float = 1.0
+@export var enable_glow: bool = true
+@export_range(0.0, 1.0, 0.05) var glow_strength: float = 0.35
+@export var enable_animated_border: bool = true
+@export_range(0.0, 8.0, 0.1) var border_speed: float = 1.0
+@export var enable_particles: bool = false
+@export_range(0, 12, 1) var particle_amount: int = 3
+@export_range(0.0, 30.0, 0.5) var particle_speed: float = 8.0
+@export var enable_wave: bool = true
+@export_range(0.0, 8.0, 0.1) var wave_speed: float = 2.0
+@export_range(0.0, 1.0, 0.05) var wave_strength: float = 0.35
+## Same Z as Units is sufficient when this overlay precedes Units in the tree.
+@export_range(-10, 10, 1) var overlay_z_index: int = 0
+
 @export_group("Testing")
 @export var start_in_movement_mode: bool = true
 
@@ -47,6 +68,9 @@ var _movement_mode: bool = true
 var _animating: bool = false
 var _direction: Vector2i = Vector2i.ZERO
 var _tween: Tween
+var _movement_overlay: Node2D
+var _highlight_time: float = 0.0
+var _highlight_tick: float = 0.0
 
 func _ready() -> void:
 	_turn = get_node_or_null(turn_path)
@@ -59,10 +83,24 @@ func _ready() -> void:
 		set_process(false)
 		set_process_unhandled_key_input(false)
 		return
+	call_deferred("_create_movement_overlay")
 	_movement_mode = start_in_movement_mode
 	if _turn.has_signal("active_unit_changed"):
 		_turn.connect("active_unit_changed", Callable(self, "_on_active_unit_changed"))
 	call_deferred("_initialize_current_unit")
+
+func _create_movement_overlay() -> void:
+	if not is_instance_valid(_units) or is_instance_valid(_movement_overlay):
+		return
+	_movement_overlay = Node2D.new()
+	_movement_overlay.name = "MovementHighlightOverlay"
+	_units.get_parent().add_child(_movement_overlay)
+	_units.get_parent().move_child(_movement_overlay, _units.get_index())
+	_movement_overlay.z_index = overlay_z_index
+	_movement_overlay.draw.connect(_draw_movement_overlay)
+	_movement_overlay.hide()
+	visibility_changed.connect(_sync_movement_overlay_visibility)
+	queue_redraw()
 
 func _initialize_current_unit() -> void:
 	_on_active_unit_changed(_turn.get("active_unit") as Node2D, _turn.get("active_hero"))
@@ -176,6 +214,7 @@ func _held_direction() -> Vector2i:
 
 
 func _process(_delta: float) -> void:
+	_update_movement_effect(_delta)
 	if _cursor == null:
 		return
 	_apply_input_mode()
@@ -367,13 +406,79 @@ func _play_unit_idle() -> void:
 	if _unit != null and _unit.has_method("play_idle"):
 		_unit.call("play_idle")
 
+# The original draw invalidation remains the public redraw entry point.
 func _draw() -> void:
-	if not show_reachable_cells or not _movement_mode or _unit == null:
+	_sync_movement_overlay_visibility()
+
+func _sync_movement_overlay_visibility() -> void:
+	if is_instance_valid(_movement_overlay):
+		_movement_overlay.visible = is_visible_in_tree() and show_reachable_cells and _movement_mode and is_instance_valid(_unit)
+		_movement_overlay.queue_redraw()
+
+func _exit_tree() -> void:
+	if is_instance_valid(_movement_overlay):
+		_movement_overlay.hide()
+		_movement_overlay.queue_free()
+
+func _update_movement_effect(delta: float) -> void:
+	if not is_instance_valid(_movement_overlay):
+		return
+	_movement_overlay.z_index = overlay_z_index
+	_movement_overlay.visible = is_visible_in_tree() and show_reachable_cells and _movement_mode and is_instance_valid(_unit)
+	if not _movement_overlay.visible:
+		return
+	_highlight_time += delta
+	_highlight_tick += delta
+	if _highlight_tick >= 1.0 / 30.0:
+		_highlight_tick = 0.0
+		_movement_overlay.queue_redraw()
+
+func _draw_movement_overlay() -> void:
+	if not is_instance_valid(_movement_overlay) or not is_visible_in_tree() or not show_reachable_cells or not _movement_mode or not is_instance_valid(_unit) or not is_instance_valid(_cursor):
 		return
 	var size: float = float(_cursor_size())
+	var inset: float = clampf(cell_inset, 0.0, maxf(0.0, size * 0.5 - 0.5))
+	var inner_size: float = size - inset * 2.0
+	var radius: int = mini(roundi(inner_size * 0.5), roundi(corner_radius)) if enable_rounded_corners else 0
+	var style := StyleBoxFlat.new()
+	style.set_corner_radius_all(radius)
+	style.corner_detail = 4
+	style.anti_aliasing = false
+	style.set_border_width_all(roundi(outline_width))
+	var glow := StyleBoxFlat.new()
+	glow.set_corner_radius_all(radius + 1 if radius > 0 else 0)
+	glow.corner_detail = 4
+	glow.anti_aliasing = false
 	for cell in _reachable.keys():
-		var top_left: Vector2 = to_local(_cell_top_left(cell))
-		var rect := Rect2(top_left, Vector2.ONE * size)
-		draw_rect(rect, reachable_color, true)
-		if outline_width > 0.0:
-			draw_rect(rect, reachable_outline, false, outline_width)
+		var top_left: Vector2 = _movement_overlay.to_local(_cell_top_left(cell))
+		var rect := Rect2(top_left + Vector2.ONE * inset, Vector2.ONE * inner_size)
+		var intensity: float = 1.0
+		if enable_pulse:
+			intensity *= 1.0 + sin(_highlight_time * pulse_speed * TAU) * pulse_strength
+		if enable_wave:
+			var phase: float = _highlight_time * wave_speed - float(_reachable[cell])
+			intensity *= 1.0 + (0.5 + 0.5 * cos(phase * TAU / 4.0)) * wave_strength
+		var fill: Color = reachable_color
+		fill.a = clampf(fill.a * fill_opacity * intensity, 0.0, 1.0)
+		var border: Color = reachable_outline
+		if enable_animated_border:
+			var border_phase: float = _highlight_time * border_speed * TAU - float(_reachable[cell]) * 0.6
+			border.a *= 0.65 + 0.35 * sin(border_phase)
+		border.a = clampf(border.a * intensity, 0.0, 1.0)
+		if enable_glow and glow_strength > 0.0:
+			var glow_color: Color = reachable_outline
+			glow_color.a = clampf(glow_color.a * glow_strength * intensity, 0.0, 1.0)
+			glow.bg_color = glow_color
+			_movement_overlay.draw_style_box(glow, rect.grow(minf(inset, 1.0)))
+		style.bg_color = fill
+		style.border_color = border
+		_movement_overlay.draw_style_box(style, rect)
+		if enable_particles:
+			for i in range(particle_amount):
+				var seed_value: float = float(cell.x * 31 + cell.y * 17 + i * 47)
+				var px: float = fposmod(seed_value * 0.618, 1.0)
+				var py: float = fposmod(seed_value * 0.137 - _highlight_time * particle_speed / maxf(inner_size, 1.0), 1.0)
+				var point: Vector2 = (rect.position + Vector2(px, py) * maxf(inner_size - 1.0, 0.0)).floor()
+				var spark: Color = reachable_outline.lerp(Color.WHITE, 0.6)
+				spark.a = clampf(reachable_outline.a * sin(py * PI) * intensity, 0.0, 1.0)
+				_movement_overlay.draw_rect(Rect2(point, Vector2.ONE), spark)

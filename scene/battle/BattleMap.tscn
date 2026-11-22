@@ -1409,9 +1409,16 @@ card_font = ExtResource("12_sh5ts")
 [node name="BattleTurn" type="Node" parent="." unique_id=1089211797]
 script = ExtResource("11_mw1ti")
 show_turn_indicator = false
-magic_enemy_outline = Color(0.8612534, 0.4340107, 0.15142694, 1)
-magic_center_outline = Color(0.85646725, 0, 0.7748048, 0.381)
+magic_area_color = Color(0.91971976, 0.6054965, 0.1897483, 0.37100002)
+magic_enemy_outline = Color(0.7617416, 0.13335153, 0, 0.5)
+magic_center_outline = Color(0.55739075, 0.00010463625, 0.50460464, 0.38039216)
 magic_outline_width = 2.0
+magic_pulse_speed = 1.65
+magic_pulse_strength = 0.15
+magic_corner_radius = 10.0
+magic_fill_opacity = 0.9
+magic_glow_strength = 0.45
+magic_particle_speed = 10.5
 
 [node name="BattleMenu" parent="." unique_id=1491715639 instance=ExtResource("12_inp5g")]
 
