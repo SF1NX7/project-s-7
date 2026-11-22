@@ -428,12 +428,15 @@ func _show_selected_spell() -> void:
 
 	desc_text.bbcode_enabled = true
 	var elem: String = str(SpellData.Element.keys()[int(sp.element)])
-	desc_text.text = "%s\n\nMana: %d\nElement: %s" % [
+	var description_text: String = "%s\n\nСтоимость MP: %d\nСтихия: %s" % [
 		sp.description,
 		sp.mp_cost,
 		elem
 	]
 	if _battle_hero != null:
-		desc_text.append_text("\nMP: %d" % _battle_hero.mp_current)
+		description_text += "\nТекущий MP: %d" % _battle_hero.mp_current
 		if _battle_hero.mp_current < maxi(0, sp.mp_cost):
-			desc_text.append_text("\n[color=red]Недостаточно MP.[/color]")
+			description_text += "\n[color=red]Недостаточно MP.[/color]"
+	# Assign the complete BBCode once. Do not clear() the internal document:
+	# repeated refreshes may assign the same cached text.
+	desc_text.text = description_text

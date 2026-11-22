@@ -552,16 +552,44 @@ func _confirm_spell_targeting() -> void:
 	if targets.is_empty():
 		_show_attack_notice("Нет противников в области")
 		return
+	if _combat == null or not _combat.has_method("plan_magic_damage") or not _combat.has_method("commit_pending_magic"):
+		_show_attack_notice("BattleCombat: отсутствует Stage 3")
+		return
 	var spell: SpellData = _pending_spell
 	var center: Vector2i = _spell_center
+	var caster: Node2D = active_unit
+	var hero: HeroData = active_hero
+	_is_switching = true
+	var result: Dictionary = _combat.call("plan_magic_damage", caster, spell, targets)
+	if not bool(result.get("ok", false)):
+		_is_switching = false
+		_show_attack_notice(str(result.get("reason", "Магия недоступна")))
+		return
 	_end_spell_targeting(true)
-	battle_spell_targets_confirmed.emit(active_unit, active_hero, spell, center, targets)
-	var names := PackedStringArray()
-	for enemy in targets:
-		names.append(String(enemy.name))
-	print("S7 MAGIC TARGETS: ", spell.title, " -> ", ", ".join(names))
-	_restore_after_attack_cancel()
-	_show_attack_notice("%s: целей %d" % [spell.title, targets.size()])
+	# Do not allow movement or menu input during the batch.
+	var movement: Node2D = get_node_or_null(^"../BattleMove") as Node2D
+	var move_process: bool = false
+	var move_input: bool = false
+	if movement != null:
+		move_process = movement.is_processing()
+		move_input = movement.is_processing_unhandled_key_input()
+		movement.set("_movement_mode", false)
+		movement.set("_direction", Vector2i.ZERO)
+		if movement.has_method("_sync_movement_overlay_visibility"):
+			movement.call("_sync_movement_overlay_visibility")
+		movement.queue_redraw()
+		movement.set_process(false)
+		movement.set_process_unhandled_key_input(false)
+	_set_player_controls_for_turn(false)
+	battle_spell_targets_confirmed.emit(caster, hero, spell, center, targets)
+	_show_attack_notice("%s: целей %d, урон %d" % [spell.title, targets.size(), int(result.get("damage", 0))])
+	await _combat.call("commit_pending_magic")
+	if _battle_stopped or not is_inside_tree() or bool(_combat.call("is_battle_finished")):
+		return
+	if is_instance_valid(movement):
+		movement.set_process(move_process)
+		movement.set_process_unhandled_key_input(move_input)
+	_complete_hero_attack_after_presentation(caster, hero)
 
 
 func _end_spell_targeting(restore_cursor: bool) -> void:

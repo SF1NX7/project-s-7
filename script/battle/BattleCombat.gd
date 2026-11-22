@@ -56,6 +56,13 @@ const RETURN_PIXEL_TRANSITION: PackedScene = preload("res://scene/battle/PixelTr
 ## Разрешает физические атаки в бою.
 @export var enable_physical_attacks: bool = true
 
+@export_group("Magic Combat")
+## Temporary Stage 3 formula: spell roll + caster magic - target resistance.
+@export var magic_use_stats: bool = true
+@export_range(0, 999, 1) var magic_xp_per_hit: int = 1
+## Use the defeated enemy's existing Experience reward.
+@export var magic_use_enemy_experience: bool = true
+
 @export_group("Поражение и победа")
 ## Имя героя-лидера. При его гибели бой немедленно считается проигранным.
 @export var party_leader_name: StringName = &"Max"
@@ -143,6 +150,7 @@ var _result_previous_pause: bool = false
 var _result_previous_process_mode: ProcessMode = Node.PROCESS_MODE_INHERIT
 var _return_transition_started: bool = false
 var _pending_exchange: Dictionary = {}
+var _magic_committing: bool = false
 
 
 
@@ -343,7 +351,146 @@ func _unit_name(unit: Node2D) -> String:
 
 ## Применяется ровно один раз после завершения FightScene.
 ## Умирающие ноды не удаляются до этого момента.
+## Stage 3: plan all targets before changing HP or MP.
+## The ordered actions are also the future FightScene presentation queue.
+func plan_magic_damage(attacker: Node2D, spell: SpellData, targets: Array[Node2D]) -> Dictionary:
+	var failure: Dictionary = {"ok": false, "reason": "Магия недоступна."}
+	if _battle_finished or not _pending_exchange.is_empty():
+		failure["reason"] = "Боевое действие уже выполняется."
+		return failure
+	if not is_instance_valid(attacker) or _units == null or attacker.get_parent() != _units or _is_enemy(attacker):
+		return failure
+	var hero: Resource = _hero_data(attacker)
+	if hero == null or get_current_hp(attacker) <= 0 or spell == null or spell.effect_type != SpellData.EffectType.DAMAGE:
+		return failure
+	var mp_before: int = get_current_mp(attacker)
+	var cost: int = maxi(0, spell.mp_cost)
+	if mp_before < cost:
+		failure["reason"] = "Недостаточно MP."
+		return failure
+	var actions: Array[Dictionary] = []
+	var seen: Dictionary = {}
+	var total_damage: int = 0
+	var total_xp: int = 0
+	var defeated_count: int = 0
+	for target in targets:
+		if not is_instance_valid(target) or target.get_parent() != _units or not _is_enemy(target):
+			continue
+		var ident: int = target.get_instance_id()
+		if seen.has(ident) or target.has_meta("battle_defeated"):
+			continue
+		seen[ident] = true
+		var before: int = get_current_hp(target)
+		if before <= 0:
+			continue
+		var missed: bool = not _roll_percent(float(clampi(spell.accuracy, 0, 100)))
+		var damage: int = 0
+		if not missed:
+			damage = spell.get_damage_roll(_rng)
+			if magic_use_stats:
+				damage += _stat(attacker, "magic") - _stat(target, "resistance")
+			damage = clampi(damage, 0, before)
+		var after: int = before - damage
+		var defeated: bool = after == 0
+		var xp: int = maxi(0, magic_xp_per_hit) if damage > 0 else 0
+		if defeated:
+			defeated_count += 1
+			if magic_use_enemy_experience:
+				xp += maxi(0, _resource_int(target.get_meta("enemy_data", null) as Resource, "experience"))
+		total_damage += damage
+		total_xp += xp
+		actions.append({
+			"kind": "magic_damage", "target": target,
+			"source_name": _unit_name(attacker), "target_name": _unit_name(target),
+			"spell_name": spell.title, "damage": damage, "dodged": missed,
+			"hp_before": before, "hp_after": after, "hp_max": get_max_hp(target),
+			"defeated": defeated, "xp_gain": xp
+		})
+	if actions.is_empty():
+		failure["reason"] = "Нет доступных противников."
+		return failure
+	var result: Dictionary = {
+		"ok": true, "kind": "magic_damage", "reason": "", "spell_name": spell.title,
+		"mp_before": mp_before, "mp_after": mp_before - cost, "mp_cost": cost,
+		"damage": total_damage, "xp_gain": total_xp, "defeated_count": defeated_count,
+		"actions": actions
+	}
+	_pending_exchange = {"kind": "magic_damage", "attacker": attacker, "spell": spell, "result": result}
+	return result
+
+
+## Stage 3 executes on the tactical map. Stage 4 can reuse the plan after FightScene.
+## Keep the pending action locked until all death presentations have completed.
+func commit_pending_magic() -> void:
+	if str(_pending_exchange.get("kind", "")) != "magic_damage" or _magic_committing:
+		return
+	_magic_committing = true
+	var attacker: Node2D = _pending_exchange.get("attacker") as Node2D
+	var result: Dictionary = _pending_exchange.get("result", {})
+	if not is_instance_valid(attacker):
+		_pending_exchange = {}
+		_magic_committing = false
+		return
+	var hero: Resource = _hero_data(attacker)
+	if hero == null:
+		_pending_exchange = {}
+		_magic_committing = false
+		return
+	var actions: Array = result.get("actions", [])
+	hero.set("mp_current", int(result["mp_after"]))
+	var defeated_units: Array[Node2D] = []
+	var leader_defeated: bool = false
+	var actual_xp: int = 0
+	print("S7 MAGIC: ", _unit_name(attacker), " casts ", result["spell_name"], "; MP ", result["mp_before"], " -> ", result["mp_after"])
+	# Apply ALL HP before checking victory or running death animations.
+	for action in actions:
+		var target: Node2D = action.get("target") as Node2D
+		if not is_instance_valid(target):
+			continue
+		_set_current_hp(target, int(action["hp_after"]))
+		actual_xp += int(action["xp_gain"])
+		if bool(action["defeated"]):
+			defeated_units.append(target)
+			leader_defeated = leader_defeated or _is_enemy_leader(target)
+	hero.set("xp", _resource_int(hero, "xp") + actual_xp)
+	for action in actions:
+		var target: Node2D = action.get("target") as Node2D
+		if not is_instance_valid(target):
+			continue
+		var unit_result: Dictionary = action.duplicate()
+		unit_result["ok"] = true
+		unit_result["actions"] = [action]
+		combat_resolved.emit(attacker, target, unit_result)
+		if int(action["damage"]) > 0 and get_current_hp(target) > 0 and _enemy_ai != null and _enemy_ai.has_method("notify_enemy_attacked"):
+			_enemy_ai.call("notify_enemy_attacked", target, attacker)
+		print("S7 MAGIC TARGET: ", action["target_name"], " | damage ", action["damage"], " | HP ", action["hp_before"], " -> ", action["hp_after"], " | miss ", action["dodged"], " | defeated ", action["defeated"])
+	print("S7 MAGIC RESULT: EXP +", actual_xp, "; defeated ", defeated_units.size())
+	# Mark every casualty first. Camera and pixel effects run sequentially.
+	for target in defeated_units:
+		if is_instance_valid(target):
+			target.set_meta("battle_defeated", true)
+			unit_defeated.emit(target, true)
+	var message: String = ""
+	if leader_defeated and victory_on_enemy_leader_death:
+		message = "Командир врагов повержен."
+	elif victory_on_all_enemies_defeated and not _has_living_enemies():
+		message = "Все противники повержены."
+	for target in defeated_units:
+		if is_instance_valid(target):
+			await _animate_death_and_remove(target, false, false, "")
+	_pending_exchange = {}
+	_magic_committing = false
+	if not message.is_empty():
+		_battle_finished = true
+		_battle_result = true
+		if stop_turns_on_battle_end and _turn != null and _turn.has_method("stop_battle"):
+			_turn.call("stop_battle")
+		await _finish_battle_presentation(true, message)
+
+
 func commit_pending_exchange() -> void:
+	if str(_pending_exchange.get("kind", "")) == "magic_damage":
+		return
 	if _pending_exchange.is_empty():
 		return
 	var exchange: Dictionary = _pending_exchange
