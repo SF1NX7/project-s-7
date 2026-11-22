@@ -1429,10 +1429,14 @@ reachable_color = Color(0.12543294, 0.4890107, 0.91332763, 0.2509804)
 reachable_outline = Color(0.3189972, 0.43405715, 0.6704099, 0.1)
 outline_width = 1.5
 pulse_speed = 1.2
-pulse_strength = 0.1
+pulse_strength = 0.15
+corner_radius = 10.0
+cell_inset = 7.0
+glow_strength = 0.15
 enable_animated_border = false
 particle_speed = 3.0
 enable_wave = false
+wave_speed = 1.1
 
 [node name="EnemySpawns" parent="." unique_id=595819906 instance=ExtResource("15_poc25")]
 

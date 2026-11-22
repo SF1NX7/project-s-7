@@ -780,3 +780,132 @@ func _exit_tree() -> void:
 	if tree != null:
 		tree.paused = false
 	_cleanup_preview()
+
+
+## Stage 4: visual-only presentation. BattleTurn commits the plan afterwards.
+func present_magic(caster: Node2D, spell: SpellData, result: Dictionary) -> void:
+	if not preview_enabled or fight_scene == null or _showing or not is_instance_valid(caster):
+		return
+	var actions: Array = result.get("actions", [])
+	if actions.is_empty():
+		return
+	var tree: SceneTree = get_tree()
+	var was_paused: bool = tree.paused
+	_showing = true
+	if freeze_battle_during_preview:
+		tree.paused = true
+	if fade_enabled:
+		_create_fade_overlay(tree)
+		await _fade_to(1.0, fade_out_seconds, tree)
+	_overlay = CanvasLayer.new()
+	_overlay.name = "FightMagicOverlay"
+	_overlay.layer = overlay_layer
+	_overlay.process_mode = Node.PROCESS_MODE_ALWAYS
+	tree.root.add_child(_overlay)
+	var fight: Node2D = fight_scene.instantiate() as Node2D
+	fight.process_mode = Node.PROCESS_MODE_ALWAYS
+	if _has_property(fight, "test_keyboard"):
+		fight.set("test_keyboard", false)
+	_overlay.add_child(fight)
+	var hud: CanvasLayer = fight.get_node_or_null("HUD") as CanvasLayer
+	if hud != null:
+		hud.layer = overlay_layer + 1
+	var hero: AnimatedSprite2D = fight.get_node_or_null("HeroAnchor/HeroVisual/Body") as AnimatedSprite2D
+	var enemy: AnimatedSprite2D = fight.get_node_or_null("EnemyAnchor/EnemyVisual/Body") as AnimatedSprite2D
+	var anchor: Node2D = fight.get_node_or_null("EnemyAnchor") as Node2D
+	var output: RichTextLabel = fight.get_node_or_null("HUD/DialoguePanel/BattleText") as RichTextLabel
+	var panel: Node = fight.get_node_or_null("HUD/FightPanel")
+	if hero == null or enemy == null or anchor == null:
+		_cleanup_preview()
+		tree.paused = was_paused
+		_showing = false
+		return
+	var hero_frames: SpriteFrames = hero.sprite_frames
+	var enemy_frames: SpriteFrames = enemy.sprite_frames
+	var enemy_scale: Vector2 = enemy.scale
+	var enemy_modulate: Color = enemy.modulate
+	var enemy_self_modulate: Color = enemy.self_modulate
+	var enemy_position: Vector2 = enemy.position
+	var enemy_material: Material = enemy.material
+	var home: Vector2 = anchor.position
+	var away: Vector2 = home + Vector2(fight.get_viewport_rect().size.x + 200.0, 0)
+	_configure_heal_sprite(hero, caster, hero_frames, enemy_frames)
+	_configure_heal_panel_side(panel, true, caster)
+	var first: Dictionary = actions[0]
+	var first_target: Node2D = first.get("target") as Node2D
+	if is_instance_valid(first_target):
+		_configure_heal_sprite(enemy, first_target, hero_frames, enemy_frames)
+		_configure_heal_panel_side(panel, false, first_target)
+	if panel != null and panel.has_method("reset_emotions"):
+		panel.call("reset_emotions")
+	if output != null:
+		output.text = ""
+	var visual = preload("res://script/battle/magic_spell_visual.gd").new()
+	visual.setup(fight)
+	if fade_enabled:
+		await _fade_to(0.0, fade_in_seconds, tree)
+	var caster_name: String = str(first.get("source_name", caster.name))
+	await _show_message(output, "%s применяет %s!" % [caster_name, spell.title], tree, announcement_seconds)
+	_set_portrait_emotion(panel, &"trigger_attack", true)
+	await _play_attack(hero, tree)
+	_set_portrait_emotion(panel, &"trigger_idle", true)
+	await visual.darken(spell.screen_darkness, spell.darken_duration)
+	for i in range(actions.size()):
+		var action: Dictionary = actions[i]
+		var target: Node2D = action.get("target") as Node2D
+		if not is_instance_valid(target):
+			continue
+		if i > 0:
+			enemy.stop()
+			enemy.sprite_frames = enemy_frames
+			enemy.scale = enemy_scale
+			enemy.position = enemy_position
+			enemy.modulate = enemy_modulate
+			enemy.self_modulate = enemy_self_modulate
+			enemy.material = enemy_material
+			enemy.show()
+			anchor.position = away
+			_configure_heal_sprite(enemy, target, hero_frames, enemy_frames)
+			_configure_heal_panel_side(panel, false, target)
+			_set_portrait_emotion(panel, &"trigger_idle", false)
+			await _magic_slide(anchor, home, spell.target_slide_duration)
+		var cast_point: Vector2 = hero.to_global(hero.offset + spell.cast_offset)
+		var hit_point: Vector2 = enemy.to_global(enemy.offset + spell.impact_offset)
+		await visual.play_spell(spell, cast_point, hit_point)
+		var victim: String = str(action.get("target_name", target.name))
+		if bool(action.get("dodged", false)):
+			await _play_dodge(enemy, tree)
+			await _show_message(output, "%s избегает магии!" % victim, tree, result_hold_seconds)
+		else:
+			_set_portrait_emotion(panel, &"trigger_hit", false)
+			await _play_hit(enemy, tree)
+			if panel != null and panel.has_method("animate_damage"):
+				await panel.call("animate_damage", false, int(action.get("damage", 0)))
+			await _show_message(output, "%s получает %d ед. урона." % [victim, int(action.get("damage", 0))], tree, result_hold_seconds)
+		if bool(action.get("defeated", false)):
+			_set_portrait_emotion(panel, &"trigger_defeat", false)
+			if is_instance_valid(_combat) and _combat.has_method("play_enemy_pixel_death"):
+				await _combat.call("play_enemy_pixel_death", enemy, true)
+			enemy.hide()
+			await _show_message(output, "%s повержен!" % victim, tree, result_hold_seconds)
+		elif i < actions.size() - 1:
+			await _magic_slide(anchor, away, spell.target_slide_duration)
+	await visual.darken(0.0, spell.darken_duration)
+	var xp: int = int(result.get("xp_gain", 0))
+	if xp > 0:
+		await _show_message(output, "%s получает %d XP." % [caster_name, xp], tree, result_hold_seconds)
+	if fade_enabled:
+		await _fade_to(1.0, fade_out_seconds, tree)
+	_overlay.queue_free()
+	_overlay = null
+	if fade_enabled:
+		await _fade_to(0.0, fade_in_seconds, tree)
+	_cleanup_fade()
+	tree.paused = was_paused
+	_showing = false
+
+func _magic_slide(anchor: Node2D, destination: Vector2, seconds: float) -> void:
+	var tween: Tween = get_tree().create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.tween_property(anchor, "position", destination, seconds)
+	await tween.finished

@@ -2,6 +2,8 @@
 
 [ext_resource type="Script" uid="uid://bu35dva6wp5a6" path="res://script/system/SpellData.gd" id="1_in5fy"]
 [ext_resource type="Texture2D" uid="uid://cfa2pbtmth4gh" path="res://data/items/Magic data/Fire/11.png" id="1_yv6pe"]
+[ext_resource type="Texture2D" uid="uid://cvda4wx355msv" path="res://data/magic_animations/Fireball_impact1.png" id="2_ttr4t"]
+[ext_resource type="Texture2D" uid="uid://4kbcl6lx3mkj" path="res://data/magic_animations/Fireball_projectile1.png" id="3_rv3cb"]
 
 [resource]
 script = ExtResource("1_in5fy")
@@ -11,7 +13,15 @@ description = "Запускает малый шар огня, нанося не�
 icon = ExtResource("1_yv6pe")
 element = 1
 mp_cost = 5
-damage_min = 2
+damage_min = 3
 damage_max = 6
 range_tiles = 1
 area_radius = 1
+projectile_sheet = ExtResource("3_rv3cb")
+impact_sheet = ExtResource("2_ttr4t")
+impact_frames = 5
+impact_fps = 12.5
+projectile_speed = 360.0
+wave_amplitude = 1.0
+arc_height = 3.0
+cast_offset = Vector2(20, 11.495)

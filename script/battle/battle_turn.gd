@@ -583,6 +583,9 @@ func _confirm_spell_targeting() -> void:
 	_set_player_controls_for_turn(false)
 	battle_spell_targets_confirmed.emit(caster, hero, spell, center, targets)
 	_show_attack_notice("%s: целей %d, урон %d" % [spell.title, targets.size(), int(result.get("damage", 0))])
+	var magic_preview: Node = get_node_or_null(^"../FightPreviewBridge")
+	if magic_preview != null and magic_preview.has_method("present_magic"):
+		await magic_preview.call("present_magic", caster, spell, result)
 	await _combat.call("commit_pending_magic")
 	if _battle_stopped or not is_inside_tree() or bool(_combat.call("is_battle_finished")):
 		return
