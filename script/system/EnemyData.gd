@@ -24,6 +24,11 @@ enum AIStyle { AGGRESSIVE, DEFENSIVE, PASSIVE, RANGED, SUPPORT }
 ## Пустой ресурс оставляет прежний механизм отображения.
 @export var battle_sprite_frames: SpriteFrames
 
+@export_group("Magic Attachment Points")
+## Local pixels relative to the battle sprite offset. Zero preserves the previous trajectory.
+@export var magic_cast_point: Vector2 = Vector2.ZERO
+@export var magic_impact_point: Vector2 = Vector2.ZERO
+
 @export_group("Base Stats")
 @export_range(1, 9999, 1) var max_hp: int = 8
 @export_range(0, 9999, 1) var max_mp: int = 0

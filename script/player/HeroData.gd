@@ -22,6 +22,11 @@ var allowed_profs_mask: int = 0
 ## Пустой ресурс оставляет прежний механизм отображения.
 @export var battle_sprite_frames: SpriteFrames
 
+@export_group("Magic Attachment Points")
+## Local pixels relative to the battle sprite offset. Zero preserves the previous trajectory.
+@export var magic_cast_point: Vector2 = Vector2.ZERO
+@export var magic_impact_point: Vector2 = Vector2.ZERO
+
 @export_group("Base Stats")
 @export var base_stats: StatsBonus = StatsBonus.new()
 

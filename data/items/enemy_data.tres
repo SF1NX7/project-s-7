@@ -1,11 +1,12 @@
-[gd_resource type="Resource" script_class="EnemyCatalog" format=3 uid="uid://7msnxqhswn3r"]
+[gd_resource type="Resource" script_class="EnemyCatalog" format=3]
 
-[ext_resource type="Script" uid="uid://cnd5iq3tkbbuc" path="res://script/system/EnemyCatalog.gd" id="1_catalog"]
-[ext_resource type="Script" uid="uid://casjtwqr2hmuv" path="res://script/system/EnemyData.gd" id="2_enemy"]
-[ext_resource type="Texture2D" uid="uid://bs45h2jkh2hdp" path="res://art/Portrait/Enemies/goblin1/GoblinIdle.png" id="2_ohjnc"]
-[ext_resource type="Texture2D" uid="uid://gl1dfwljwjyn" path="res://art/Portrait/Enemies/goblin1/GoblinAttack.png" id="3_o5mil"]
-[ext_resource type="PackedScene" uid="uid://d2ftdwv0ucmem" path="res://scene/battle/enemies/Goblin.tscn" id="3_scene"]
-[ext_resource type="Texture2D" uid="uid://w2lk2805iv4" path="res://art/Portrait/Enemies/goblin1/GoblinHit.png" id="4_4ciye"]
+[ext_resource type="Script" path="res://script/system/EnemyCatalog.gd" id="1_catalog"]
+[ext_resource type="Script" path="res://script/system/EnemyData.gd" id="2_enemy"]
+[ext_resource type="SpriteFrames" path="res://data/battle_animations/goblin_battle.tres" id="2_o5mil"]
+[ext_resource type="Texture2D" path="res://art/Portrait/Enemies/goblin1/GoblinIdle.png" id="2_ohjnc"]
+[ext_resource type="Texture2D" path="res://art/Portrait/Enemies/goblin1/GoblinAttack.png" id="3_o5mil"]
+[ext_resource type="PackedScene" path="res://scene/battle/enemies/Goblin.tscn" id="3_scene"]
+[ext_resource type="Texture2D" path="res://art/Portrait/Enemies/goblin1/GoblinHit.png" id="4_4ciye"]
 
 [sub_resource type="Resource" id="EnemyData_goblin"]
 script = ExtResource("2_enemy")
@@ -14,6 +15,8 @@ scene = ExtResource("3_scene")
 portrait = ExtResource("2_ohjnc")
 portrait_attack = ExtResource("3_o5mil")
 portrait_hit = ExtResource("4_4ciye")
+battle_sprite_frames = ExtResource("2_o5mil")
+magic_impact_point = Vector2(-5.0858765, 37.97606)
 max_hp = 10
 luck = 1
 base_movement = 3

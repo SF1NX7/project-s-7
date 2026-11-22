@@ -40,7 +40,7 @@ func _make_sprite(sheet: Texture2D, count: int, fps: float, looped: bool, magnif
 	sprite.play(&"effect")
 	return sprite
 
-func _point(start: Vector2, end: Vector2, phase: float, spell: SpellData) -> Vector2:
+static func _point(start: Vector2, end: Vector2, phase: float, spell: SpellData) -> Vector2:
 	var normal: Vector2 = (end - start).normalized().orthogonal()
 	var envelope: float = sin(PI * phase)
 	return start.lerp(end, phase) + normal * sin(TAU * spell.wave_count * phase) * spell.wave_amplitude * envelope - Vector2(0, spell.arc_height * envelope)
@@ -76,3 +76,13 @@ func play_spell(spell: SpellData, cast_world: Vector2, hit_world: Vector2) -> vo
 		impact.queue_free()
 	else:
 		await get_tree().create_timer(0.15, true).timeout
+
+## Shared by the real battle and preview. Character points supplement spell offsets.
+static func attachment(sprite: AnimatedSprite2D, data: Resource, property_name: String, spell_offset: Vector2) -> Vector2:
+	var extra: Vector2 = Vector2.ZERO
+	if data != null:
+		for info: Dictionary in data.get_property_list():
+			if str(info.get("name", "")) == property_name:
+				extra = data.get(property_name)
+				break
+	return sprite.to_global(sprite.offset + extra + spell_offset)

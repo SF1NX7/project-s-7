@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="SpellData" format=3 uid="uid://bjmk7v12vva26"]
+[gd_resource type="Resource" script_class="SpellData" format=3]
 
-[ext_resource type="Script" uid="uid://bu35dva6wp5a6" path="res://script/system/SpellData.gd" id="1_in5fy"]
-[ext_resource type="Texture2D" uid="uid://cfa2pbtmth4gh" path="res://data/items/Magic data/Fire/11.png" id="1_yv6pe"]
-[ext_resource type="Texture2D" uid="uid://cvda4wx355msv" path="res://data/magic_animations/Fireball_impact1.png" id="2_ttr4t"]
-[ext_resource type="Texture2D" uid="uid://4kbcl6lx3mkj" path="res://data/magic_animations/Fireball_projectile1.png" id="3_rv3cb"]
+[ext_resource type="Script" path="res://script/system/SpellData.gd" id="1_in5fy"]
+[ext_resource type="Texture2D" path="res://data/items/Magic data/Fire/11.png" id="1_yv6pe"]
+[ext_resource type="Texture2D" path="res://data/magic_animations/Fireball_impact1.png" id="2_ttr4t"]
+[ext_resource type="Texture2D" path="res://data/magic_animations/Fireball_projectile1.png" id="3_rv3cb"]
 
 [resource]
 script = ExtResource("1_in5fy")
@@ -22,6 +22,8 @@ impact_sheet = ExtResource("2_ttr4t")
 impact_frames = 5
 impact_fps = 12.5
 projectile_speed = 360.0
-wave_amplitude = 1.0
-arc_height = 3.0
-cast_offset = Vector2(20, 11.495)
+wave_amplitude = 2.0
+wave_count = 6.5
+arc_height = 2.0
+cast_offset = Vector2(8, 6)
+impact_offset = Vector2(0, 1)

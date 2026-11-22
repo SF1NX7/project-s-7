@@ -846,10 +846,8 @@ func present_magic(caster: Node2D, spell: SpellData, result: Dictionary) -> void
 		await _fade_to(0.0, fade_in_seconds, tree)
 	var caster_name: String = str(first.get("source_name", caster.name))
 	await _show_message(output, "%s применяет %s!" % [caster_name, spell.title], tree, announcement_seconds)
-	_set_portrait_emotion(panel, &"trigger_attack", true)
-	await _play_attack(hero, tree)
-	_set_portrait_emotion(panel, &"trigger_idle", true)
 	await visual.darken(spell.screen_darkness, spell.darken_duration)
+	var cast_started: bool = false
 	for i in range(actions.size()):
 		var action: Dictionary = actions[i]
 		var target: Node2D = action.get("target") as Node2D
@@ -869,8 +867,12 @@ func present_magic(caster: Node2D, spell: SpellData, result: Dictionary) -> void
 			_configure_heal_panel_side(panel, false, target)
 			_set_portrait_emotion(panel, &"trigger_idle", false)
 			await _magic_slide(anchor, home, spell.target_slide_duration)
-		var cast_point: Vector2 = hero.to_global(hero.offset + spell.cast_offset)
-		var hit_point: Vector2 = enemy.to_global(enemy.offset + spell.impact_offset)
+		if not cast_started:
+			_set_portrait_emotion(panel, &"trigger_attack", true)
+			await _magic_cast_to_release(hero, panel, tree)
+			cast_started = true
+		var cast_point: Vector2 = preload("res://script/battle/magic_spell_visual.gd").attachment(hero, _unit_visual_data(caster), "magic_cast_point", spell.cast_offset)
+		var hit_point: Vector2 = preload("res://script/battle/magic_spell_visual.gd").attachment(enemy, _unit_visual_data(target), "magic_impact_point", spell.impact_offset)
 		await visual.play_spell(spell, cast_point, hit_point)
 		var victim: String = str(action.get("target_name", target.name))
 		if bool(action.get("dodged", false)):
@@ -903,6 +905,43 @@ func present_magic(caster: Node2D, spell: SpellData, result: Dictionary) -> void
 	_cleanup_fade()
 	tree.paused = was_paused
 	_showing = false
+
+
+# Magic only: release at the beginning of the final attack frame.
+# Keep that frame visible for its configured duration while the spell flies.
+func _magic_cast_to_release(sprite: AnimatedSprite2D, panel: Node, tree: SceneTree) -> void:
+	if not is_instance_valid(sprite) or sprite.sprite_frames == null or not sprite.sprite_frames.has_animation(&"attack"):
+		_set_portrait_emotion(panel, &"trigger_idle", true)
+		return
+	var frames: SpriteFrames = sprite.sprite_frames
+	var count: int = frames.get_frame_count(&"attack")
+	var fps: float = frames.get_animation_speed(&"attack") * sprite.speed_scale
+	if count <= 0 or fps <= 0.0:
+		_set_portrait_emotion(panel, &"trigger_idle", true)
+		return
+	var last: int = count - 1
+	var lead_seconds: float = 0.0
+	for index in range(last):
+		lead_seconds += frames.get_frame_duration(&"attack", index) / fps
+	sprite.stop()
+	sprite.play(&"attack")
+	sprite.set_frame_and_progress(0, 0.0)
+	var deadline: int = Time.get_ticks_msec() + int(maxf(1.0, lead_seconds * 2.0 + 0.5) * 1000.0)
+	while is_instance_valid(sprite) and sprite.animation == &"attack" and sprite.frame < last and Time.get_ticks_msec() < deadline:
+		await tree.process_frame
+	if not is_instance_valid(sprite):
+		return
+	# Freeze the release pose even if attack accidentally has Loop enabled.
+	sprite.pause()
+	sprite.set_frame_and_progress(last, 0.0)
+	var hold: float = frames.get_frame_duration(&"attack", last) / fps
+	tree.create_timer(hold, true).timeout.connect(func() -> void:
+		if is_instance_valid(sprite) and sprite.animation == &"attack":
+			if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(&"idle"):
+				sprite.play(&"idle")
+			if is_instance_valid(panel):
+				_set_portrait_emotion(panel, &"trigger_idle", true)
+	)
 
 func _magic_slide(anchor: Node2D, destination: Vector2, seconds: float) -> void:
 	var tween: Tween = get_tree().create_tween()
