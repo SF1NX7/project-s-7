@@ -53,6 +53,19 @@ enum EffectType {
 @export var projectile_sheet: Texture2D
 @export_range(1, 64, 1) var projectile_frames: int = 4
 @export_range(1.0, 60.0, 0.5) var projectile_fps: float = 12.0
+# Meteor / area spell presentation. These fields are independent for each spell card.
+@export_group("Lingering Magic Effect")
+@export var has_lingering_effect: bool = false
+@export var lingering_sheet: Texture2D
+@export_range(1, 64, 1) var lingering_frames: int = 4
+@export_range(1.0, 60.0, 0.5) var lingering_fps: float = 10.0
+@export_range(0.1, 8.0, 0.1) var lingering_scale: float = 1.0
+@export var lingering_offset: Vector2 = Vector2(0, 60)
+@export var play_main_effect_once: bool = false
+@export var keep_effect_between_targets: bool = true
+@export_range(0.0, 2.0, 0.05) var lingering_start_delay: float = 0.0
+
+@export_group("Magic Visual Effects")
 @export var impact_sheet: Texture2D
 @export_range(1, 64, 1) var impact_frames: int = 4
 @export_range(1.0, 60.0, 0.5) var impact_fps: float = 10.0

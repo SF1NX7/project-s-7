@@ -1,6 +1,7 @@
 extends Node2D
 ## Temporary visual layer, owned by the current FightScene.
 var _shade: ColorRect
+var _lingering_sprite: AnimatedSprite2D
 
 func setup(fight: Node2D) -> void:
 	fight.add_child(self)
@@ -90,3 +91,24 @@ static func attachment(sprite: AnimatedSprite2D, data: Resource, property_name: 
 				extra = data.get(property_name)
 				break
 	return sprite.to_global(sprite.offset + extra + spell_offset)
+
+## Start the third (looping) sheet after the initial impact.
+## The sprite stays at the first enemy's combat slot while subsequent targets swap in.
+func start_lingering(spell: SpellData, hit_world: Vector2) -> void:
+	stop_lingering()
+	if not spell.has_lingering_effect or spell.lingering_sheet == null:
+		return
+	if spell.lingering_start_delay > 0.0:
+		await get_tree().create_timer(spell.lingering_start_delay, true).timeout
+	_lingering_sprite = _make_sprite(spell.lingering_sheet, spell.lingering_frames, spell.lingering_fps, true, spell.lingering_scale)
+	if _lingering_sprite == null:
+		return
+	_lingering_sprite.name = "MagicLingeringEffect"
+	_lingering_sprite.position = to_local(hit_world) + spell.lingering_offset
+	# Draw the ground effect behind the active enemy character when possible.
+	_lingering_sprite.z_index = -1
+
+func stop_lingering() -> void:
+	if is_instance_valid(_lingering_sprite):
+		_lingering_sprite.queue_free()
+	_lingering_sprite = null

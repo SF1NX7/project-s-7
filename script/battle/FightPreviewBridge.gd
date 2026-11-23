@@ -848,12 +848,15 @@ func present_magic(caster: Node2D, spell: SpellData, result: Dictionary) -> void
 	await _show_message(output, "%s применяет %s!" % [caster_name, spell.title], tree, announcement_seconds)
 	await visual.darken(spell.screen_darkness, spell.darken_duration)
 	var cast_started: bool = false
+	var primary_effect_played: bool = false
 	for i in range(actions.size()):
 		var action: Dictionary = actions[i]
 		var target: Node2D = action.get("target") as Node2D
 		if not is_instance_valid(target):
 			continue
 		if i > 0:
+			if spell.has_lingering_effect and not spell.keep_effect_between_targets:
+				visual.stop_lingering()
 			enemy.stop()
 			enemy.sprite_frames = enemy_frames
 			enemy.scale = enemy_scale
@@ -873,7 +876,17 @@ func present_magic(caster: Node2D, spell: SpellData, result: Dictionary) -> void
 			cast_started = true
 		var cast_point: Vector2 = preload("res://script/battle/magic_spell_visual.gd").attachment(hero, _unit_visual_data(caster), "magic_cast_point", spell.cast_offset)
 		var hit_point: Vector2 = preload("res://script/battle/magic_spell_visual.gd").attachment(enemy, _unit_visual_data(target), "magic_impact_point", spell.impact_offset)
-		await visual.play_spell(spell, cast_point, hit_point)
+		# Meteor-style spells use their projectile and impact only once.
+		# Following targets retain the looping ground effect and still take their
+		# independently calculated damage and defeat animations.
+		var play_primary: bool = (not spell.play_main_effect_once) or (not primary_effect_played)
+		if play_primary:
+			await visual.play_spell(spell, cast_point, hit_point)
+			primary_effect_played = true
+			if spell.has_lingering_effect:
+				await visual.start_lingering(spell, hit_point)
+		elif spell.has_lingering_effect and not spell.keep_effect_between_targets:
+			await visual.start_lingering(spell, hit_point)
 		var victim: String = str(action.get("target_name", target.name))
 		if bool(action.get("dodged", false)):
 			await _play_dodge(enemy, tree)
@@ -892,6 +905,7 @@ func present_magic(caster: Node2D, spell: SpellData, result: Dictionary) -> void
 			await _show_message(output, "%s повержен!" % victim, tree, result_hold_seconds)
 		elif i < actions.size() - 1:
 			await _magic_slide(anchor, away, spell.target_slide_duration)
+	visual.stop_lingering()
 	await visual.darken(0.0, spell.darken_duration)
 	var xp: int = int(result.get("xp_gain", 0))
 	if xp > 0:

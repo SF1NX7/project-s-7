@@ -30,6 +30,7 @@ var _drag: String = ""
 var _show_points: bool = true
 var _show_path: bool = true
 var _loop: bool = false
+var _preview_hold: float = 1.5
 
 func _ready() -> void:
 	var root := HBoxContainer.new()
@@ -53,6 +54,14 @@ func _ready() -> void:
 	preview.mouse_filter = Control.MOUSE_FILTER_STOP
 	left.add_child(preview)
 	preview.gui_input.connect(_preview_input.bind(preview))
+	# Keep the playback action directly below the scene viewport.
+	var play_button := Button.new()
+	play_button.text = "▶  Play Preview"
+	play_button.tooltip_text = "Play the currently selected spell effect"
+	play_button.custom_minimum_size.y = 32.0
+	play_button.add_theme_font_size_override("font_size", 13)
+	play_button.pressed.connect(_play)
+	left.add_child(play_button)
 	_status = Label.new()
 	_status.add_theme_font_size_override("font_size", 12)
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -69,15 +78,36 @@ func _ready() -> void:
 	for key: String in ["Caster", "Target", "Spell"]:
 		var b := _button("Select " + key, _pick.bind(key))
 		_controls[key] = b
-	_button("Play Preview", _play)
 	_button("Save Settings (.tres)", _save)
+	_button("Move shared points into selected spell (once)", _migrate_shared_points)
 	_toggle("Loop Preview", false, func(v: bool): _loop = v)
 	_toggle("Show Attachment Points", true, _toggle_points)
 	_toggle("Show Trajectory", true, _toggle_path)
-	_number("Cast Point X", "cx", -500, 500, 1)
-	_number("Cast Point Y", "cy", -500, 500, 1)
-	_number("Impact Point X", "ix", -500, 500, 1)
-	_number("Impact Point Y", "iy", -500, 500, 1)
+	_section("Spell-specific trajectory (each .tres separately)")
+	_section("Spell identity and battle values")
+	_text_input("ID", "id")
+	_text_input("Title", "title")
+	_text_input("Description", "description")
+	_texture_button("Icon", "icon")
+	_dropdown("Element", "element", ["None", "Fire", "Ice", "Lightning", "Earth", "Wind", "Water", "Light", "Dark"])
+	_dropdown("Effect Type", "effect_type", ["Damage", "Heal", "Buff", "Debuff", "Revive", "Utility"])
+	_number("MP Cost", "mp_cost", 0, 999, 1)
+	_number("Damage Min", "damage_min", 0, 9999, 1)
+	_number("Damage Max", "damage_max", 0, 9999, 1)
+	_number("Heal Min", "heal_min", 0, 9999, 1)
+	_number("Heal Max", "heal_max", 0, 9999, 1)
+	_number("Accuracy", "accuracy", 0, 100, 1)
+	_number("Range Tiles", "range_tiles", 0, 50, 1)
+	_number("Area Radius", "area_radius", 0, 30, 1)
+	_section("Projectile / trajectory")
+	_dropdown("Visual Mode", "visual_mode", ["Projectile", "Target Effect", "Falling", "Full Screen"])
+	_texture_button("Projectile Sheet", "projectile_sheet")
+	_number("Projectile Frames", "projectile_frames", 1, 64, 1)
+	_number("Projectile FPS", "projectile_fps", 1, 60, 0.5)
+	_number("Projectile Speed", "projectile_speed", 20, 1500, 10)
+	_number("Projectile Scale", "projectile_scale", 0.1, 8, 0.1)
+	_number("Projectile Rotation (deg)", "projectile_rotation_degrees", -360, 360, 1)
+	_spell_toggle("Rotate Along Path", "rotate_along_path")
 	_number("Spell Cast Offset X", "scx", -500, 500, 1)
 	_number("Spell Cast Offset Y", "scy", -500, 500, 1)
 	_number("Spell Impact Offset X", "six", -500, 500, 1)
@@ -85,12 +115,26 @@ func _ready() -> void:
 	_number("Arc Height", "arc_height", 0, 150, 1)
 	_number("Wave Amplitude", "wave_amplitude", 0, 150, 1)
 	_number("Wave Count", "wave_count", 0, 8, 0.5)
-	_number("Projectile Speed", "projectile_speed", 20, 1500, 10)
-	_number("Projectile Scale", "projectile_scale", 0.1, 8, 0.1)
-	_number("Projectile Rotation (deg)", "projectile_rotation_degrees", -360, 360, 1)
-	_rotation_toggle()
+	_section("Impact / transitions")
+	_texture_button("Impact Sheet", "impact_sheet")
+	_number("Impact Frames", "impact_frames", 1, 64, 1)
+	_number("Impact FPS", "impact_fps", 1, 60, 0.5)
 	_number("Impact Scale", "impact_scale", 0.1, 8, 0.1)
 	_number("Screen Darkness", "screen_darkness", 0, 0.9, 0.05)
+	_number("Darken Duration", "darken_duration", 0.05, 2, 0.05)
+	_number("Target Slide Duration", "target_slide_duration", 0.05, 2, 0.05)
+	_section("Lingering Effects / persistent ground fire")
+	_spell_toggle("Has Lingering Effect", "has_lingering_effect")
+	_texture_button("Lingering Sheet", "lingering_sheet")
+	_number("Lingering Frames", "lingering_frames", 1, 64, 1)
+	_number("Lingering FPS", "lingering_fps", 1, 60, 0.5)
+	_number("Lingering Offset X", "lingering_x", -500, 500, 1)
+	_number("Lingering Offset Y", "lingering_y", -500, 500, 1)
+	_number("Lingering Scale", "lingering_scale", 0.1, 8, 0.1)
+	_number("Lingering Start Delay", "lingering_start_delay", 0, 2, 0.05)
+	_spell_toggle("Play Main Effect Once", "play_main_effect_once")
+	_spell_toggle("Keep Between Targets", "keep_effect_between_targets")
+	_number("Preview Fire Hold", "preview_hold", 0.1, 10, 0.1)
 	_dialog = FileDialog.new()
 	_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 	_dialog.access = FileDialog.ACCESS_RESOURCES
@@ -125,6 +169,92 @@ func _button(label_text: String, action: Callable) -> Button:
 	button.pressed.connect(action)
 	_fields.add_child(button)
 	return button
+
+func _section(title_text: String) -> void:
+	var heading := Label.new()
+	heading.text = title_text
+	heading.add_theme_font_size_override("font_size", 13)
+	heading.add_theme_color_override("font_color", Color(0.85, 0.79, 0.49))
+	_fields.add_child(heading)
+	var separator := HSeparator.new()
+	_fields.add_child(separator)
+
+func _spell_toggle(label_text: String, key: String) -> void:
+	var toggle := CheckButton.new()
+	toggle.text = label_text
+	toggle.add_theme_font_size_override("font_size", 12)
+	toggle.toggled.connect(_bool_changed.bind(key))
+	_fields.add_child(toggle)
+	_controls[key] = toggle
+
+func _bool_changed(value: bool, key: String) -> void:
+	if _syncing or _playing: return
+	_spell.set(key, value)
+	_markers.queue_redraw()
+
+func _dropdown(label_text: String, key: String, values: Array[String]) -> void:
+	var row := HBoxContainer.new()
+	_fields.add_child(row)
+	var label := Label.new()
+	label.text = label_text
+	label.custom_minimum_size.x = 120
+	label.add_theme_font_size_override("font_size", 12)
+	row.add_child(label)
+	var option := OptionButton.new()
+	option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	option.add_theme_font_size_override("font_size", 12)
+	for value in values:
+		option.add_item(value)
+	option.item_selected.connect(_dropdown_changed.bind(key))
+	row.add_child(option)
+	_controls[key] = option
+
+func _dropdown_changed(index: int, key: String) -> void:
+	if _syncing or _playing: return
+	_spell.set(key, index)
+	_markers.queue_redraw()
+
+func _texture_button(label_text: String, key: String) -> void:
+	var row := HBoxContainer.new()
+	_fields.add_child(row)
+	var label := Label.new()
+	label.text = label_text
+	label.custom_minimum_size.x = 120
+	label.add_theme_font_size_override("font_size", 12)
+	row.add_child(label)
+	var button := Button.new()
+	button.text = "Select PNG"
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.add_theme_font_size_override("font_size", 12)
+	button.pressed.connect(_pick_texture.bind(key))
+	row.add_child(button)
+	_controls[key] = button
+
+func _pick_texture(key: String) -> void:
+	if _playing: return
+	_selecting = "Texture:" + key
+	_dialog.filters = PackedStringArray(["*.png, *.webp, *.jpg ; Image"])
+	_dialog.current_dir = "res://"
+	_dialog.popup_centered_ratio(0.9)
+
+func _text_input(label_text: String, key: String) -> void:
+	var row := HBoxContainer.new()
+	_fields.add_child(row)
+	var label := Label.new()
+	label.text = label_text
+	label.custom_minimum_size.x = 120
+	label.add_theme_font_size_override("font_size", 12)
+	row.add_child(label)
+	var edit := LineEdit.new()
+	edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	edit.add_theme_font_size_override("font_size", 12)
+	edit.text_changed.connect(_text_changed.bind(key))
+	row.add_child(edit)
+	_controls[key] = edit
+
+func _text_changed(value: String, key: String) -> void:
+	if _syncing or _playing: return
+	_spell.set(key, value)
 
 func _toggle(label_text: String, initial: bool, action: Callable) -> void:
 	var check := CheckButton.new()
@@ -184,6 +314,9 @@ func _short_label(label_text: String) -> String:
 		"Projectile Scale": return "Size"
 		"Projectile Rotation (deg)": return "Rotation °"
 		"Impact Scale": return "Impact Size"
+		"Lingering Offset X": return "Fire Offset X"
+		"Lingering Offset Y": return "Fire Offset Y"
+		"Lingering Scale": return "Fire Size"
 		"Screen Darkness": return "Darkness"
 	return label_text
 
@@ -211,10 +344,21 @@ func _pick(key: String) -> void:
 	if _playing:
 		return
 	_selecting = key
+	_dialog.filters = PackedStringArray(["*.tres ; Godot resource"])
 	_dialog.current_dir = "res://data"
 	_dialog.popup_centered_ratio(0.9)
 
 func _selected(path: String) -> void:
+	if _selecting.begins_with("Texture:"):
+		var key: String = _selecting.trim_prefix("Texture:")
+		var tex: Texture2D = ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
+		if tex == null:
+			_status.text = "Not a valid imported image: " + path
+			return
+		_spell.set(key, tex)
+		_status.text = "Texture selected. Save Settings to keep it."
+		_sync()
+		return
 	var data: Resource = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 	if _selecting == "Spell":
 		if not data is SpellData:
@@ -300,30 +444,39 @@ func _sync() -> void:
 	_syncing = true
 	var c: Vector2 = _extra(_caster, "magic_cast_point")
 	var h: Vector2 = _extra(_target, "magic_impact_point")
-	for key: String in ["cx", "cy", "ix", "iy", "scx", "scy", "six", "siy", "arc_height", "wave_amplitude", "wave_count", "projectile_speed", "projectile_scale", "projectile_rotation_degrees", "impact_scale", "screen_darkness"]:
+	for key: String in _sliders:
 		var spin: SpinBox = _controls[key]
 		match key:
-			"cx": spin.value = c.x
-			"cy": spin.value = c.y
-			"ix": spin.value = h.x
-			"iy": spin.value = h.y
 			"scx": spin.value = _spell.cast_offset.x
 			"scy": spin.value = _spell.cast_offset.y
 			"six": spin.value = _spell.impact_offset.x
 			"siy": spin.value = _spell.impact_offset.y
+			"lingering_x": spin.value = _spell.lingering_offset.x
+			"lingering_y": spin.value = _spell.lingering_offset.y
+			"preview_hold": spin.value = _preview_hold
 			_: spin.value = float(_spell.get(key))
 		var enabled: bool = not _playing
-		if key in ["cx", "cy"]:
-			enabled = enabled and _caster != null
-		if key in ["ix", "iy"]:
-			enabled = enabled and _target != null
 		spin.editable = enabled
 		var slider: HSlider = _sliders[key]
 		slider.set_value_no_signal(spin.value)
 		slider.editable = enabled
-	var rotation_toggle: CheckButton = _controls["rotate_along_path"]
-	rotation_toggle.button_pressed = _spell.rotate_along_path
-	rotation_toggle.disabled = _playing
+	for key: String in ["rotate_along_path", "has_lingering_effect", "play_main_effect_once", "keep_effect_between_targets"]:
+		var toggle: CheckButton = _controls[key]
+		toggle.set_pressed_no_signal(bool(_spell.get(key)))
+		toggle.disabled = _playing
+	for key: String in ["visual_mode", "element", "effect_type"]:
+		var mode: OptionButton = _controls[key]
+		mode.select(int(_spell.get(key)))
+		mode.disabled = _playing
+	for key: String in ["icon", "projectile_sheet", "impact_sheet", "lingering_sheet"]:
+		var button: Button = _controls[key]
+		var tex: Texture2D = _spell.get(key) as Texture2D
+		button.text = tex.resource_path.get_file() if tex != null else "Select PNG"
+		button.disabled = _playing
+	for key: String in ["id", "title", "description"]:
+		var edit: LineEdit = _controls[key]
+		edit.text = str(_spell.get(key))
+		edit.editable = not _playing
 	_syncing = false
 	_markers.queue_redraw()
 
@@ -332,19 +485,7 @@ func _changed(value: float, key: String) -> void:
 		return
 	var slider: HSlider = _sliders[key]
 	slider.set_value_no_signal(value)
-	if key in ["cx", "cy"]:
-		if _caster == null: return
-		var pt := _extra(_caster, "magic_cast_point")
-		if key == "cx": pt.x = value
-		else: pt.y = value
-		_caster.set("magic_cast_point", pt)
-	elif key in ["ix", "iy"]:
-		if _target == null: return
-		var pt := _extra(_target, "magic_impact_point")
-		if key == "ix": pt.x = value
-		else: pt.y = value
-		_target.set("magic_impact_point", pt)
-	elif key == "scx":
+	if key == "scx":
 		_spell.cast_offset.x = value
 	elif key == "scy":
 		_spell.cast_offset.y = value
@@ -352,6 +493,12 @@ func _changed(value: float, key: String) -> void:
 		_spell.impact_offset.x = value
 	elif key == "siy":
 		_spell.impact_offset.y = value
+	elif key == "lingering_x":
+		_spell.lingering_offset.x = value
+	elif key == "lingering_y":
+		_spell.lingering_offset.y = value
+	elif key == "preview_hold":
+		_preview_hold = value
 	else:
 		_spell.set(key, value)
 	_markers.queue_redraw()
@@ -406,9 +553,9 @@ func _preview_input(event: InputEvent, preview: TextureRect) -> void:
 	if event is InputEventMouseMotion and (mouse.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
 		_drag = ""
 	if _drag == "cast":
-		_caster.set("magic_cast_point", _hero.to_local(pt) - _hero.offset - _spell.cast_offset)
+		_spell.cast_offset = _hero.to_local(pt) - _hero.offset - _extra(_caster, "magic_cast_point")
 	elif _drag == "hit":
-		_target.set("magic_impact_point", _enemy.to_local(pt) - _enemy.offset - _spell.impact_offset)
+		_spell.impact_offset = _enemy.to_local(pt) - _enemy.offset - _extra(_target, "magic_impact_point")
 	else:
 		return
 	_sync()
@@ -420,10 +567,16 @@ func _play() -> void:
 	if not _paths.has("Spell"):
 		_status.text = "Select a spell first."
 		return
+	if _hero.sprite_frames == null:
+		_status.text = "Select caster to play the animation."
+		return
 	_playing = true
 	_sync()
 	_status.text = "Preview playing. Press Play again to stop looping."
 	while true:
+		_visual = Visual.new()
+		_visual.setup(_fight)
+		await _visual.darken(_spell.screen_darkness, _spell.darken_duration)
 		if _hero.sprite_frames.has_animation(&"attack") and _hero.sprite_frames.get_frame_count(&"attack") > 0:
 			_hero.play(&"attack")
 			var seconds: float = 0.0
@@ -431,10 +584,11 @@ func _play() -> void:
 				seconds += _hero.sprite_frames.get_frame_duration(&"attack", i)
 			await get_tree().create_timer(seconds / maxf(1.0, _hero.sprite_frames.get_animation_speed(&"attack"))).timeout
 			_idle(_hero)
-		_visual = Visual.new()
-		_visual.setup(_fight)
-		await _visual.darken(_spell.screen_darkness, _spell.darken_duration)
 		await _visual.play_spell(_spell, _start(), _end())
+		if _spell.has_lingering_effect:
+			await _visual.start_lingering(_spell, _end())
+			await get_tree().create_timer(_preview_hold).timeout
+			_visual.stop_lingering()
 		await _visual.darken(0.0, _spell.darken_duration)
 		_visual.queue_free()
 		await get_tree().process_frame
@@ -442,6 +596,28 @@ func _play() -> void:
 	_playing = false
 	_sync()
 	_status.text = "Preview finished. Save if satisfied."
+
+func _migrate_shared_points() -> void:
+	# Legacy previews edited the character cards instead of the selected spell.
+	# Explicit one-time migration keeps the *current* on-screen trajectory
+	# by transferring the character attachment positions into spell offsets.
+	if _playing or _spell == null or not _paths.has("Spell"):
+		_status.text = "Select a spell first."
+		return
+	if _caster == null or _target == null:
+		_status.text = "Select both caster and target before migrating."
+		return
+	var cast_shared: Vector2 = _extra(_caster, "magic_cast_point")
+	var hit_shared: Vector2 = _extra(_target, "magic_impact_point")
+	if cast_shared.is_zero_approx() and hit_shared.is_zero_approx():
+		_status.text = "Character shared points are already zero. Nothing to transfer."
+		return
+	_spell.cast_offset += cast_shared
+	_spell.impact_offset += hit_shared
+	_caster.set("magic_cast_point", Vector2.ZERO)
+	_target.set("magic_impact_point", Vector2.ZERO)
+	_sync()
+	_status.text = "Transferred shared points into this spell. Save Settings now. Other spells will use their own offsets."
 
 func _save() -> void:
 	if _playing: return
@@ -478,7 +654,7 @@ func _save() -> void:
 			"Target":
 				card.set("magic_impact_point", _target.get("magic_impact_point"))
 			"Spell":
-				for key: String in ["cast_offset", "impact_offset", "arc_height", "wave_amplitude", "wave_count", "projectile_speed", "projectile_scale", "projectile_rotation_degrees", "rotate_along_path", "impact_scale", "screen_darkness"]:
+				for key: String in ["id", "title", "description", "icon", "element", "effect_type", "mp_cost", "damage_min", "damage_max", "heal_min", "heal_max", "accuracy", "range_tiles", "area_radius", "visual_mode", "projectile_sheet", "projectile_frames", "projectile_fps", "projectile_speed", "projectile_scale", "projectile_rotation_degrees", "rotate_along_path", "cast_offset", "impact_offset", "arc_height", "wave_amplitude", "wave_count", "impact_sheet", "impact_frames", "impact_fps", "impact_scale", "screen_darkness", "darken_duration", "target_slide_duration", "has_lingering_effect", "lingering_sheet", "lingering_frames", "lingering_fps", "lingering_offset", "lingering_scale", "lingering_start_delay", "play_main_effect_once", "keep_effect_between_targets"]:
 					card.set(key, _spell.get(key))
 	for path: String in loaded:
 		var root: Resource = loaded[path] as Resource

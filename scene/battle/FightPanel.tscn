@@ -4,7 +4,7 @@
 [ext_resource type="Resource" uid="uid://cfspmqlral7bh" path="res://data/heroes/hero_01_max.tres" id="2_ay8bc"]
 [ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="2_tv074"]
 [ext_resource type="Texture2D" uid="uid://cl16fas5by5de" path="res://art/Pics/HpMpFrameVertical.png" id="3_ay8bc"]
-[ext_resource type="Resource" uid="uid://7msnxqhswn3r" path="res://data/items/enemy_data.tres" id="3_nhdr8"]
+[ext_resource type="Resource" path="res://data/items/enemy_data.tres" id="3_nhdr8"]
 [ext_resource type="Texture2D" uid="uid://hr6mi1b6he4e" path="res://art/Pics/Preview_Frame.png" id="5_nhdr8"]
 [ext_resource type="Texture2D" uid="uid://2rm8yicxs5vs" path="res://art/Portrait/Heroes/Max/MaxIdle2.png" id="6_nhdr8"]
 [ext_resource type="Texture2D" uid="uid://bs45h2jkh2hdp" path="res://art/Portrait/Enemies/goblin1/GoblinIdle.png" id="8_1t7i5"]
