@@ -1,12 +1,12 @@
-[gd_resource type="Resource" script_class="HeroData" format=3]
+[gd_resource type="Resource" script_class="HeroData" format=3 uid="uid://d4irc2jmj020f"]
 
-[ext_resource type="Script" path="res://script/system/stats_bonus.gd" id="1_68yjj"]
-[ext_resource type="SpriteFrames" path="res://data/battle_animations/sara_battle.tres" id="2_iivhf"]
-[ext_resource type="Resource" path="res://data/items/Magic data/sara_magic_tree.tres" id="2_m3bw5"]
-[ext_resource type="Texture2D" path="res://art/Portrait/Heroes/Sara/SaraIdle.png" id="3_b5xyd"]
-[ext_resource type="Texture2D" path="res://art/Portrait/Heroes/Sara/SaraAttack.png" id="4_flgip"]
-[ext_resource type="Script" path="res://script/player/HeroData.gd" id="4_iivhf"]
-[ext_resource type="Texture2D" path="res://art/Portrait/Heroes/Sara/SaraHit.png" id="5_fhh2c"]
+[ext_resource type="Script" uid="uid://crdx2krqtdpx" path="res://script/system/stats_bonus.gd" id="1_68yjj"]
+[ext_resource type="SpriteFrames" uid="uid://dysf4d70bf0sj" path="res://data/battle_animations/sara_battle.tres" id="2_iivhf"]
+[ext_resource type="Resource" uid="uid://cahp85q1vhurl" path="res://data/items/Magic data/sara_magic_tree.tres" id="2_m3bw5"]
+[ext_resource type="Texture2D" uid="uid://badcel8w5m7dl" path="res://art/Portrait/Heroes/Sara/SaraIdle.png" id="3_b5xyd"]
+[ext_resource type="Texture2D" uid="uid://cmcjai4ayyqfl" path="res://art/Portrait/Heroes/Sara/SaraAttack.png" id="4_flgip"]
+[ext_resource type="Script" uid="uid://drif5nqii2jwo" path="res://script/player/HeroData.gd" id="4_iivhf"]
+[ext_resource type="Texture2D" uid="uid://ccmtdo4hvn3yx" path="res://art/Portrait/Heroes/Sara/SaraHit.png" id="5_fhh2c"]
 
 [sub_resource type="Resource" id="Resource_wsnol"]
 script = ExtResource("1_68yjj")
