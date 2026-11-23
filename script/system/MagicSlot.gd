@@ -13,6 +13,16 @@ var locked: bool = true
 var exists: bool = false
 
 
+func _ready() -> void:
+	# All spell icons must fit within their slots, regardless of PNG dimensions.
+	# Some MagicScreen slots omit these settings in the .tscn resource.
+	if icon != null:
+		icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
 func set_state(p_spell: SpellData, p_exists: bool, p_locked: bool) -> void:
 	spell = p_spell
 	exists = p_exists

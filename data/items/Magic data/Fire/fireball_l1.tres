@@ -1,15 +1,15 @@
-[gd_resource type="Resource" script_class="SpellData" format=3]
+[gd_resource type="Resource" script_class="SpellData" format=3 uid="uid://b21cv51d6f3p5"]
 
-[ext_resource type="Script" path="res://script/system/SpellData.gd" id="1_in5fy"]
-[ext_resource type="Texture2D" path="res://data/items/Magic data/Fire/11.png" id="1_yv6pe"]
-[ext_resource type="Texture2D" path="res://data/magic_animations/Fireball_impact1.png" id="2_ttr4t"]
-[ext_resource type="Texture2D" path="res://data/magic_animations/Fireball_projectile1.png" id="3_rv3cb"]
+[ext_resource type="Script" uid="uid://bu35dva6wp5a6" path="res://script/system/SpellData.gd" id="1_in5fy"]
+[ext_resource type="Texture2D" uid="uid://cfa2pbtmth4gh" path="res://data/items/Magic data/Fire/11.png" id="1_yv6pe"]
+[ext_resource type="Texture2D" uid="uid://cvda4wx355msv" path="res://data/magic_animations/Fireball_impact1.png" id="2_ttr4t"]
+[ext_resource type="Texture2D" uid="uid://4kbcl6lx3mkj" path="res://data/magic_animations/Fireball_projectile1.png" id="3_rv3cb"]
 
 [resource]
 script = ExtResource("1_in5fy")
 id = "F1"
 title = "Огненный шар"
-description = "Запускает малый шар огня, нанося небольшой урон огнём"
+description = "Запускает  шар огня, нанося небольшой урон огнём по одиночной цели."
 icon = ExtResource("1_yv6pe")
 element = 1
 mp_cost = 5

@@ -1,15 +1,15 @@
-[gd_resource type="Resource" script_class="SpellData" format=3]
+[gd_resource type="Resource" script_class="SpellData" format=3 uid="uid://ch2q8kxgkl4e8"]
 
-[ext_resource type="Texture2D" path="res://data/items/Magic data/Fire/22.png" id="1_yaamw"]
-[ext_resource type="Script" path="res://script/system/SpellData.gd" id="2_12ga0"]
-[ext_resource type="Texture2D" path="res://data/magic_animations/comet_burst1.png" id="2_gnysn"]
-[ext_resource type="Texture2D" path="res://data/magic_animations/comet_proj1.png" id="3_34bb8"]
-[ext_resource type="Texture2D" path="res://data/magic_animations/comet_lake1.png" id="3_l3dwh"]
+[ext_resource type="Texture2D" uid="uid://13s2qes5mobo" path="res://data/items/Magic data/Fire/22.png" id="1_yaamw"]
+[ext_resource type="Script" uid="uid://bu35dva6wp5a6" path="res://script/system/SpellData.gd" id="2_12ga0"]
+[ext_resource type="Texture2D" uid="uid://xlm33fwdapqt" path="res://data/magic_animations/comet_burst1.png" id="2_gnysn"]
+[ext_resource type="Texture2D" uid="uid://dedk3qiaglf03" path="res://data/magic_animations/comet_proj1.png" id="3_34bb8"]
+[ext_resource type="Texture2D" uid="uid://b7crx5xlsuno6" path="res://data/magic_animations/comet_lake1.png" id="3_l3dwh"]
 
 [resource]
 script = ExtResource("2_12ga0")
 title = "Метеор"
-description = "Обрушивает метеорит на выбранную область. После взрыва остаётся пламя."
+description = "Обрушивает метеорит на выбранную область оставляя магму на месте взрыва."
 icon = ExtResource("1_yaamw")
 element = 1
 mp_cost = 10
