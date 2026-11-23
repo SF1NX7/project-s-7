@@ -51,10 +51,21 @@ enum AIStyle { AGGRESSIVE, DEFENSIVE, PASSIVE, RANGED, SUPPORT }
 @export_range(0, 30, 1) var leash_range: int = 8
 
 @export_group("Rewards")
+## Level for XP diminishing returns. Each spawned unit may use its own copy of this EnemyData.
+@export_range(1, 999, 1) var level: int = 1
 @export_range(0, 999999, 1) var experience: int = 5
 @export_range(0, 999999, 1) var gold: int = 2
 
-@export_group("Future Drops")
+@export_group("Bonus Gold")
+## Existing 'gold' field above is guaranteed; bonus coins are rolled on death.
+@export_range(0.0, 1.0, 0.01) var bonus_gold_chance: float = 0.0
+@export_range(0, 999999, 1) var bonus_gold_min: int = 0
+@export_range(0, 999999, 1) var bonus_gold_max: int = 0
+
+@export_group("Item Drops")
+## Independent rolls for each entry. Items go to the existing Inventory_Service autoload.
+@export var item_drops: Array[EnemyDropEntry] = []
+## Legacy single-drop fields remain available for old cards.
 @export var drop_item: Resource
 @export_range(0.0, 1.0, 0.01) var drop_chance: float = 0.0
 

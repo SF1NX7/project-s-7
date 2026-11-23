@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ExperienceRules" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://script/system/ExperienceRules.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+xp_per_hit = 1
+xp_per_dodge = 1
+xp_per_counter = 1
+xp_per_heal = 1
+damage_per_bonus_xp = 5
+max_damage_bonus_xp = 3
+healing_per_bonus_xp = 10
+max_healing_bonus_xp = 3
+use_enemy_kill_experience = true
+level_one_requirement = 100
+requirement_growth = 1.2
+maximum_level = 99
+carry_over_experience = true
+scale_xp_by_level_difference = true
+bonus_per_stronger_level = 0.15
+maximum_stronger_multiplier = 1.75
+weaker_level_factor = 0.75
+zero_xp_if_enemy_weaker_by = 6
+minimum_scaled_xp = 0
+print_level_ups = true

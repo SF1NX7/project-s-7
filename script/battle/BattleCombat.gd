@@ -9,6 +9,8 @@ signal combat_resolved(attacker: Node2D, target: Node2D, result: Dictionary)
 signal exchange_planned(exchange: Dictionary)
 signal unit_defeated(unit: Node2D, is_enemy: bool)
 signal battle_ended(victory: bool, reason: String)
+## Emitted after each enemy death reward is added to existing inventory service.
+signal enemy_rewards_granted(enemy_name: String, gold_amount: int, items: Array)
 
 const RETURN_PIXEL_TRANSITION: PackedScene = preload("res://scene/battle/PixelTransition.tscn")
 
@@ -23,6 +25,12 @@ const RETURN_PIXEL_TRANSITION: PackedScene = preload("res://scene/battle/PixelTr
 @export var enemy_ai_path: NodePath = ^"../BattleEnemyAI"
 ## Общий ресурс с формулой физического урона.
 @export var rules: CombatRules
+
+@export_group("Experience and Loot")
+## The shared XP balance preset. Edit the .tres file, not combat scripts.
+@export var experience_rules: ExperienceRules = preload("res://data/battle_rules/ExperienceRules.tres")
+## Gold and drops are taken from each EnemyData card; one roll per dead unit.
+@export var award_enemy_loot: bool = true
 
 @export_group("Предрасчёт столкновения")
 ## При подключённом FightPreviewBridge откладывать применение HP до конца анимаций.
@@ -270,6 +278,11 @@ func use_healing_item(attacker: Node2D, target: Node2D, item: ItemData) -> Dicti
 		result["reason"] = "Здоровье цели уже полное."
 		return result
 	var xp: int = maxi(0, effect.xp_gain)
+	if experience_rules != null:
+		var healer: Resource = _hero_data(attacker)
+		if healer != null:
+			var healer_level: int = maxi(1, _resource_int(healer, "level"))
+			xp = experience_rules.xp_for_healing(healed, healer_level, healer_level)
 	result = {
 		"ok": true, "reason": "", "kind": "item_heal",
 		"hp_before": hp_before, "hp_after": hp_after,
@@ -392,11 +405,22 @@ func plan_magic_damage(attacker: Node2D, spell: SpellData, targets: Array[Node2D
 			damage = clampi(damage, 0, before)
 		var after: int = before - damage
 		var defeated: bool = after == 0
-		var xp: int = maxi(0, magic_xp_per_hit) if damage > 0 else 0
+		var enemy_resource: Resource = target.get_meta("enemy_data", null) as Resource
+		var hero_level: int = _resource_int(hero, "level")
+		var enemy_level: int = maxi(1, _resource_int(enemy_resource, "level"))
+		var xp: int = 0
+		if experience_rules != null:
+			xp = experience_rules.xp_for_hit(damage, hero_level, enemy_level)
+		else:
+			xp = maxi(0, magic_xp_per_hit) if damage > 0 else 0
 		if defeated:
 			defeated_count += 1
 			if magic_use_enemy_experience:
-				xp += maxi(0, _resource_int(target.get_meta("enemy_data", null) as Resource, "experience"))
+				var kill_exp: int = maxi(0, _resource_int(enemy_resource, "experience"))
+				if experience_rules != null:
+					xp += experience_rules.xp_for_kill(kill_exp, hero_level, enemy_level)
+				else:
+					xp += kill_exp
 		total_damage += damage
 		total_xp += xp
 		actions.append({
@@ -452,7 +476,7 @@ func commit_pending_magic() -> void:
 		if bool(action["defeated"]):
 			defeated_units.append(target)
 			leader_defeated = leader_defeated or _is_enemy_leader(target)
-	hero.set("xp", _resource_int(hero, "xp") + actual_xp)
+	_grant_hero_xp(hero, actual_xp)
 	for action in actions:
 		var target: Node2D = action.get("target") as Node2D
 		if not is_instance_valid(target):
@@ -469,6 +493,7 @@ func commit_pending_magic() -> void:
 	for target in defeated_units:
 		if is_instance_valid(target):
 			target.set_meta("battle_defeated", true)
+			_grant_enemy_loot(target)
 			unit_defeated.emit(target, true)
 	var message: String = ""
 	if leader_defeated and victory_on_enemy_leader_death:
@@ -519,12 +544,13 @@ func commit_pending_exchange() -> void:
 		_set_current_hp(target, int(result.get("hp_after", get_current_hp(target))))
 		var hero: Resource = _hero_data(attacker)
 		var gained_xp: int = int(result.get("xp_gain", 0))
-		if gained_xp > 0 and hero != null:
-			hero.set("xp", int(hero.get("xp")) + gained_xp)
+		if hero != null:
+			_grant_hero_xp(hero, gained_xp)
 		combat_resolved.emit(attacker, target, result)
 		return
 	_set_current_hp(attacker, int(result.get("attacker_hp_after", get_current_hp(attacker))))
 	_set_current_hp(target, int(result.get("hp_after", get_current_hp(target))))
+	_award_physical_action_xp(attacker, target, result.get("actions", []))
 	# Совместимый сигнал — после применения итогового состояния.
 	combat_resolved.emit(attacker, target, result)
 	if _is_enemy(target) and _enemy_ai != null and _enemy_ai.has_method("notify_enemy_attacked"):
@@ -616,6 +642,95 @@ func _hero_data(unit: Node2D) -> Resource:
 			return hero
 	return null
 
+## Add XP to the specific hero and apply level thresholds only once on commit.
+func _grant_hero_xp(hero: Resource, gained: int) -> void:
+	if hero == null or gained <= 0:
+		return
+	if experience_rules != null:
+		experience_rules.grant_experience(hero, gained)
+	else:
+		hero.set("xp", _resource_int(hero, "xp") + gained)
+
+
+## Physical attacks are planned as an array; each successful dodge and counter has its own owner.
+func _award_physical_action_xp(attacker: Node2D, target: Node2D, actions: Array) -> void:
+	if experience_rules == null:
+		return
+	for action in actions:
+		if not (action is Dictionary):
+			continue
+		var source: Node2D = attacker if bool(action.get("source_is_enemy", false)) == _is_enemy(attacker) else target
+		var victim: Node2D = attacker if source == target else target
+		if not is_instance_valid(source) or not is_instance_valid(victim):
+			continue
+		var is_miss: bool = bool(action.get("dodged", false))
+		var enemy_unit: Node2D = source if _is_enemy(source) else victim
+		var enemy_data: Resource = enemy_unit.get_meta("enemy_data", null) as Resource
+		var enemy_level: int = maxi(1, _resource_int(enemy_data, "level"))
+		if is_miss and not _is_enemy(victim):
+			var dodger: Resource = _hero_data(victim)
+			if dodger != null:
+				_grant_hero_xp(dodger, experience_rules.xp_for_dodge(maxi(1, _resource_int(dodger, "level")), enemy_level))
+		elif not is_miss and not _is_enemy(source):
+			var hero: Resource = _hero_data(source)
+			if hero == null:
+				continue
+			var current_level: int = maxi(1, _resource_int(hero, "level"))
+			var amount: int = experience_rules.xp_for_hit(int(action.get("damage", 0)), current_level, enemy_level, str(action.get("kind", "")) == "counter")
+			if bool(action.get("defeated", false)) and _is_enemy(victim):
+				amount += experience_rules.xp_for_kill(_resource_int(enemy_data, "experience"), current_level, enemy_level)
+			_grant_hero_xp(hero, amount)
+
+
+## A defeated enemy pays rewards exactly once even if death animations are repeated.
+func _grant_enemy_loot(enemy_unit: Node2D) -> void:
+	if not award_enemy_loot or not is_instance_valid(enemy_unit) or not _is_enemy(enemy_unit):
+		return
+	if enemy_unit.has_meta("s7_rewards_processed"):
+		return
+	enemy_unit.set_meta("s7_rewards_processed", true)
+	var enemy_data: Resource = enemy_unit.get_meta("enemy_data", null) as Resource
+	if enemy_data == null:
+		return
+	var service: Node = get_node_or_null("/root/Inventory_Service")
+	if service == null:
+		service = get_node_or_null("/root/InventoryService")
+	if service == null:
+		push_warning("BattleCombat: Inventory_Service not found; gold and loot were not awarded.")
+		return
+	var guaranteed_gold: int = maxi(0, _resource_int(enemy_data, "gold"))
+	var bonus_gold: int = 0
+	if _rng.randf() < float(enemy_data.get("bonus_gold_chance")):
+		var minimum: int = maxi(0, int(enemy_data.get("bonus_gold_min")))
+		var maximum: int = maxi(minimum, int(enemy_data.get("bonus_gold_max")))
+		bonus_gold = _rng.randi_range(minimum, maximum)
+	var gold_amount: int = guaranteed_gold + bonus_gold
+	if gold_amount > 0 and service.has_method("add_gold"):
+		service.call("add_gold", gold_amount)
+	var gained_items: Array = []
+	if service.has_method("add_item"):
+		var drops: Array = enemy_data.get("item_drops")
+		for entry in drops:
+			if not (entry is EnemyDropEntry):
+				continue
+			if entry.item == null or _rng.randf() >= clampf(entry.chance, 0.0, 1.0):
+				continue
+			var lower: int = maxi(1, entry.minimum_amount)
+			var upper: int = maxi(lower, entry.maximum_amount)
+			var amount: int = _rng.randi_range(lower, upper)
+			for index in range(amount):
+				service.call("add_item", entry.item)
+				gained_items.append(entry.item)
+		# Support old enemy cards using the original one-item drop fields.
+		var old_item: Resource = enemy_data.get("drop_item") as Resource
+		var old_chance: float = clampf(float(enemy_data.get("drop_chance")), 0.0, 1.0)
+		if old_item != null and _rng.randf() < old_chance:
+			service.call("add_item", old_item)
+			gained_items.append(old_item)
+	enemy_rewards_granted.emit(_unit_name(enemy_unit), gold_amount, gained_items)
+	print("S7 LOOT: ", _unit_name(enemy_unit), " | gold +", gold_amount, " | items +", gained_items.size())
+
+
 func _resource_int(resource: Resource, key: String) -> int:
 	if resource == null:
 		return 0
@@ -656,6 +771,8 @@ func _handle_defeat(unit: Node2D) -> void:
 		return
 	unit.set_meta("battle_defeated", true)
 	var enemy: bool = _is_enemy(unit)
+	if enemy:
+		_grant_enemy_loot(unit)
 	var leader: bool = not enemy and StringName(unit.name) == party_leader_name
 	var enemy_leader: bool = enemy and _is_enemy_leader(unit)
 	unit_defeated.emit(unit, enemy)

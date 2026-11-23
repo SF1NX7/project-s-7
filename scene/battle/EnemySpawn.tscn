@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://script/battle/enemy_spawn_point.gd" id="1_point"]
+
+[node name="EnemySpawn" type="Marker2D"]
+script = ExtResource("1_point")
+enemy_id = &"goblin"

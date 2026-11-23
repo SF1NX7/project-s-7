@@ -15,7 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://c8c8ufoh7td0w" path="res://scene/battle/BattleMenu.tscn" id="12_inp5g"]
 [ext_resource type="FontFile" uid="uid://b8rlu1ajapsuk" path="res://font/TagesschriftCyrillic-Regular.ttf" id="12_sh5ts"]
 [ext_resource type="Script" uid="uid://btngamp3en6kb" path="res://script/battle/battle_move.gd" id="13_5a78g"]
-[ext_resource type="PackedScene" uid="uid://ck76gkdl8h12t" path="res://scene/battle/EnemySpawns.tscn" id="15_poc25"]
+[ext_resource type="PackedScene" uid="uid://cx3nmx6yasdoo" path="res://scene/battle/EnemySpawns.tscn" id="15_poc25"]
 [ext_resource type="Script" uid="uid://onftq43m0rbs" path="res://script/battle/battle_enemy_ai.gd" id="16_enemy_ai"]
 [ext_resource type="Script" uid="uid://ckka4abhi62jf" path="res://script/battle/EnemyAIProfile.gd" id="17_jf776"]
 [ext_resource type="Script" uid="uid://tvlhjpn80om3" path="res://script/battle/BattleCombat.gd" id="18_8l6eh"]
@@ -1338,7 +1338,6 @@ sources/2 = SubResource("TileSetAtlasSource_do26m")
 
 [sub_resource type="Resource" id="Resource_he8ac"]
 script = ExtResource("17_jf776")
-behavior = 0
 metadata/_custom_type_script = "uid://ckka4abhi62jf"
 
 [sub_resource type="Resource" id="Resource_sh5ts"]
@@ -1443,20 +1442,66 @@ wave_speed = 1.1
 [node name="EnemySpawn1" parent="EnemySpawns" index="0" unique_id=208487325]
 position = Vector2(-240, -144)
 
+[node name="EnemySpawn2" parent="EnemySpawns" index="1" unique_id=957468975]
+position = Vector2(-240, -176)
+
 [node name="BattleEnemyAI" type="Node" parent="." unique_id=287329850]
 script = ExtResource("16_enemy_ai")
 fallback_profile = SubResource("Resource_he8ac")
 
 [node name="BattleCombat" type="Node2D" parent="." unique_id=1542915884]
 script = ExtResource("18_8l6eh")
+turn_path = null
+units_path = null
+enemy_ai_path = null
 rules = SubResource("Resource_sh5ts")
+staged_exchanges_enabled = null
 dodge_chance = 2.0
 critical_chance = 2.0
+critical_multiplier = null
 counter_chance = 2.0
 extra_attack_chance = 2.0
+use_luck_for_chances = null
+dodge_per_luck = null
 critical_per_luck = 0.15
+counter_per_luck = null
 extra_attack_per_luck = 0.15
+enable_physical_attacks = null
+magic_use_stats = null
+magic_xp_per_hit = null
+magic_use_enemy_experience = null
+party_leader_name = null
+defeat_on_party_leader_death = null
+victory_on_all_enemies_defeated = null
+victory_on_enemy_leader_death = null
+stop_turns_on_battle_end = null
+death_fade_duration = null
+death_camera_arrival_delay = null
+death_camera_hold_delay = null
+shrink_on_death = null
+end_battle_delay = null
+pixel_death_enabled = null
+pixel_death_use_on_fight_scene = null
+pixel_death_use_on_tactical_map = null
+pixel_death_duration = null
+pixel_death_pixel_size = null
+pixel_death_map_pixel_size = null
+pixel_death_scatter_strength = null
+pixel_death_map_scatter_strength = null
+pixel_death_fade_strength = null
+pixel_death_flash_before_dissolve = null
+pixel_death_hold_after_death = null
+show_result_panel = null
+allow_retry = null
+load_save_hint = null
+victory_world_scene = null
 return_after_victory = false
+victory_panel_duration = null
+show_return_button = null
+pixel_return_enabled = null
+pixel_return_duration = null
+pixel_return_size = null
+pixel_return_color = null
 
 [node name="FightPreviewBridge" type="Node2D" parent="." unique_id=1601772689]
 script = ExtResource("20_ry66a")

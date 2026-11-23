@@ -22,6 +22,11 @@ luck = 1
 base_movement = 3
 ai_style = 1
 detection_range = 6
+level = null
+bonus_gold_chance = null
+bonus_gold_min = null
+bonus_gold_max = null
+item_drops = null
 
 [resource]
 script = ExtResource("1_catalog")

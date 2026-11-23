@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://ck76gkdl8h12t"]
+[gd_scene format=3 uid="uid://cx3nmx6yasdoo"]
 
 [ext_resource type="Script" uid="uid://bmdwvgujiscce" path="res://script/battle/battle_enemy_spawns.gd" id="1_enemy_spawns"]
 
@@ -6,3 +6,6 @@
 script = ExtResource("1_enemy_spawns")
 
 [node name="EnemySpawn1" type="Marker2D" parent="." unique_id=208487325]
+
+[node name="EnemySpawn2" type="Marker2D" parent="." unique_id=957468975]
+position = Vector2(-208, -144)

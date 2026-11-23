@@ -24,6 +24,7 @@ lingering_sheet = ExtResource("3_l3dwh")
 lingering_fps = 9.5
 lingering_scale = 0.9
 lingering_offset = Vector2(1, -21)
+play_main_effect_once = true
 impact_sheet = ExtResource("2_gnysn")
 projectile_scale = 0.7999999999999999
 projectile_speed = 970.0
