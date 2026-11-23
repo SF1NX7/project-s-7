@@ -16,10 +16,10 @@ border_width = 2.0
 attack_cursor_color = Color(1, 0.11774104, 0.16007765, 0.762)
 
 [node name="BattleHover" parent="BattleMap" index="7" unique_id=716872636]
+highlight_color = Color(0.1415517, 1.4667847e-05, 0.14155036, 1)
+highlight_strength = 0.22
+pulse_speed = 2.9
 tactical_panel_scene = ExtResource("3_jt45t")
-
-[node name="BattleMove" parent="BattleMap" index="10" unique_id=1472764406]
-visible = false
 
 [node name="BattleCombat" parent="BattleMap" index="13" unique_id=1542915884]
 dodge_chance = 3.0

@@ -47,12 +47,16 @@ static func _point(start: Vector2, end: Vector2, phase: float, spell: SpellData)
 
 func _move_sprite(phase: float, sprite: AnimatedSprite2D, start: Vector2, end: Vector2, spell: SpellData) -> void:
 	sprite.position = _point(start, end, phase, spell)
+	var rotation_offset: float = deg_to_rad(spell.projectile_rotation_degrees)
 	if spell.rotate_along_path:
 		var a: Vector2 = _point(start, end, maxf(0.0, phase - 0.001), spell)
 		var b: Vector2 = _point(start, end, minf(1.0, phase + 0.001), spell)
 		if a.distance_squared_to(b) > 0.000001:
-			sprite.rotation = (b - a).angle()
+			sprite.rotation = (b - a).angle() + rotation_offset
+		else:
+			sprite.rotation = rotation_offset
 	else:
+		sprite.rotation = rotation_offset
 		sprite.flip_h = end.x < start.x
 
 func play_spell(spell: SpellData, cast_world: Vector2, hit_world: Vector2) -> void:

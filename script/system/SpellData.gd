@@ -64,6 +64,7 @@ enum EffectType {
 @export_range(0.0, 8.0, 0.5) var wave_count: float = 2.0
 @export_range(0.0, 150.0, 1.0) var arc_height: float = 10.0
 @export var rotate_along_path: bool = false
+@export_range(-360.0, 360.0, 1.0) var projectile_rotation_degrees: float = 0.0
 @export var cast_offset: Vector2 = Vector2(20, 0)
 @export var impact_offset: Vector2 = Vector2.ZERO
 @export_range(0.0, 0.9, 0.05) var screen_darkness: float = 0.4

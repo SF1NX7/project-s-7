@@ -13,6 +13,7 @@ var _pending_catalog: Resource
 var _pending_path: String = ""
 var _pending_role: String = ""
 var _controls: Dictionary = {}
+var _sliders: Dictionary = {}
 var _view: SubViewport
 var _fight: Node2D
 var _hero: AnimatedSprite2D
@@ -53,14 +54,16 @@ func _ready() -> void:
 	left.add_child(preview)
 	preview.gui_input.connect(_preview_input.bind(preview))
 	_status = Label.new()
+	_status.add_theme_font_size_override("font_size", 12)
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.text = "Select caster, target and spell resources."
 	left.add_child(_status)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size.x = 235
+	scroll.custom_minimum_size.x = 370
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	root.add_child(scroll)
 	_fields = VBoxContainer.new()
+	_fields.add_theme_constant_override("separation", 3)
 	_fields.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_fields)
 	for key: String in ["Caster", "Target", "Spell"]:
@@ -84,6 +87,8 @@ func _ready() -> void:
 	_number("Wave Count", "wave_count", 0, 8, 0.5)
 	_number("Projectile Speed", "projectile_speed", 20, 1500, 10)
 	_number("Projectile Scale", "projectile_scale", 0.1, 8, 0.1)
+	_number("Projectile Rotation (deg)", "projectile_rotation_degrees", -360, 360, 1)
+	_rotation_toggle()
 	_number("Impact Scale", "impact_scale", 0.1, 8, 0.1)
 	_number("Screen Darkness", "screen_darkness", 0, 0.9, 0.05)
 	_dialog = FileDialog.new()
@@ -116,6 +121,7 @@ func _ready() -> void:
 func _button(label_text: String, action: Callable) -> Button:
 	var button := Button.new()
 	button.text = label_text
+	button.add_theme_font_size_override("font_size", 12)
 	button.pressed.connect(action)
 	_fields.add_child(button)
 	return button
@@ -123,21 +129,83 @@ func _button(label_text: String, action: Callable) -> Button:
 func _toggle(label_text: String, initial: bool, action: Callable) -> void:
 	var check := CheckButton.new()
 	check.text = label_text
+	check.add_theme_font_size_override("font_size", 12)
 	check.button_pressed = initial
 	check.toggled.connect(action)
 	_fields.add_child(check)
 
 func _number(label_text: String, key: String, low: float, high: float, step_size: float) -> void:
+	# Compact single-row control: short label, draggable slider, exact value.
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 5)
+	_fields.add_child(row)
 	var label := Label.new()
-	label.text = label_text
-	_fields.add_child(label)
+	label.text = _short_label(label_text)
+	label.tooltip_text = label_text
+	label.custom_minimum_size.x = 120
+	label.add_theme_font_size_override("font_size", 12)
+	row.add_child(label)
+	var slider := HSlider.new()
+	slider.min_value = low
+	slider.max_value = high
+	slider.step = step_size
+	slider.custom_minimum_size.x = 92
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slider.tooltip_text = label_text
+	row.add_child(slider)
 	var spin := SpinBox.new()
 	spin.min_value = low
 	spin.max_value = high
 	spin.step = step_size
-	spin.value_changed.connect(_changed.bind(key))
-	_fields.add_child(spin)
+	spin.custom_minimum_size.x = 82
+	spin.size_flags_horizontal = Control.SIZE_SHRINK_END
+	spin.add_theme_font_size_override("font_size", 12)
+	spin.tooltip_text = label_text
+	row.add_child(spin)
 	_controls[key] = spin
+	_sliders[key] = slider
+	slider.value_changed.connect(_slider_changed.bind(key))
+	spin.value_changed.connect(_changed.bind(key))
+
+func _short_label(label_text: String) -> String:
+	match label_text:
+		"Cast Point X": return "Cast X"
+		"Cast Point Y": return "Cast Y"
+		"Impact Point X": return "Hit X"
+		"Impact Point Y": return "Hit Y"
+		"Spell Cast Offset X": return "Cast Offset X"
+		"Spell Cast Offset Y": return "Cast Offset Y"
+		"Spell Impact Offset X": return "Hit Offset X"
+		"Spell Impact Offset Y": return "Hit Offset Y"
+		"Arc Height": return "Arc"
+		"Wave Amplitude": return "Wave Size"
+		"Wave Count": return "Waves"
+		"Projectile Speed": return "Speed"
+		"Projectile Scale": return "Size"
+		"Projectile Rotation (deg)": return "Rotation °"
+		"Impact Scale": return "Impact Size"
+		"Screen Darkness": return "Darkness"
+	return label_text
+
+func _slider_changed(value: float, key: String) -> void:
+	if _syncing or _playing:
+		return
+	var spin: SpinBox = _controls[key]
+	spin.value = value
+
+func _rotation_toggle() -> void:
+	var toggle := CheckButton.new()
+	toggle.text = "Rotate Along Path"
+	toggle.add_theme_font_size_override("font_size", 12)
+	toggle.toggled.connect(_rotation_mode_changed)
+	_fields.add_child(toggle)
+	_controls["rotate_along_path"] = toggle
+
+func _rotation_mode_changed(enabled: bool) -> void:
+	if _syncing or _playing:
+		return
+	_spell.rotate_along_path = enabled
+	_markers.queue_redraw()
 
 func _pick(key: String) -> void:
 	if _playing:
@@ -232,7 +300,7 @@ func _sync() -> void:
 	_syncing = true
 	var c: Vector2 = _extra(_caster, "magic_cast_point")
 	var h: Vector2 = _extra(_target, "magic_impact_point")
-	for key: String in ["cx", "cy", "ix", "iy", "scx", "scy", "six", "siy", "arc_height", "wave_amplitude", "wave_count", "projectile_speed", "projectile_scale", "impact_scale", "screen_darkness"]:
+	for key: String in ["cx", "cy", "ix", "iy", "scx", "scy", "six", "siy", "arc_height", "wave_amplitude", "wave_count", "projectile_speed", "projectile_scale", "projectile_rotation_degrees", "impact_scale", "screen_darkness"]:
 		var spin: SpinBox = _controls[key]
 		match key:
 			"cx": spin.value = c.x
@@ -244,13 +312,26 @@ func _sync() -> void:
 			"six": spin.value = _spell.impact_offset.x
 			"siy": spin.value = _spell.impact_offset.y
 			_: spin.value = float(_spell.get(key))
-		spin.editable = (not _playing and (not key.begins_with("c") or _caster != null) and (key not in ["ix", "iy"] or _target != null))
+		var enabled: bool = not _playing
+		if key in ["cx", "cy"]:
+			enabled = enabled and _caster != null
+		if key in ["ix", "iy"]:
+			enabled = enabled and _target != null
+		spin.editable = enabled
+		var slider: HSlider = _sliders[key]
+		slider.set_value_no_signal(spin.value)
+		slider.editable = enabled
+	var rotation_toggle: CheckButton = _controls["rotate_along_path"]
+	rotation_toggle.button_pressed = _spell.rotate_along_path
+	rotation_toggle.disabled = _playing
 	_syncing = false
 	_markers.queue_redraw()
 
 func _changed(value: float, key: String) -> void:
 	if _syncing or _playing:
 		return
+	var slider: HSlider = _sliders[key]
+	slider.set_value_no_signal(value)
 	if key in ["cx", "cy"]:
 		if _caster == null: return
 		var pt := _extra(_caster, "magic_cast_point")
@@ -397,7 +478,7 @@ func _save() -> void:
 			"Target":
 				card.set("magic_impact_point", _target.get("magic_impact_point"))
 			"Spell":
-				for key: String in ["cast_offset", "impact_offset", "arc_height", "wave_amplitude", "wave_count", "projectile_speed", "projectile_scale", "impact_scale", "screen_darkness"]:
+				for key: String in ["cast_offset", "impact_offset", "arc_height", "wave_amplitude", "wave_count", "projectile_speed", "projectile_scale", "projectile_rotation_degrees", "rotate_along_path", "impact_scale", "screen_darkness"]:
 					card.set(key, _spell.get(key))
 	for path: String in loaded:
 		var root: Resource = loaded[path] as Resource

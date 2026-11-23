@@ -1,14 +1,26 @@
-[gd_resource type="Resource" script_class="SpellData" format=3 uid="uid://3mgd67y4ijho"]
+[gd_resource type="Resource" script_class="SpellData" format=3]
 
-[ext_resource type="Texture2D" uid="uid://13s2qes5mobo" path="res://data/items/Magic data/Fire/22.png" id="1_yaamw"]
-[ext_resource type="Script" uid="uid://bu35dva6wp5a6" path="res://script/system/SpellData.gd" id="2_12ga0"]
+[ext_resource type="Texture2D" path="res://data/items/Magic data/Fire/22.png" id="1_yaamw"]
+[ext_resource type="Script" path="res://script/system/SpellData.gd" id="2_12ga0"]
+[ext_resource type="Texture2D" path="res://data/magic_animations/comet_burst1.png" id="2_gnysn"]
+[ext_resource type="Texture2D" path="res://data/magic_animations/comet_proj1.png" id="3_34bb8"]
 
 [resource]
 script = ExtResource("2_12ga0")
-title = "Раскаленный осколок"
-description = "Выпускает осколок разогретый до огромной температуры"
+title = "Комета"
+description = "Выпускает осколок кометы разогретый до огромной температуры. Наносит массовый урон"
 icon = ExtResource("1_yaamw")
 element = 1
 mp_cost = 10
 damage_min = 20
 damage_max = 25
+projectile_sheet = ExtResource("3_34bb8")
+impact_sheet = ExtResource("2_gnysn")
+impact_fps = 19.5
+projectile_speed = 1220.0
+wave_amplitude = 0.0
+wave_count = 0.0
+arc_height = 0.0
+projectile_rotation_degrees = -18.0
+cast_offset = Vector2(19, 0)
+impact_offset = Vector2(0, -2)
