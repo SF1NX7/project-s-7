@@ -8,6 +8,13 @@
 [ext_resource type="Texture2D" uid="uid://gl1dfwljwjyn" path="res://art/Portrait/Enemies/goblin1/GoblinAttack.png" id="3_o5mil"]
 [ext_resource type="PackedScene" uid="uid://d2ftdwv0ucmem" path="res://scene/battle/enemies/Goblin.tscn" id="3_scene"]
 [ext_resource type="Texture2D" uid="uid://w2lk2805iv4" path="res://art/Portrait/Enemies/goblin1/GoblinHit.png" id="4_4ciye"]
+[ext_resource type="Resource" uid="uid://cy6n0261cs7eq" path="res://data/items/Potions/hp_small.tres" id="4_rleaa"]
+
+[sub_resource type="Resource" id="Resource_fmrba"]
+script = ExtResource("3_4ciye")
+item = ExtResource("4_rleaa")
+chance = 1.0
+metadata/_custom_type_script = "uid://dlhnouejnplyj"
 
 [sub_resource type="Resource" id="EnemyData_goblin"]
 script = ExtResource("2_enemy")
@@ -23,6 +30,8 @@ luck = 1
 base_movement = 3
 ai_style = 1
 detection_range = 6
+gold = 5
+item_drops = Array[ExtResource("3_4ciye")]([SubResource("Resource_fmrba")])
 
 [resource]
 script = ExtResource("1_catalog")

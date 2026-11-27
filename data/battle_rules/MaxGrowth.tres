@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="HeroGrowthProfile" format=3 uid="uid://dwg1wky4lvwle"]
+
+[ext_resource type="Script" uid="uid://c6xxs4txyighr" path="res://script/system/HeroGrowthProfile.gd" id="1"]
+[ext_resource type="Script" uid="uid://c7f4pta4c2qbb" path="res://script/system/HeroGrowthStage.gd" id="2"]
+
+[sub_resource type="Resource" id="Resource_i11h1"]
+script = ExtResource("2")
+display_name = "New Growth Stage"
+start_level = 10
+end_level = 99
+mp_every_levels = null
+mp_add_per_step = null
+mp_max_extra = null
+
+[resource]
+script = ExtResource("1")
+stages = Array[ExtResource("2")]([SubResource("Resource_i11h1")])
+hero_name = "Max"
+hp_min = 2
+hp_max = 4
+attack_min = 1
+magic_max = 0
+defense_max = 2

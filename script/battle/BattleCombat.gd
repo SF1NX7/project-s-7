@@ -16,6 +16,15 @@ const RETURN_PIXEL_TRANSITION: PackedScene = preload("res://scene/battle/PixelTr
 
 ## Общие правила смерти и завершения боя находятся в этом же скрипте.
 ## Отдельные BattleOutcome и BattleDeathEffect не нужны.
+## EXP actually awarded during FightScene. Read once by the dialogue bridge.
+var _fight_xp_messages: Array[Dictionary] = []
+
+func take_fight_xp_messages() -> Array[Dictionary]:
+	var result: Array[Dictionary] = _fight_xp_messages.duplicate()
+	_fight_xp_messages.clear()
+	return result
+
+
 @export_group("References")
 ## Путь к ноде очередности ходов.
 @export var turn_path: NodePath = ^"../BattleTurn"
@@ -476,7 +485,8 @@ func commit_pending_magic() -> void:
 		if bool(action["defeated"]):
 			defeated_units.append(target)
 			leader_defeated = leader_defeated or _is_enemy_leader(target)
-	_grant_hero_xp(hero, actual_xp)
+	if not bool(_pending_exchange.get("xp_claimed", false)):
+		_grant_hero_xp(hero, actual_xp)
 	for action in actions:
 		var target: Node2D = action.get("target") as Node2D
 		if not is_instance_valid(target):
@@ -544,13 +554,14 @@ func commit_pending_exchange() -> void:
 		_set_current_hp(target, int(result.get("hp_after", get_current_hp(target))))
 		var hero: Resource = _hero_data(attacker)
 		var gained_xp: int = int(result.get("xp_gain", 0))
-		if hero != null:
+		if hero != null and not bool(exchange.get("xp_claimed", false)):
 			_grant_hero_xp(hero, gained_xp)
 		combat_resolved.emit(attacker, target, result)
 		return
 	_set_current_hp(attacker, int(result.get("attacker_hp_after", get_current_hp(attacker))))
 	_set_current_hp(target, int(result.get("hp_after", get_current_hp(target))))
-	_award_physical_action_xp(attacker, target, result.get("actions", []))
+	if not bool(exchange.get("xp_claimed", false)):
+		_award_physical_action_xp(attacker, target, result.get("actions", []))
 	# Совместимый сигнал — после применения итогового состояния.
 	combat_resolved.emit(attacker, target, result)
 	if _is_enemy(target) and _enemy_ai != null and _enemy_ai.has_method("notify_enemy_attacked"):
@@ -642,10 +653,74 @@ func _hero_data(unit: Node2D) -> Resource:
 			return hero
 	return null
 
+## Called by FightPreviewBridge at the end of animation, while FightScene is open.
+## Claims only XP (not HP/MP/death/loot); commit skips XP if already claimed.
+func claim_pending_experience_for_fight() -> Array:
+	if _pending_exchange.is_empty() or bool(_pending_exchange.get("xp_claimed", false)):
+		return []
+	var kind: String = str(_pending_exchange.get("kind", ""))
+	if kind == "magic_damage":
+		return claim_pending_magic_experience_for_fight()
+	var attacker: Node2D = _pending_exchange.get("attacker") as Node2D
+	var target: Node2D = _pending_exchange.get("target") as Node2D
+	if not is_instance_valid(attacker):
+		return []
+	_fight_xp_messages.clear()
+	_pending_exchange["xp_claimed"] = true
+	var result: Dictionary = _pending_exchange.get("result", {})
+	if kind == "item_heal":
+		_grant_hero_xp(_hero_data(attacker), int(result.get("xp_gain", 0)))
+	else:
+		if is_instance_valid(target):
+			_award_physical_action_xp(attacker, target, result.get("actions", []))
+	return _take_level_up_events()
+
+
+func claim_pending_magic_experience_for_fight() -> Array:
+	if str(_pending_exchange.get("kind", "")) != "magic_damage" or bool(_pending_exchange.get("xp_claimed", false)):
+		return []
+	var attacker: Node2D = _pending_exchange.get("attacker") as Node2D
+	if not is_instance_valid(attacker):
+		return []
+	_fight_xp_messages.clear()
+	_pending_exchange["xp_claimed"] = true
+	var result: Dictionary = _pending_exchange.get("result", {})
+	var total_xp: int = 0
+	for action in result.get("actions", []):
+		if action is Dictionary:
+			var enemy: Node2D = action.get("target") as Node2D
+			if is_instance_valid(enemy):
+				total_xp += int(action.get("xp_gain", 0))
+	_grant_hero_xp(_hero_data(attacker), total_xp)
+	return _take_level_up_events()
+
+
+func _take_level_up_events() -> Array:
+	var events_out: Array = []
+	if _turn == null:
+		return events_out
+	var party: Resource = _turn.get("party") as Resource
+	if party == null:
+		return events_out
+	for hero in party.get("heroes"):
+		if hero is Resource:
+			var events: Array = hero.get_meta("s7_level_up_events", [])
+			events_out.append_array(events)
+			if hero.has_meta("s7_level_up_events"):
+				hero.remove_meta("s7_level_up_events")
+	return events_out
+
+
 ## Add XP to the specific hero and apply level thresholds only once on commit.
 func _grant_hero_xp(hero: Resource, gained: int) -> void:
 	if hero == null or gained <= 0:
 		return
+	# Record the real amount once, at the point of actual XP award.
+	# The dialogue bridge consumes these records without granting XP again.
+	var hero_name: String = str(hero.get("hero_name"))
+	if hero_name.is_empty():
+		hero_name = "Герой"
+	_fight_xp_messages.append({"hero": hero_name, "xp": gained})
 	if experience_rules != null:
 		experience_rules.grant_experience(hero, gained)
 	else:
@@ -683,21 +758,27 @@ func _award_physical_action_xp(attacker: Node2D, target: Node2D, actions: Array)
 
 
 ## A defeated enemy pays rewards exactly once even if death animations are repeated.
-func _grant_enemy_loot(enemy_unit: Node2D) -> void:
+## Called by FightPreviewBridge before closing FightScene. Claims drops once.
+## The later death commit sees s7_rewards_processed and does not grant again.
+func claim_enemy_rewards_for_fight(enemy_unit: Node2D) -> Dictionary:
+	return _grant_enemy_loot(enemy_unit)
+
+
+func _grant_enemy_loot(enemy_unit: Node2D) -> Dictionary:
 	if not award_enemy_loot or not is_instance_valid(enemy_unit) or not _is_enemy(enemy_unit):
-		return
+		return {}
 	if enemy_unit.has_meta("s7_rewards_processed"):
-		return
+		return {}
 	enemy_unit.set_meta("s7_rewards_processed", true)
 	var enemy_data: Resource = enemy_unit.get_meta("enemy_data", null) as Resource
 	if enemy_data == null:
-		return
+		return {}
 	var service: Node = get_node_or_null("/root/Inventory_Service")
 	if service == null:
 		service = get_node_or_null("/root/InventoryService")
 	if service == null:
 		push_warning("BattleCombat: Inventory_Service not found; gold and loot were not awarded.")
-		return
+		return {}
 	var guaranteed_gold: int = maxi(0, _resource_int(enemy_data, "gold"))
 	var bonus_gold: int = 0
 	if _rng.randf() < float(enemy_data.get("bonus_gold_chance")):
@@ -729,6 +810,7 @@ func _grant_enemy_loot(enemy_unit: Node2D) -> void:
 			gained_items.append(old_item)
 	enemy_rewards_granted.emit(_unit_name(enemy_unit), gold_amount, gained_items)
 	print("S7 LOOT: ", _unit_name(enemy_unit), " | gold +", gold_amount, " | items +", gained_items.size())
+	return {"gold": gold_amount, "items": gained_items}
 
 
 func _resource_int(resource: Resource, key: String) -> int:

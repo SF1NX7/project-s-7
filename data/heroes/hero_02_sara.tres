@@ -31,6 +31,7 @@ allowed_profs_mask = 80
 battle_sprite_frames = ExtResource("2_iivhf")
 magic_cast_point = Vector2(59.608643, -12.930313)
 base_stats = SubResource("Resource_wsnol")
+xp = 96
 hp_current = 8
 mp_current = 10
 talent_name = "Всплеск маны"

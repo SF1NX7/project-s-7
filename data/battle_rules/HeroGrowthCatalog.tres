@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="HeroGrowthCatalog" format=3 uid="uid://ckxv6npyt8of6"]
+
+[ext_resource type="Script" uid="uid://5804w1qopu1k" path="res://script/system/HeroGrowthCatalog.gd" id="1"]
+[ext_resource type="Resource" uid="uid://dwg1wky4lvwle" path="res://data/battle_rules/MaxGrowth.tres" id="3"]
+[ext_resource type="Resource" uid="uid://dko7r0yus2amj" path="res://data/battle_rules/SaraGrowth.tres" id="4"]
+
+[resource]
+script = ExtResource("1")
+profiles = Array[Resource]([ExtResource("3"), ExtResource("4")])

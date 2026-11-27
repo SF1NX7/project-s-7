@@ -8,6 +8,8 @@ extends Node
 @export var combat_path: NodePath = ^"../BattleCombat"
 ## Готовая визуальная сцена с HeroAnchor, EnemyAnchor и BattleText.
 @export var fight_scene: PackedScene = preload("res://scene/battle/FightScene.tscn")
+## Единый ресурс всех текстов боевого окна. Меняется через Inspector.
+@export var battle_text_rules: BattleTextRules = preload("res://data/battle_rules/BattleTextRules.tres")
 
 @export_group("Показ столкновения")
 ## Включить показ FightScene после физической атаки.
@@ -132,6 +134,11 @@ func _input(event: InputEvent) -> void:
 		advance_requested.emit()
 
 
+## Подставляет именованные параметры из карточки BattleTextRules.
+func _battle_text(template: String, values: Dictionary = {}) -> String:
+	return template.format(values)
+
+
 func _show_message(output: RichTextLabel, message: String, tree: SceneTree, hold_seconds: float) -> void:
 	if output != null:
 		output.text = message
@@ -154,6 +161,100 @@ func _show_message(output: RichTextLabel, message: String, tree: SceneTree, hold
 			_typing_message = false
 			_skip_typing = false
 	await _wait_for_message(tree, hold_seconds)
+
+
+## Show confirmed gold/items in FightScene's existing dialogue, never over BattleMap.
+func _show_fight_loot(output: RichTextLabel, tree: SceneTree, enemy_unit: Node2D, hero_name: String) -> void:
+	if not is_instance_valid(enemy_unit) or not is_instance_valid(_combat):
+		return
+	if not _combat.has_method("claim_enemy_rewards_for_fight"):
+		return
+	var rewards: Dictionary = _combat.call("claim_enemy_rewards_for_fight", enemy_unit)
+	if rewards.is_empty():
+		return
+	var gold_amount: int = int(rewards.get("gold", 0))
+	if gold_amount > 0:
+		await _show_message(output, _battle_text(battle_text_rules.gold_received, {"hero": hero_name, "gold": gold_amount}), tree, result_hold_seconds)
+	var counts: Dictionary = {}
+	for value in rewards.get("items", []):
+		var item: Resource = value as Resource
+		if item == null:
+			continue
+		var item_name: String = str(item.get("title"))
+		if item_name.strip_edges().is_empty():
+			item_name = item.resource_path.get_file().get_basename()
+		if item_name.is_empty():
+			item_name = "Предмет"
+		counts[item_name] = int(counts.get(item_name, 0)) + 1
+	for item_name in counts:
+		await _show_message(output, _battle_text(battle_text_rules.item_found, {"hero": hero_name, "item": str(item_name), "count": int(counts[item_name])}), tree, result_hold_seconds)
+
+
+## Level-ups appear in the SAME FightScene dialogue, after actual XP is claimed.
+## Level-up header stays separate; stat changes are paged in groups of two lines.
+func _show_level_up_events(output: RichTextLabel, tree: SceneTree, events: Array) -> void:
+	if battle_text_rules == null:
+		return
+	for value in events:
+		if not (value is Dictionary):
+			continue
+		var event: Dictionary = value
+		var hero_name: String = str(event.get("hero", "Герой"))
+		var hero_level: int = int(event.get("level", 1))
+		await _show_message(output, _battle_text(battle_text_rules.level_up, {"hero": hero_name, "level": hero_level}), tree, result_hold_seconds)
+		var changes: Dictionary = event.get("stats", {})
+		var stat_names: Dictionary = {
+			"hp": "HP", "mp": "MP", "attack": "Атака", "magic": "Магия",
+			"defense": "Защита", "resistance": "Сопротивление",
+			"speed": "Скорость", "luck": "Удача"
+		}
+		var lines: Array[String] = []
+		for stat in ["hp", "mp", "attack", "magic", "defense", "resistance", "speed", "luck"]:
+			var amount: int = int(changes.get(stat, 0))
+			if amount <= 0:
+				continue
+			var template: String = battle_text_rules.stat_increase
+			if stat == "hp":
+				template = battle_text_rules.max_hp_increase
+			elif stat == "mp":
+				template = battle_text_rules.max_mp_increase
+			lines.append(_battle_text(template, {
+				"hero": hero_name, "stat": stat_names[stat], "amount": amount
+			}))
+		for index in range(0, lines.size(), 2):
+			var page: String = lines[index]
+			if index + 1 < lines.size():
+				page += "\n" + lines[index + 1]
+			await _show_message(output, page, tree, result_hold_seconds)
+
+
+## Displays actual EXP granted by BattleCombat, including counters and dodges.
+## This does not calculate or grant EXP; avoids double counting on multi-target magic.
+func _show_fight_xp(output: RichTextLabel, tree: SceneTree) -> void:
+	if not is_instance_valid(_combat) or not _combat.has_method("take_fight_xp_messages"):
+		return
+	var awards: Array = _combat.call("take_fight_xp_messages")
+	if awards.is_empty():
+		return
+	var totals: Dictionary = {}
+	var order: Array[String] = []
+	for award_value in awards:
+		if not (award_value is Dictionary):
+			continue
+		var award: Dictionary = award_value
+		var name: String = str(award.get("hero", "Герой"))
+		var amount: int = int(award.get("xp", 0))
+		if amount <= 0:
+			continue
+		if not totals.has(name):
+			totals[name] = 0
+			order.append(name)
+		totals[name] = int(totals[name]) + amount
+	for hero_name in order:
+		var earned: int = int(totals[hero_name])
+		# The existing healing and magic text templates are retained.
+		var template: String = battle_text_rules.action_xp
+		await _show_message(output, _battle_text(template, {"hero": hero_name, "xp": earned}), tree, result_hold_seconds)
 
 
 func _wait_for_message(tree: SceneTree, automatic_seconds: float) -> void:
@@ -275,11 +376,11 @@ func _show_one_preview(entry: Dictionary) -> void:
 		var actor_name: String = str(action.get("source_name", "Атакующий"))
 		var victim_name: String = str(action.get("target_name", "Цель"))
 		var kind: String = str(action.get("kind", "attack"))
-		var announcement: String = "%s атакует!" % actor_name
+		var announcement: String = _battle_text(battle_text_rules.attack, {"hero": actor_name})
 		if kind == "counter":
-			announcement = "%s контратакует!" % actor_name
+			announcement = _battle_text(battle_text_rules.counterattack, {"hero": actor_name})
 		elif kind == "extra":
-			announcement = "%s атакует повторно!" % actor_name
+			announcement = _battle_text(battle_text_rules.extra_attack, {"hero": actor_name})
 		# Сначала сообщение: портрет остаётся Idle.
 		await _show_message(output, announcement, tree, announcement_seconds)
 		# Эмоция Attack начинается вместе с анимацией самого удара.
@@ -288,7 +389,7 @@ func _show_one_preview(entry: Dictionary) -> void:
 		_set_portrait_emotion(portraits, &"trigger_idle", not attacking_enemy)
 		if bool(action.get("dodged", false)):
 			await _play_dodge(target_sprite, tree)
-			await _show_message(output, "%s уклоняется!" % victim_name, tree, result_hold_seconds)
+			await _show_message(output, _battle_text(battle_text_rules.dodge, {"target": victim_name}), tree, result_hold_seconds)
 		else:
 			# Реакция Hit не вызывается при уклонении.
 			_set_portrait_emotion(portraits, &"trigger_hit", attacking_enemy)
@@ -299,9 +400,9 @@ func _show_one_preview(entry: Dictionary) -> void:
 				await portraits.call("animate_damage", attacking_enemy, int(action.get("damage", 0)))
 			if bool(action.get("critical", false)):
 				await _play_critical_effect(tree)
-			var message: String = "%s получает %d ед. урона." % [victim_name, int(action.get("damage", 0))]
+			var message: String = _battle_text(battle_text_rules.damage, {"target": victim_name, "damage": int(action.get("damage", 0))})
 			if bool(action.get("critical", false)):
-				message = "Критический удар! " + message
+				message = _battle_text(battle_text_rules.critical_damage, {"target": victim_name, "damage": int(action.get("damage", 0))})
 			await _show_message(output, message, tree, result_hold_seconds)
 			if not bool(action.get("defeated", false)):
 				_set_portrait_emotion(portraits, &"trigger_idle", attacking_enemy)
@@ -316,8 +417,21 @@ func _show_one_preview(entry: Dictionary) -> void:
 				if hit_tween != null and hit_tween.is_running():
 					await hit_tween.finished
 				await _combat.call("play_enemy_pixel_death", target_sprite, true)
-			await _show_message(output, "%s повержен!" % victim_name, tree, result_hold_seconds)
+			await _show_message(output, _battle_text(battle_text_rules.defeated, {"target": victim_name}), tree, result_hold_seconds)
+			var exchange_attacker: Node2D = entry.get("attacker") as Node2D
+			var exchange_target: Node2D = entry.get("target") as Node2D
+			if is_instance_valid(exchange_attacker) and is_instance_valid(exchange_target):
+				var original_enemy: bool = exchange_attacker.is_in_group(&"battle_enemies")
+				var defeated_unit: Node2D = exchange_target if attacking_enemy == original_enemy else exchange_attacker
+				if defeated_unit.is_in_group(&"battle_enemies"):
+					var hero_name: String = actor_name
+					await _show_fight_loot(output, tree, defeated_unit, hero_name)
 
+	# XP/Level Up BEFORE leaving FightScene. BattleCombat will not grant XP twice.
+	if is_instance_valid(_combat) and _combat.has_method("claim_pending_experience_for_fight"):
+		var level_events: Array = _combat.call("claim_pending_experience_for_fight")
+		await _show_fight_xp(output, tree)
+		await _show_level_up_events(output, tree, level_events)
 	# Сначала закрываем FightScene затемнением, потом убираем её из дерева.
 	if fade_enabled:
 		await _fade_to(1.0, fade_out_seconds, tree)
@@ -431,7 +545,7 @@ func _show_one_heal_preview(entry: Dictionary) -> void:
 	var item_name: String = str(action.get("item_name", "предмет"))
 	var healed: int = int(action.get("heal", 0))
 	var xp: int = int(action.get("xp_gain", 0))
-	await _show_message(output, "%s применяет %s!" % [actor_name, item_name], tree, announcement_seconds)
+	await _show_message(output, _battle_text(battle_text_rules.item_use, {"hero": actor_name, "item": item_name}), tree, announcement_seconds)
 	_set_portrait_emotion(panel, &"trigger_attack", not enemy_actor)
 	await _play_heal_actor_animation(actor_sprite, tree)
 	_set_portrait_emotion(panel, &"trigger_idle", not enemy_actor)
@@ -439,10 +553,15 @@ func _show_one_heal_preview(entry: Dictionary) -> void:
 	if panel != null and panel.has_method("animate_heal"):
 		# При самолечении анимируем HP на стороне самого лечащего.
 		await panel.call("animate_heal", (not enemy_actor) if self_heal else enemy_actor, healed)
-	var result_text: String = "%s восстановлено %d HP." % [recipient_name, healed]
+	var result_text: String = _battle_text(battle_text_rules.heal, {"target": recipient_name, "heal": healed})
 	if xp > 0:
-		result_text += "\n%s получает %d XP." % [actor_name, xp]
+		result_text += "\n" + _battle_text(battle_text_rules.heal_xp, {"hero": actor_name, "xp": xp})
 	await _show_message(output, result_text, tree, result_hold_seconds)
+	if is_instance_valid(_combat) and _combat.has_method("claim_pending_experience_for_fight"):
+		var level_events: Array = _combat.call("claim_pending_experience_for_fight")
+		if _combat.has_method("take_fight_xp_messages"):
+			_combat.call("take_fight_xp_messages") # Healing already shows EXP beside recovered HP.
+		await _show_level_up_events(output, tree, level_events)
 
 	if fade_enabled:
 		await _fade_to(1.0, fade_out_seconds, tree)
@@ -845,7 +964,7 @@ func present_magic(caster: Node2D, spell: SpellData, result: Dictionary) -> void
 	if fade_enabled:
 		await _fade_to(0.0, fade_in_seconds, tree)
 	var caster_name: String = str(first.get("source_name", caster.name))
-	await _show_message(output, "%s применяет %s!" % [caster_name, spell.title], tree, announcement_seconds)
+	await _show_message(output, _battle_text(battle_text_rules.spell_cast, {"hero": caster_name, "spell": spell.title}), tree, announcement_seconds)
 	await visual.darken(spell.screen_darkness, spell.darken_duration)
 	var cast_started: bool = false
 	var primary_effect_played: bool = false
@@ -890,26 +1009,28 @@ func present_magic(caster: Node2D, spell: SpellData, result: Dictionary) -> void
 		var victim: String = str(action.get("target_name", target.name))
 		if bool(action.get("dodged", false)):
 			await _play_dodge(enemy, tree)
-			await _show_message(output, "%s избегает магии!" % victim, tree, result_hold_seconds)
+			await _show_message(output, _battle_text(battle_text_rules.magic_dodge, {"target": victim}), tree, result_hold_seconds)
 		else:
 			_set_portrait_emotion(panel, &"trigger_hit", false)
 			await _play_hit(enemy, tree)
 			if panel != null and panel.has_method("animate_damage"):
 				await panel.call("animate_damage", false, int(action.get("damage", 0)))
-			await _show_message(output, "%s получает %d ед. урона." % [victim, int(action.get("damage", 0))], tree, result_hold_seconds)
+			await _show_message(output, _battle_text(battle_text_rules.magic_damage, {"target": victim, "damage": int(action.get("damage", 0))}), tree, result_hold_seconds)
 		if bool(action.get("defeated", false)):
 			_set_portrait_emotion(panel, &"trigger_defeat", false)
 			if is_instance_valid(_combat) and _combat.has_method("play_enemy_pixel_death"):
 				await _combat.call("play_enemy_pixel_death", enemy, true)
 			enemy.hide()
-			await _show_message(output, "%s повержен!" % victim, tree, result_hold_seconds)
+			await _show_message(output, _battle_text(battle_text_rules.defeated, {"target": victim}), tree, result_hold_seconds)
+			await _show_fight_loot(output, tree, target, caster_name)
 		elif i < actions.size() - 1:
 			await _magic_slide(anchor, away, spell.target_slide_duration)
 	visual.stop_lingering()
 	await visual.darken(0.0, spell.darken_duration)
-	var xp: int = int(result.get("xp_gain", 0))
-	if xp > 0:
-		await _show_message(output, "%s получает %d XP." % [caster_name, xp], tree, result_hold_seconds)
+	if is_instance_valid(_combat) and _combat.has_method("claim_pending_magic_experience_for_fight"):
+		var level_events: Array = _combat.call("claim_pending_magic_experience_for_fight")
+		await _show_fight_xp(output, tree)
+		await _show_level_up_events(output, tree, level_events)
 	if fade_enabled:
 		await _fade_to(1.0, fade_out_seconds, tree)
 	_overlay.queue_free()

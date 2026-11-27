@@ -2,7 +2,13 @@
 extends Resource
 class_name ExperienceRules
 
-## Central rules for HERO experience. XP is per hero, and carries over on level-up.
+## Central rules for HERO experience, level-ups and randomized stat growth.
+## Exp and growth are applied to the same runtime HeroData resource.
+var _growth_rng: RandomNumberGenerator = RandomNumberGenerator.new()
+
+@export_group("Рост героев")
+@export var growth_catalog: HeroGrowthCatalog = preload("res://data/battle_rules/HeroGrowthCatalog.tres")
+
 
 @export_group("Experience: Actions")
 @export_range(0, 10000, 1) var xp_per_hit: int = 1
@@ -90,6 +96,41 @@ func xp_for_healing(actual_healed: int, hero_level: int, reference_level: int) -
 	return scaled_xp(xp_per_heal + bonus, hero_level, reference_level)
 
 
+func _growth_profile_for(hero: Resource) -> HeroGrowthProfile:
+	var name: String = str(hero.get("hero_name"))
+	var fallback: HeroGrowthProfile = null
+	if growth_catalog == null:
+		return null
+	for profile_resource in growth_catalog.profiles:
+		var profile: HeroGrowthProfile = profile_resource as HeroGrowthProfile
+		if profile == null:
+			continue
+		if profile.hero_name == name:
+			return profile
+		if profile.hero_name.is_empty():
+			fallback = profile
+	return fallback
+
+
+func _apply_level_growth(hero: Resource, reached_level: int) -> Dictionary:
+	var profile: HeroGrowthProfile = _growth_profile_for(hero)
+	if profile == null:
+		return {}
+	var stats: Resource = hero.get("base_stats") as Resource
+	if stats == null:
+		return {}
+	var growth: Dictionary = profile.roll_growth_for_level(_growth_rng, hero, reached_level)
+	for key in growth:
+		var value: int = int(growth[key])
+		stats.set(key, int(stats.get(key)) + value)
+	if growth_catalog != null and growth_catalog.restore_grown_hp_mp:
+		if growth.has("hp"):
+			hero.set("hp_current", int(hero.get("hp_current")) + int(growth["hp"]))
+		if growth.has("mp"):
+			hero.set("mp_current", int(hero.get("mp_current")) + int(growth["mp"]))
+	return growth
+
+
 func grant_experience(hero: Resource, amount: int) -> int:
 	## Returns number of levels gained. HeroData already contains level, xp, xp_to_next.
 	if hero == null or amount <= 0:
@@ -106,6 +147,10 @@ func grant_experience(hero: Resource, amount: int) -> int:
 		else:
 			current_xp = 0
 		current_level += 1
+		var changes: Dictionary = _apply_level_growth(hero, current_level)
+		var events: Array = hero.get_meta("s7_level_up_events", [])
+		events.append({"hero": str(hero.get("hero_name")), "level": current_level, "stats": changes})
+		hero.set_meta("s7_level_up_events", events)
 		levels_gained += 1
 		threshold = xp_requirement_for_level(current_level)
 	if current_level >= maximum_level:

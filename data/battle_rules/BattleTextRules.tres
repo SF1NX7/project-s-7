@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="BattleTextRules" format=3 uid="uid://bgr4wkx0ewp32"]
+
+[ext_resource type="Script" uid="uid://d0ckurmw7f87x" path="res://script/battle/BattleTextRules.gd" id="1_text"]
+
+[resource]
+script = ExtResource("1_text")
+item_found = "{hero} находит {item}!"
+level_up = "{hero} получает уровень {level}!"
+stat_increase = "{hero} повышает : {stat} +{amount}!"

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="HeroGrowthProfile" format=3 uid="uid://dko7r0yus2amj"]
+
+[ext_resource type="Script" uid="uid://c6xxs4txyighr" path="res://script/system/HeroGrowthProfile.gd" id="1"]
+[ext_resource type="Script" uid="uid://c7f4pta4c2qbb" path="res://script/system/HeroGrowthStage.gd" id="2"]
+
+[resource]
+script = ExtResource("1")
+hero_name = "Sara"
+hp_max = 2
+mp_min = 2
+mp_max = 4
+attack_max = 1
+magic_min = 1
+magic_max = 3
+resistance_min = 1
+resistance_max = 2
