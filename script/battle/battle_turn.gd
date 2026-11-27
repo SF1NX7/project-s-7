@@ -1,6 +1,5 @@
 extends Node
-## First battle turn prototype. Reads existing HeroData and living units on the map.
-## No battle actions, artificial enemies or permanent save mutations yet.
+## Battle turn controller. Stable queue with optional allied/enemy turn grouping.
 
 @export_group("References")
 @export var units_path: NodePath = ^"../Units"
@@ -13,6 +12,11 @@ extends Node
 @export_group("Turn Rules")
 @export var focus_cursor_on_active_unit: bool = true
 @export var higher_speed_acts_first: bool = true
+## When enabled, all living heroes act before all living enemies each round.
+## Speed decides the order within each side. Disable for fully mixed speed order.
+@export var group_enemy_turns: bool = true
+## Print the initial roster and active turns to Godot Output for debugging.
+@export var debug_turn_order: bool = false
 
 @export_group("Attack Targeting")
 ## Дальность обычной атаки в клетках (по горизонтали и вертикали).
@@ -168,14 +172,30 @@ func _start_first_turn() -> void:
 	if roster.is_empty():
 		push_warning("BattleTurn: No deployed heroes found in Units.")
 		return
+	# Each unit has a stable insertion index. This matters for multiple enemies:
+	# comparing party indexes for enemies used to compare -1 with -1.
+	for position in range(roster.size()):
+		roster[position]["spawn_order"] = position
 	roster.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		if a["speed"] == b["speed"]:
-			return _party_index(a["hero"]) < _party_index(b["hero"])
-		if higher_speed_acts_first:
-			return a["speed"] > b["speed"]
-		return a["speed"] < b["speed"]
+		var a_is_enemy: bool = a["enemy"] != null
+		var b_is_enemy: bool = b["enemy"] != null
+		if group_enemy_turns and a_is_enemy != b_is_enemy:
+			return not a_is_enemy
+		var a_speed: int = int(a["speed"])
+		var b_speed: int = int(b["speed"])
+		if a_speed != b_speed:
+			if higher_speed_acts_first:
+				return a_speed > b_speed
+			return a_speed < b_speed
+		return int(a["spawn_order"]) < int(b["spawn_order"])
 	)
 	_roster = roster
+	if debug_turn_order:
+		var names: PackedStringArray = []
+		for entry in _roster:
+			var roster_unit: Node2D = entry["unit"] as Node2D
+			names.append("%s (SPD %d)" % [roster_unit.name, int(entry["speed"])])
+		print("S7 TURN ROSTER: ", " -> ".join(names))
 	_turn_index = 0
 	_activate_current_turn()
 
@@ -1116,6 +1136,8 @@ func _activate_current_turn() -> void:
 	active_unit = candidate as Node2D
 	active_hero = _roster[_turn_index]["hero"] as HeroData
 	active_enemy_data = _roster[_turn_index]["enemy"] as Resource
+	if debug_turn_order:
+		print("S7 TURN ACTIVE: ", active_unit.name, " (index ", _turn_index, "/", _roster.size(), ")")
 	_set_player_controls_for_turn(active_hero != null and active_enemy_data == null)
 	_update_indicator()
 	if focus_cursor_on_active_unit:
